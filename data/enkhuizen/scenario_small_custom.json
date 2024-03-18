@@ -1,0 +1,190 @@
+{
+    "types": [
+        {
+            "name": "VIRM-4",
+            "length": 108,
+            "speed": 13.9
+        },
+        {
+            "name": "VIRM-6",
+            "length": 162,
+            "speed": 13.9
+        },
+        {
+            "name": "ICM-3",
+            "length": 81,
+            "speed": 11.1
+        },
+        {
+            "name": "ICM-4",
+            "length": 107,
+            "speed": 11.1
+        },
+        {
+            "name": "SNG-4",
+            "length": 75,
+            "speed": 16.7
+        },        
+        {
+            "name": "SNG-3",
+            "length": 60,
+            "speed": 16.7
+        },
+        {
+            "name": "SLT-4",
+            "length": 69,
+            "speed": 15.2
+        },
+        {
+            "name": "SLT-6",
+            "length": 100,
+            "speed": 15.2
+        }
+    ],
+    "trains": [
+        {
+            "trainNumber": 1,
+            "trainUnits": [
+                8655
+            ],
+            "trainUnitTypes": [
+                "VIRM-6"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-405B",
+                    "startTime": 0,
+                    "endTime": 300,
+                    "endLocation": "t-401A"
+                },
+                {
+                    "startLocation": "t-401A",
+                    "startTime": 460,
+                    "endTime": 620,
+                    "endLocation": "t-EHA"
+                }                
+            ]
+        },        
+        {
+            "trainNumber": 2,
+            "trainUnits": [
+                9595
+            ],
+            "trainUnitTypes": [
+                "ICM-4"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-406B",
+                    "startTime": 200,
+                    "endTime": 360,
+                    "endLocation": "t-402A"
+                },
+                {
+                    "startLocation": "t-402A",
+                    "startTime": 700,
+                    "endTime": 900,
+                    "endLocation": "t-EHA"
+                }
+            ]
+        },
+        {
+            "trainNumber": 3,
+            "trainUnits": [
+                9425
+            ],
+            "trainUnitTypes": [
+                "SLT-4",
+                "SLT-6"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-EHB",
+                    "startTime": 1200,
+                    "endLocation": "t-401A",
+                    "endTime": 1340
+                },
+                {
+                    "startLocation": "t-401A",
+                    "startTime": 1640,
+                    "endLocation": "t-404B",
+                    "endTime": 2040
+                }
+            ]
+        },
+        {
+            "trainNumber": 4,
+            "trainUnits": [
+                9407
+            ],
+            "trainUnitTypes": [
+                "SNG-4", 
+                "SNG-4"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-403A",
+                    "startTime": 1775,
+                    "endLocation": "t-401A",
+                    "endTime": 2000
+                },
+                {
+                    "startLocation": "t-401A",
+                    "startTime": 2640,
+                    "endLocation": "t-EHA",
+                    "endTime": 2920
+                }
+            ]
+        },
+        {
+            "trainNumber": 5,
+            "trainUnits": [
+                8615
+            ],
+            "trainUnitTypes": [
+                "VIRM-6"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-EHB",
+                    "startTime": 2200,
+                    "endLocation": "t-402A",
+                    "endTime": 2500
+                },
+                {
+                    "startLocation": "t-402A",
+                    "startTime": 3100,
+                    "endLocation": "t-405B",
+                    "endTime": 3200
+                }
+            ]
+        },
+        {
+            "trainNumber": 6,
+            "trainUnits": [
+                9579
+            ],
+            "trainUnitTypes": [
+                "VIRM-4",
+                "VIRM-6"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-EHB",
+                    "startTime": 3180,
+                    "endLocation": "t-402A",
+                    "endTime": 3360
+                },
+                {
+                    "startLocation": "t-402A",
+                    "startTime": 3460,
+                    "endLocation": "t-EHA",
+                    "endTime": 3600
+                }
+            ]
+        }
+    ],
+    "headwayFollowing": 180,
+    "headwayCrossing": 120,
+    "walkingSpeed": 1.4
+}

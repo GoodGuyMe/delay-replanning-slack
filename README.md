@@ -1,16 +1,16 @@
 # Any-Start-Time-Train-Routing
 
 This project has the following directories:
-- generation: module to generate the @SIPP search graph
-- search (atSIPP): C++ module to search for any-start-time plans in the @SIPP search graph
-- data: two dutch shunting yard layouts: Enkhuizen and Heerlen. This also includes code to generate new scenarios
-- experiments: code to run experiments for our paper
+- `generation`: Python module to generate the @SIPP search graph
+- `search` (atSIPP): C++ module to search for any-start-time plans in the @SIPP search graph
+- `data`: two dutch shunting yard layouts: Enkhuizen and Heerlen. This also includes code to generate new scenarios and explanation of how the real-life scenario was created.
+- `experiments`: code to run experiments for our paper
 
 Compiling:
-- meson setup --buildtype release  build
-- meson setup --buildtype debug build_debug
-- meson compile -C build
-- meson compile -C build_debug
+- `meson setup --buildtype release  build`
+- `meson setup --buildtype debug build_debug`
+- `meson compile -C build`
+- `meson compile -C build_debug`
 
 To cite, please use:
 
