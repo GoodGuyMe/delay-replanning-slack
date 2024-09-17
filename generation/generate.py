@@ -21,6 +21,7 @@ parser.add_argument('-v', "--agent_speed", help="(optional) the speed of the age
 parser.add_argument('-p', "--printing", help="(optional) whether to print edge intervals (default=True)", default=True)
 
 def read_scenario(file, g, agent=-1):
+    """Read scenario files in json format."""
     try:
         base_path = Path(__file__).parent
         file_path = (base_path / file).resolve()
@@ -33,17 +34,18 @@ def read_scenario(file, g, agent=-1):
     return node_intervals, edge_intervals, agent_intervals, moves_per_agent, end_time - start_time
 
 def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals):
+    """Write SIPP graph to gzip file for the search procedure"""
     with gzip.open(file, "wt") as f:
         f.write("vertex count: " + str(len([x for node in safe_node_intervals for x in safe_node_intervals[node]])) + "\n")
         for node in safe_node_intervals:
             for interval in safe_node_intervals[node]:
                 f.write(node + " " + str(interval[0]) + " " + str(interval[1]) + "\n")
         for tup in safe_edge_intervals:
-            # In our domain there is not really a difference between alpha and zeta since we have no waiting time, so they are the same, but we keep both for further notice. 
+            # In our domain there is not really a difference between alpha and zeta since we have no waiting time, so they are the same, but we keep both for extendability. 
             f.write(str(tup[0]) + " " + str(tup[1]) + " " + str(tup[2]) + " " + str(tup[3]) + " " + str(tup[4]) + " " + str(tup[5]) + "\n")
 
 def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output):
-    """For testing the time to get the safe intervals. Also writes to file (without timing)."""
+    """For testing the time to get the safe intervals. Also writes to file (without timing). Used for experiments."""
     g = read_graph(location)
     unsafe_node_intervals, _, _, _, unsafe_computation_time = read_scenario(scenario, g, agent_id)
     start_time = time.time()

@@ -3,6 +3,8 @@ import queue as Q
 from util import *
 
 def process_scenario(data, g, agent):
+    """Process the data from the scenario."""
+    # Create a global end time (end of the planning horizon)
     g.global_end_time = max([2 * move["endTime"] for entry in data["trains"] for move in entry["movements"]])
     types = {x["name"]: x for x in data["types"]}
     node_intervals = {}
@@ -20,7 +22,9 @@ def process_scenario(data, g, agent):
         moves_per_agent[entry["trainNumber"]] = []
         node_intervals[entry["trainNumber"]] = {n:[] for n in g.nodes}
         edge_intervals[entry["trainNumber"]] = {e.get_identifier():[] for e in g.edges}
+        # Each of the planned moves of the train must be converted to intervals
         process_moves(entry, g, measures, moves_per_agent, node_intervals, edge_intervals)
+    # Combine intervals and merge overlapping intervals, taking into account the current agent
     node_intervals, edge_intervals, agent_intervals = combine_intervals_per_train(node_intervals, edge_intervals, g, agent)
     for node in node_intervals:
         for i in range(len(node_intervals[node])):
@@ -70,6 +74,7 @@ def process_moves(entry, g, measures, moves_per_agent, node_intervals, edge_inte
     return node_intervals, edge_intervals
 
 def construct_path(g, move, print_path_error=True):
+    """Construct a shortest path from the start to the end location to determine the locations and generate their unsafe intervals."""
     start = g.nodes[move["startLocation"]]
     end = g.nodes[move["endLocation"]]
     distances = {n: sys.maxsize for n in g.nodes}

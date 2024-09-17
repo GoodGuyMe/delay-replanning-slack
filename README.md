@@ -12,6 +12,8 @@ Dependencies (version tested):
 - zlib (1.3.1)
 - meson (1.2.3)
 
+Additionally, the Python `generation` module requires the `numpy` package to be installed, we tested using version 1.25.1.
+
 Compiling:
 ```bash
     cd search
@@ -21,7 +23,7 @@ Compiling:
     meson compile -C build_debug
 ```
 
-To run a specifc scenario (in this case scenario `data/enkhuizen/scenario_small_custom.json` on location `data/enkhuizen/location_enkhuizen.json` for agent 1):
+To run a specific scenario (in this case scenario `data/enkhuizen/scenario_small_custom.json` on location `data/enkhuizen/location_enkhuizen.json` for agent 1):
 ```
 python3 generation/generate.py -s data/enkhuizen/scenario_small_custom.json -l data/enkhuizen/location_enkhuizen.json -o output
 ./search/build/atsipp --edgegraph output --start t-405B --goal t-401A
