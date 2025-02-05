@@ -12,6 +12,15 @@ class Node:
         self.canReverse = False
         self.stationPlatform = False
 
+    def __eq__(self, other):
+        if isinstance(other, Node):
+            return self.name == other.name
+        return False
+
+    def __hash__(self):
+        """Overrides the default implementation"""
+        return hash(self.name)
+
     def __repr__(self) -> str:
         return f"Node {self.name} of type {self.type} coming from {self.incoming} and going to {self.outgoing}\n"
 
@@ -22,12 +31,16 @@ class Edge:
         self.length = l
         self.opposites = []
         self.associated = []
+        self.depart_time = None
     
     def get_identifier(self):
         return f"{self.from_node.name}--{self.to_node.name}"
 
     def __repr__(self) -> str:
         return f"Edge from {self.from_node.name} to {self.to_node.name} with length {self.length}"
+
+    def set_depart_time(self, time):
+        self.depart_time = time
 
 class Graph:
     def __init__(self):

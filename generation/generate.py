@@ -4,6 +4,8 @@ import numpy as np
 import argparse
 import gzip
 from pathlib import Path
+
+from generation.safe_interval_graph import plot_safe_node_intervals, plot_unsafe_node_intervals
 from util import *
 from interval_generation import *
 from convert_to_safe_intervals import *
@@ -58,5 +60,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     g = read_graph(args.location)
     unsafe_node_intervals, unsafe_edge_intervals, agent_intervals, moves_per_agent, computation_time = read_scenario(args.scenario, g, args.agent_id)
+    plot_unsafe_node_intervals(unsafe_node_intervals, moves_per_agent)
     safe_node_intervals, safe_edge_intervals, not_found_edges = create_safe_intervals(unsafe_node_intervals, g, float(args.agent_speed), print_intervals=args.printing == "True")
     write_intervals_to_file(args.output, safe_node_intervals, safe_edge_intervals)
+    plot_safe_node_intervals(safe_node_intervals)

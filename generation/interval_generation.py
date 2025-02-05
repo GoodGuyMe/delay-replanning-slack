@@ -1,3 +1,4 @@
+import copy
 import sys
 import queue as Q
 from util import *
@@ -42,8 +43,8 @@ def process_moves(entry, g, measures, moves_per_agent, node_intervals, edge_inte
         move = entry["movements"][i]
         current_train = entry["trainNumber"] # This is the train making the move, but not necessarily the delayed agent
         path = construct_path(g, move)
-        moves_per_agent[entry["trainNumber"]].append(path)
         current_node_intervals, current_edge_intervals = generate_unsafe_intervals(g, path, move, measures)
+        moves_per_agent[entry["trainNumber"]].append(path)
         
         # If train starts at a parking track node, it is unsafe until its start time
         if i == 0 and g.nodes[move["startLocation"]].canReverse:
@@ -103,7 +104,7 @@ def construct_path(g, move, print_path_error=True):
         while current != start:
             for x in current.incoming:
                 if x.from_node == previous[current.name]:
-                    path.insert(0, x)
+                    path.insert(0, copy.deepcopy(x))
             current = previous[current.name]
     except:
         if print_path_error:
@@ -136,29 +137,31 @@ def generate_unsafe_intervals(g, path, move, measures):
                     end_time,
                     (e.length + measures["trainLength"]) / measures["walkingSpeed"]
                 ))
+            e.set_depart_time(end_time)
             cur_time = end_time
         # In all other cases use train speed
         else:
             # Make sure to set the starting state
             if len(node_intervals[e.from_node.name]) == 0:
                 node_intervals[e.from_node.name].append((
-                    cur_time, 
+                    cur_time,
                     cur_time + measures["trainLength"] / measures["trainSpeed"] + measures["headwayFollowing"],
                     e.length / measures["trainSpeed"]
                 ))
                 for x in e.from_node.associated:
                     node_intervals[x.name].append((
-                        cur_time, 
+                        cur_time,
                         cur_time + measures["trainLength"] / measures["trainSpeed"] + measures["headwayFollowing"],
                         e.length / measures["trainSpeed"]
                     ))
                 for x in e.from_node.opposites:
                     node_intervals[x.name].append((
-                        cur_time, 
+                        cur_time,
                         cur_time + measures["trainLength"] / measures["trainSpeed"] + measures["headwayCrossing"],
                         e.length / measures["trainSpeed"]
-                    ))                    
+                    ))
             end_time = cur_time + e.length / measures["trainSpeed"]
+            e.set_depart_time(end_time)
             node_intervals[e.to_node.name].append((
                 cur_time + e.length / measures["trainSpeed"], 
                 cur_time + (e.length + measures["trainLength"]) / measures["trainSpeed"] + measures["headwayFollowing"],
