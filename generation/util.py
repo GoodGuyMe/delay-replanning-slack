@@ -138,8 +138,8 @@ def read_graph(file):
                     # Connect the aSide node(s) to the respective edges
                     for aSideToTrack in nodes_per_id_A[aSideId]:
                         length = track["length"]
-                        if g.nodes[aSideToTrack].type == "RailRoad":
-                            length = track_lengths[aSideId]
+                        # if g.nodes[aSideToTrack].type == "RailRoad":
+                        length = track_lengths[aSideId]
                         e = g.add_edge(Edge(g.nodes[aSideToTrack], g.nodes[fromNode], length))
                         g.nodes[fromNode].incoming.append(e)
                         g.nodes[aSideToTrack].outgoing.append(e)
@@ -157,8 +157,8 @@ def read_graph(file):
                     # Connect the bSide node(s) to the respective neighbors
                     for bSideToTrack in nodes_per_id_B[bSideId]:
                         length = track["length"]
-                        if g.nodes[bSideToTrack].type == "RailRoad":
-                            length = track_lengths[bSideId]
+                        # if g.nodes[bSideToTrack].type == "RailRoad":
+                        length = track_lengths[bSideId]
                         e = g.add_edge(Edge(g.nodes[bSideToTrack], g.nodes[fromNode], length))
                         g.nodes[fromNode].incoming.append(e)
                         g.nodes[bSideToTrack].outgoing.append(e)
