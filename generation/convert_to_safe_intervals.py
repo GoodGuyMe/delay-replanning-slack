@@ -13,23 +13,23 @@ def create_safe_intervals(node_intervals, g, agent_speed=15, print_intervals=Tru
         duration = 0
         # Make sure they are ordered in chronological order
         node_intervals[node].sort()
-        tuple = None
         # Each tuple is (start, end, duration)
-        for tuple in node_intervals[node]:
-            interval = (current, tuple[0])
-            if interval[0] > interval[1]:
+        for start, end, dur in node_intervals[node]:
+            if current > start:
+                interval = (current, start)
                 print(f"INTERVAL ERROR safe node interval {interval} on node {node} has later end than start.")
-            elif interval[0] == interval[1]:
+            elif current == start:
                 # Don't add safe intervals like (0,0), but do update for the next interval
-                current = tuple[1]
+                current = end
             else:
+                interval = (current, start)
                 safe_node_intervals[node].append(interval)
                 # Dictionary with node keys, each entry has a dictionary with interval keys and then the index value
                 state_indices[node][str(interval)] = index
-                duration = tuple[2]
+                duration = dur
                 edge_durations[node][str(interval)] = duration
                 index += 1
-                current = tuple[1]
+                current = end
         if current < g.global_end_time:
             last_interval = (current, g.global_end_time)
             safe_node_intervals[node].append(last_interval)
