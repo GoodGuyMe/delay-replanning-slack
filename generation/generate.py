@@ -63,4 +63,5 @@ if __name__ == "__main__":
     plot_unsafe_node_intervals(unsafe_node_intervals, moves_per_agent)
     safe_node_intervals, safe_edge_intervals, not_found_edges = create_safe_intervals(unsafe_node_intervals, g, float(args.agent_speed), print_intervals=args.printing == "True")
     write_intervals_to_file(args.output, safe_node_intervals, safe_edge_intervals)
+    plot_safe_node_intervals(safe_node_intervals, moves_per_agent)
     plot_safe_node_intervals(safe_node_intervals)

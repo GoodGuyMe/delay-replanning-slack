@@ -137,7 +137,8 @@ def generate_unsafe_intervals(g, path, move, measures):
                     end_time,
                     (e.length + measures["trainLength"]) / measures["walkingSpeed"]
                 ))
-            e.set_depart_time(end_time)
+            e.set_start_time(cur_time)
+            e.set_depart_time(cur_time)
             cur_time = end_time
         # In all other cases use train speed
         else:
@@ -200,6 +201,8 @@ def generate_unsafe_intervals(g, path, move, measures):
                     cur_time + e.length / measures["trainSpeed"] + measures["headwayCrossing"],
                     e.length / measures["trainSpeed"]
                 ))
+            e.set_start_time(cur_time)
+            e.set_depart_time(end_time)
             cur_time = end_time
     return node_intervals, edge_intervals
 
