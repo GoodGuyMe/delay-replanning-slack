@@ -1,0 +1,83 @@
+{
+    "types": [
+        {
+            "name": "VIRM-4",
+            "length": 108,
+            "speed": 13.9
+        },
+        {
+            "name": "VIRM-6",
+            "length": 162,
+            "speed": 13.9
+        },
+        {
+            "name": "ICM-3",
+            "length": 81,
+            "speed": 11.1
+        },
+        {
+            "name": "ICM-4",
+            "length": 107,
+            "speed": 11.1
+        },
+        {
+            "name": "SNG-4",
+            "length": 75,
+            "speed": 16.7
+        },        
+        {
+            "name": "SNG-3",
+            "length": 60,
+            "speed": 16.7
+        },
+        {
+            "name": "SLT-4",
+            "length": 69,
+            "speed": 15.2
+        },
+        {
+            "name": "SLT-6",
+            "length": 100,
+            "speed": 15.2
+        }
+    ],
+    "trains": [
+        {
+            "trainNumber": 1,
+            "trainUnits": [
+                8655
+            ],
+            "trainUnitTypes": [
+                "VIRM-6"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-213B",
+                    "startTime": 0,
+                    "endTime": 1900,
+                    "endLocation": "t-432B"
+                }
+            ]
+        },        
+        {
+            "trainNumber": 2,
+            "trainUnits": [
+                9595
+            ],
+            "trainUnitTypes": [
+                "ICM-4"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-433A",
+                    "startTime": 200,
+                    "endTime": 1900,
+                    "endLocation": "t-211bA"
+                }
+            ]
+        }
+    ],
+    "headwayFollowing": 180,
+    "headwayCrossing": 120,
+    "walkingSpeed": 1.4
+}
