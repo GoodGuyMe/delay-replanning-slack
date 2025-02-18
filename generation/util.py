@@ -33,6 +33,8 @@ class Edge:
         self.associated = []
         self.depart_time = None
         self.start_time = None
+        self.max_speed = 50
+        self.stops_at_station = False
     
     def get_identifier(self):
         return f"{self.from_node.name}--{self.to_node.name}"
@@ -45,6 +47,11 @@ class Edge:
 
     def set_start_time(self, time):
         self.start_time = time
+
+    # def __eq__(self, other):
+    #     if isinstance(other, Edge):
+    #         return self.from_node == other.from_node and self.to_node == other.to_node
+    #     return False
 
 class Graph:
     def __init__(self):
@@ -60,6 +67,8 @@ class Graph:
     def add_edge(self, e):
         if type(e) is Edge:
             self.edges.append(e)
+            e.to_node.incoming.append(e)
+            e.from_node.outgoing.append(e)
             return e
     
     def __repr__(self) -> str:
@@ -137,46 +146,30 @@ def read_graph(file):
                     bumperAside = False
                     # Connect the aSide node(s) to the respective edges
                     for aSideToTrack in nodes_per_id_A[aSideId]:
-                        length = track["length"]
-                        # if g.nodes[aSideToTrack].type == "RailRoad":
                         length = track_lengths[aSideId]
                         e = g.add_edge(Edge(g.nodes[aSideToTrack], g.nodes[fromNode], length))
-                        g.nodes[fromNode].incoming.append(e)
-                        g.nodes[aSideToTrack].outgoing.append(e)
                         aEdges.append(e)
                 # This side is a bumper, so the other side attaches to itself
                 elif g.nodes[fromNode].type == "RailRoad" and track["sawMovementAllowed"]:
                     toNode = nodes_per_id_B[track["id"]][i]
-                    e = g.add_edge(Edge(g.nodes[toNode], g.nodes[fromNode], 0))
-                    g.nodes[fromNode].incoming.append(e)
-                    g.nodes[toNode].outgoing.append(e)
+                    g.add_edge(Edge(g.nodes[toNode], g.nodes[fromNode], 0))
             for i, bSideId in enumerate(track["bSide"]):
                 fromNode = nodes_per_id_B[track["id"]][i]
                 if bSideId in nodes_per_id_B:
                     bumperBside = False
                     # Connect the bSide node(s) to the respective neighbors
                     for bSideToTrack in nodes_per_id_B[bSideId]:
-                        length = track["length"]
-                        # if g.nodes[bSideToTrack].type == "RailRoad":
                         length = track_lengths[bSideId]
                         e = g.add_edge(Edge(g.nodes[bSideToTrack], g.nodes[fromNode], length))
-                        g.nodes[fromNode].incoming.append(e)
-                        g.nodes[bSideToTrack].outgoing.append(e)
                         bEdges.append(e) 
                 # This side is a bumper, so the other side attaches
                 elif g.nodes[nodes_per_id_B[track["id"]][i]].type == "RailRoad" and track["sawMovementAllowed"]:
                     toNode = nodes_per_id_A[track["id"]][i]
-                    e = g.add_edge(Edge(g.nodes[toNode], g.nodes[fromNode], 0))
-                    g.nodes[fromNode].incoming.append(e)
-                    g.nodes[toNode].outgoing.append(e)
+                    g.add_edge(Edge(g.nodes[toNode], g.nodes[fromNode], 0))
             # If it is a double-ended (not dead-end) track where parking is allowed, then we can go from A->B and B->A
             if track["type"] == "RailRoad" and track["sawMovementAllowed"] and not bumperAside and not bumperBside:
-                e = g.add_edge(Edge(g.nodes[nodes_per_id_A[track["id"]][i]], g.nodes[nodes_per_id_B[track["id"]][i]], 0))
-                g.nodes[nodes_per_id_B[track["id"]][i]].incoming.append(e)
-                g.nodes[nodes_per_id_A[track["id"]][i]].outgoing.append(e)
-                e = g.add_edge(Edge(g.nodes[nodes_per_id_B[track["id"]][i]], g.nodes[nodes_per_id_A[track["id"]][i]], 0))
-                g.nodes[nodes_per_id_A[track["id"]][i]].incoming.append(e)
-                g.nodes[nodes_per_id_B[track["id"]][i]].outgoing.append(e)
+                g.add_edge(Edge(g.nodes[nodes_per_id_A[track["id"]][i]], g.nodes[nodes_per_id_B[track["id"]][i]], 0))
+                g.add_edge(Edge(g.nodes[nodes_per_id_B[track["id"]][i]], g.nodes[nodes_per_id_A[track["id"]][i]], 0))
             # Assign the associated edges (same side of switch)                  
             for x in aEdges:
                 for y in aEdges:
