@@ -1,0 +1,37 @@
+{
+    "types": [
+        {
+            "name": "fast",
+            "length": 100,
+            "speed": 15
+        },
+        {
+            "name": "slow",
+            "length": 100,
+            "speed": 5
+        }
+    ],
+    "trains": [
+        {
+            "trainNumber": 1,
+            "trainUnits": [
+                1
+            ],
+            "trainUnitTypes": [
+                "fast"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-100B",
+                    "startTime": 50,
+                    "endTime": 800,
+                    "endLocation": "t-200B",
+                    "stops": []
+                }
+            ]
+        }
+    ],
+    "headwayFollowing": 180,
+    "headwayCrossing": 120,
+    "walkingSpeed": 1.4
+}

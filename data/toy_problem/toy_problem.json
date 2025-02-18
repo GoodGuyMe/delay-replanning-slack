@@ -1,0 +1,52 @@
+{
+    "distanceEntries": [],
+    "facilities": [],
+    "movementConstant": 0,
+    "movementSwitchCoefficient": 0,
+    "movementTrackCoefficient": 0,
+    "signals": [],
+    "taskTypes": [],
+    "trackParts": [
+        {
+            "aSide": [
+                2
+            ],
+            "bSide": [],
+            "id": 1,
+            "length": 1000,
+            "name": "t-100",
+            "parkingAllowed": false,
+            "sawMovementAllowed": false,
+            "stationPlatform": true,
+            "type": "RailRoad"
+        },
+        {
+            "aSide": [
+                3
+            ],
+            "bSide": [
+                1
+            ],
+            "id": 2,
+            "length": 50000,
+            "name": "t-long",
+            "parkingAllowed": false,
+            "sawMovementAllowed": false,
+            "stationPlatform": false,
+            "type": "RailRoad"
+        },
+        {
+            "aSide": [],
+            "bSide": [
+                2
+            ],
+            "id": 3,
+            "length": 1000,
+            "name": "t-200",
+            "parkingAllowed": false,
+            "sawMovementAllowed": false,
+            "stationPlatform": true,
+            "type": "RailRoad"
+        }
+    ]
+}
