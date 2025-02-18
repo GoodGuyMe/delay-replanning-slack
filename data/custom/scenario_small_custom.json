@@ -48,31 +48,57 @@
                 8655
             ],
             "trainUnitTypes": [
-                "VIRM-6"
+                "SNG-3"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-213B",
+                    "startTime": 660,
+                    "endTime": 10,
+                    "endLocation": "t-432B",
+                    "stops": []
+                }
+            ]
+        },
+        {
+            "trainNumber": 2,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "ICM-3"
             ],
             "movements": [
                 {
                     "startLocation": "t-213B",
                     "startTime": 0,
-                    "endTime": 1900,
-                    "endLocation": "t-432B"
+                    "endTime": 10,
+                    "endLocation": "t-432B",
+                    "stops": [
+                        "t-412B",
+                        "t-423B"
+                    ]
                 }
             ]
-        },        
+        },
         {
-            "trainNumber": 2,
+            "trainNumber": 3,
             "trainUnits": [
-                9595
+                8657
             ],
             "trainUnitTypes": [
-                "ICM-4"
+                "ICM-3"
             ],
             "movements": [
                 {
-                    "startLocation": "t-433A",
-                    "startTime": 200,
-                    "endTime": 1900,
-                    "endLocation": "t-211bA"
+                    "startLocation": "t-213B",
+                    "startTime": 900,
+                    "endTime": 1500,
+                    "endLocation": "t-432B",
+                    "stops": [
+                        "t-412B",
+                        "t-423B"
+                    ]
                 }
             ]
         }
