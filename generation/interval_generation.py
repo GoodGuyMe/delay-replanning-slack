@@ -184,25 +184,25 @@ def generate_unsafe_intervals(g, path, move, measures):
                     e.length / trainSpeed + extra_stop_time
                 ))
             end_time = cur_time + e.length / trainSpeed + extra_stop_time
-            node_intervals[e.to_node.name].append((
-                cur_time + e.length / measures["trainSpeed"],
-                cur_time + (e.length + measures["trainLength"]) / measures["trainSpeed"] + measures["headwayFollowing"],
-                e.length / measures["trainSpeed"]
-            ))
-            # In case of an A-B move, the associated node should get the same interval
-            for x in e.to_node.associated:
-                node_intervals[x.name].append((
-                    cur_time + e.length / measures["trainSpeed"],
-                    cur_time + (e.length + measures["trainLength"]) / measures["trainSpeed"] + measures["headwayFollowing"],
-                    e.length / measures["trainSpeed"]
-                ))
-            #  The node in-between the edge is the opposite of the from node, which should get the crossing headway and same time as the from node
-            for x in e.to_node.opposites:
-                node_intervals[x.name].append((
-                    cur_time + e.length / measures["trainSpeed"],
-                    cur_time + (e.length + measures["trainLength"]) / measures["trainSpeed"] + measures["headwayCrossing"],
-                    e.length / measures["trainSpeed"]
-                ))
+            # node_intervals[e.to_node.name].append((
+            #     cur_time + e.length / measures["trainSpeed"],
+            #     cur_time + (e.length + measures["trainLength"]) / measures["trainSpeed"] + measures["headwayFollowing"],
+            #     e.length / measures["trainSpeed"]
+            # ))
+            # # In case of an A-B move, the associated node should get the same interval
+            # for x in e.to_node.associated:
+            #     node_intervals[x.name].append((
+            #         cur_time + e.length / measures["trainSpeed"],
+            #         cur_time + (e.length + measures["trainLength"]) / measures["trainSpeed"] + measures["headwayFollowing"],
+            #         e.length / measures["trainSpeed"]
+            #     ))
+            # #  The node in-between the edge is the opposite of the from node, which should get the crossing headway and same time as the from node
+            # for x in e.to_node.opposites:
+            #     node_intervals[x.name].append((
+            #         cur_time + e.length / measures["trainSpeed"],
+            #         cur_time + (e.length + measures["trainLength"]) / measures["trainSpeed"] + measures["headwayCrossing"],
+            #         e.length / measures["trainSpeed"]
+            #     ))
             # Edge interval
             edge_intervals[e.get_identifier()].append((
                 cur_time,
