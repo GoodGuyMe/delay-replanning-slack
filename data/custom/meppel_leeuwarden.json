@@ -1,5 +1,12 @@
 {
     "distanceEntries": [],
+    "distanceMarkers": {
+        "Hr": 137173,
+        "Hry": 134663,
+        "Mp": 100674,
+        "Swk": 114548,
+        "Wv": 127135
+    },
     "facilities": [],
     "movementConstant": 0,
     "movementSwitchCoefficient": 0,
@@ -14,7 +21,7 @@
                 32
             ],
             "id": 1,
-            "length": 5000,
+            "length": 9000,
             "name": "t-TF",
             "parkingAllowed": false,
             "sawMovementAllowed": false,
@@ -29,7 +36,7 @@
                 33
             ],
             "id": 2,
-            "length": 5000,
+            "length": 9000,
             "name": "t-UF",
             "parkingAllowed": false,
             "sawMovementAllowed": false,
@@ -347,7 +354,7 @@
                 22
             ],
             "id": 24,
-            "length": 2500,
+            "length": 3000,
             "name": "t-mb",
             "parkingAllowed": false,
             "sawMovementAllowed": false,
@@ -362,7 +369,7 @@
                 23
             ],
             "id": 25,
-            "length": 2500,
+            "length": 3000,
             "name": "t-lb",
             "parkingAllowed": false,
             "sawMovementAllowed": false,

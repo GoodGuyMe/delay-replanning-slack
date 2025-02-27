@@ -58,6 +58,7 @@ class Graph:
         self.edges = []
         self.nodes = {}
         self.global_end_time = -1
+        self.distance_markers = {}
 
     def add_node(self, n):
         if type(n) is Node:
@@ -193,6 +194,11 @@ def read_graph(file):
                 for other_edge in g.nodes[opposite_node.name].outgoing:
                     if other_edge.to_node in e.from_node.opposites:
                         e.opposites.append(other_edge)
+
+    g.distance_markers = data["distanceMarkers"]
+    min_distance = min(g.distance_markers.values())
+    for key, val in g.distance_markers.items():
+        g.distance_markers[key] = val - min_distance
     return g
 
 def print_node_intervals_per_train(node_intervals, edge_intervals, g, move=None):

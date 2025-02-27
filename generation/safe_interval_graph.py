@@ -67,11 +67,13 @@ def plot_safe_node_intervals(safe_node_intervals, moves_per_agent=None):
         plt.title(f"Agent {agent_id} opposite")
         plt.show()
 
-def plot_unsafe_node_intervals(unsafe_node_intervals, moves_per_agent, fixed_block=False):
+def plot_unsafe_node_intervals(unsafe_node_intervals, moves_per_agent, distance_markers, fixed_block=False):
     node_map = dict()
     y = 0
     ax = plt.gca()
     max_time = 0
+    hw = None
+    train = None
     for agent_id, movements in moves_per_agent.items():
         for movement in movements:
             for edge in movement:
@@ -79,12 +81,8 @@ def plot_unsafe_node_intervals(unsafe_node_intervals, moves_per_agent, fixed_blo
                 if node not in node_map:
                     node_map[node] = (y, edge)
                     y += edge.length
-                # node = edge.to_node.name
-                # if node not in node_map:
-                #     y += edge.length
-                #     node_map[node] = (y, edge.length)
                 y_cur, old_len = node_map[node]
-                plt.plot([y_cur, y_cur + edge.length], [edge.start_time, edge.depart_time], color='black', linestyle='--')
+                train, = plt.plot([y_cur, y_cur + edge.length], [edge.start_time, edge.depart_time], color='black', linestyle='--')
                 max_time = max(max_time, edge.depart_time)
         for node, (y, edge) in node_map.items():
             for start, stop, duration in unsafe_node_intervals[node]:
@@ -92,19 +90,36 @@ def plot_unsafe_node_intervals(unsafe_node_intervals, moves_per_agent, fixed_blo
                     occupied = patches.Rectangle((y, start), edge.length, duration, linewidth=1, edgecolor='red', facecolor='none')
                     ax.add_patch(occupied)
                 else:
-                    plt.plot([y, y+edge.length], [start + 180, start + duration + 180], color='red', linestyle='-')
+                    hw, = plt.plot([y, y+edge.length], [start + 180, start + duration + 180], color='red', linestyle='-')
                 # ax.add_patch(headway)
-                # plt.plot([start, start + duration], [y, y], color='green')
-                # plt.plot([start + duration, stop], [y, y], color='red')
 
     plt.ylabel(f"Time (s)")
     plt.xlabel(f"Distance")
 
-    x_axis = [n for (n, _) in node_map.values()]
-    xtics = list(node_map.keys())
+    train.set_label("Train") if train else None
+    hw.set_label("Headway") if hw else None
+    plt.legend()
 
-    # plt.ylim([0, 4000])
+    distances = [n for (n, _) in node_map.values()]
+    tracks = list(node_map.keys())
+    print(tracks)
 
-    plt.xticks(x_axis, xtics)
-    plt.title(f"Agent {agent_id}")
+    x_axis = []
+    xtics = []
+
+    max_distance = max(distances)
+
+    # for track, distance in zip(tracks, distances):
+    #     if "t" in track:
+    #         x_axis.append(distance)
+    #         xtics.append(track)
+
+
+    for key, value in distance_markers.items():
+        if value < max_distance:
+            x_axis.append(value)
+            xtics.append(key)
+
+    plt.xticks(x_axis, xtics, rotation=90)
+    plt.title(f"Agents")
     plt.show()
