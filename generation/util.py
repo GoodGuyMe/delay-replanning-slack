@@ -34,7 +34,7 @@ class Edge:
         self.depart_time = None
         self.start_time = None
         self.max_speed = 50
-        self.stops_at_station = False
+        self.stops_at_station = None
     
     def get_identifier(self):
         return f"{self.from_node.name}--{self.to_node.name}"
