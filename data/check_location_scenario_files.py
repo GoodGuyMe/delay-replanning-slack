@@ -9,7 +9,7 @@ def check_json_files(loc_file, scen_file=None, show_error=True, show_warning=Fal
     print(f"\n### Processing {loc_file}")
     base_path = Path(__file__).parent
     file_path = (base_path / loc_file).resolve()
-    g = generate.read_graph(loc_file)
+    g, g_block = generate.read_graph(loc_file)
     location = json.load(open(file_path))
     check_location(location, g, show_error, show_warning)
     if scen_file is not None:

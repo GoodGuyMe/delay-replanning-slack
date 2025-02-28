@@ -1,6 +1,9 @@
 import json 
 from pathlib import Path
 
+from generation.signal_sections import generate_signal_blocks
+
+
 class Node:
     def __init__(self, name, type):
         self.name = name
@@ -11,6 +14,7 @@ class Node:
         self.opposites = []
         self.canReverse = False
         self.stationPlatform = False
+        self.routes = []
 
     def __eq__(self, other):
         if isinstance(other, Node):
@@ -22,7 +26,8 @@ class Node:
         return hash(self.name)
 
     def __repr__(self) -> str:
-        return f"Node {self.name} of type {self.type} coming from {self.incoming} and going to {self.outgoing}\n"
+        # return f"Node {self.name} of type {self.type} coming from {self.incoming} and going to {self.outgoing}\n"
+        return f"Node {self.name}"
 
 class Edge:
     def __init__(self, f, to, l):
@@ -57,6 +62,7 @@ class Graph:
     def __init__(self):
         self.edges = []
         self.nodes = {}
+        self.signals = []
         self.global_end_time = -1
         self.distance_markers = {}
 
@@ -71,9 +77,18 @@ class Graph:
             e.to_node.incoming.append(e)
             e.from_node.outgoing.append(e)
             return e
+
+    def add_signal(self, s):
+        if type(s) is Signal:
+            self.signals.append(s)
     
     def __repr__(self) -> str:
         return f"Graph with {len(self.edges)} edges and {len(self.nodes)} nodes:\n{self.nodes.values()}"
+
+class Signal:
+    def __init__(self, id, track):
+        self.id = id
+        self.track = track
     
 def read_graph(file):
     try:
@@ -199,7 +214,50 @@ def read_graph(file):
     min_distance = min(g.distance_markers.values())
     for key, val in g.distance_markers.items():
         g.distance_markers[key] = val - min_distance
-    return g
+
+    # Extract signal locations
+    for signal in data["signals"]:
+        if signal["side"] == "A":
+            track = g.nodes[nodes_per_id_A[signal["track"]][0]]
+        else:
+            track = g.nodes[nodes_per_id_B[signal["track"]][0]]
+        g.add_signal(Signal(signal["name"], track))
+
+    g_block = Graph()
+    for signal in g.signals:
+        g_block.add_node(Node(f"r-{signal.id}", "RailRoad"))
+
+    for signal in g.signals:
+        routes = generate_signal_blocks(signal, g.signals)
+        for idx, route in enumerate(routes):
+            # Add node in g
+            route_node = g_block.add_node(Node(f"r-{signal.id}_{idx}", "RailRoad"))
+
+            length = get_length_of_edge(g, signal.track, route[0])
+
+            # Add reference in every node that is part of that route to the route node, also count total length of route
+            for idx, node in enumerate(route):
+                node.routes.append(route_node.name)
+                if idx < len(route) - 1:
+                    length += get_length_of_edge(g, node, route[idx + 1])
+
+            # Create edges in g_block
+            from_signal_node = g_block.nodes[f"r-{signal.id}"]
+            g_block.add_edge(Edge(from_signal_node, route_node, 0))
+
+            # Only add edge if a signal is found at the end of the route
+            to_signal = [signal for signal in g.signals if signal.track == route[-1]]
+            if len(to_signal) == 1:
+                to_signal_node = g_block.nodes[f"r-{to_signal[0].id}"]
+                g_block.add_edge(Edge(route_node, to_signal_node, length))
+            else:
+                print(to_signal)
+
+    return g, g_block
+
+def get_length_of_edge(g, from_node, to_node):
+    length = [edge.length for edge in g.edges if edge.from_node == from_node and edge.to_node == to_node][0]
+    return length
 
 def print_node_intervals_per_train(node_intervals, edge_intervals, g, move=None):
     ### Print the intervals

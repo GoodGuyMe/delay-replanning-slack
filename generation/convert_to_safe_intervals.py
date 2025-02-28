@@ -71,6 +71,8 @@ def create_safe_intervals(node_intervals, g, agent_speed=15, print_intervals=Tru
                                 o.length # delta: length of the edge or in case of A-B edge the time to walk to the other side
                             ))
                             safe_edge_node_references[o.get_identifier()].append(((node, o.to_node.name), from_interval, to_interval, safe_edge_intervals[-1]))
+                        else:
+                            print(f"--------------------\nFound interval too short\nFrom: {node} to {o.to_node.name}\n{from_interval}, {to_interval}\nAlpha: {alpha}, Beta: {beta}")
                 if to_index < 0:
                     # If this is an opposite edge which cannot be connected due to node occupied it is okay that is not found
                     # This is true if this edge interval does not happen on the path of any agent

@@ -48,7 +48,7 @@ def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals):
 
 def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output):
     """For testing the time to get the safe intervals. Also writes to file (without timing). Used for experiments."""
-    g = read_graph(location)
+    g, g_block = read_graph(location)
     unsafe_node_intervals, _, _, _, unsafe_computation_time = read_scenario(scenario, g, agent_id)
     start_time = time.time()
     safe_node_intervals, safe_edge_intervals, _ = create_safe_intervals(unsafe_node_intervals, g, agent_speed, print_intervals=False)
@@ -58,7 +58,7 @@ def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, out
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    g = read_graph(args.location)
+    g, g_block = read_graph(args.location)
     unsafe_node_intervals, unsafe_edge_intervals, agent_intervals, moves_per_agent, computation_time = read_scenario(args.scenario, g, args.agent_id)
     plot_unsafe_node_intervals(unsafe_node_intervals, moves_per_agent, g.distance_markers)
     safe_node_intervals, safe_edge_intervals, not_found_edges = create_safe_intervals(unsafe_node_intervals, g, float(args.agent_speed), print_intervals=args.printing == "True")
