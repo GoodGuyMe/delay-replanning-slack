@@ -4,7 +4,7 @@ from json import JSONEncoder
 
 class OutputJSONEncoder(JSONEncoder):
     def __init__(self, trackParts, facilities=None, taskTypes=None, movementConstant=0, movementTrackCoefficient=0,
-                 movementSwitchCoefficient=0, distanceEntries=None, distanceMarkers=None):
+                 movementSwitchCoefficient=0, distanceEntries=None, signals=None, distanceMarkers=None):
         if facilities is None:
             facilities = []
         if taskTypes is None:
@@ -13,6 +13,8 @@ class OutputJSONEncoder(JSONEncoder):
             distanceEntries = []
         if distanceMarkers is None:
             distanceMarkers = {}
+        if signals is None:
+            signals = []
         self.trackParts = trackParts
         self.facilities = facilities
         self.taskTypes = taskTypes
@@ -21,6 +23,7 @@ class OutputJSONEncoder(JSONEncoder):
         self.movementSwitchCoefficient = movementSwitchCoefficient
         self.distanceEntries = distanceEntries
         self.distanceMarkers = distanceMarkers
+        self.signals = signals
 
     def default(self, o):
         return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
@@ -60,6 +63,16 @@ class TrackPart(JSONEncoder):
             return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
         return json.JSONEncoder.default(self, o)
 
+class Signal(JSONEncoder):
+    def __init__(self, name, side, track):
+        self.name = name
+        self.side = side
+        self.track = track
+
+    def default(self, o):
+        if isinstance(o, Signal):
+            return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+        return json.JSONEncoder.default(self, o)
 
 def defaultFalse(inp):
     out = input(f"{inp} ([t]rue/[F]alse): ")
@@ -67,9 +80,10 @@ def defaultFalse(inp):
 
 
 def main():
-    print("Location generation program, [t]rack, [c]onnection, [d]istance marker, [s]ave, [l]oad")
+    print("Location generation program, [t]rack, [c]onnection, s[e]in, [d]istance marker, [s]ave, [l]oad")
     track_parts = dict()
     distance_markers = dict()
+    signals = list()
     for line in sys.stdin:
         c = line.strip()[0]
         if 'q' == c:
@@ -80,15 +94,17 @@ def main():
         elif 'c' == c:
             connections(track_parts)
         elif 's' == c:
-            save(track_parts, distance_markers)
+            save(track_parts, signals, distance_markers)
         elif 'l' == c:
             track_parts = dict()
-            tps, distance_markers = load()
+            tps, signals, distance_markers = load()
             for tp in tps:
                 track_parts[tp.name] = tp
         elif 'd' == c:
             create_distance_markers(distance_markers)
-        print("Location generation program, [t]rack, [c]onnection, [d]istance marker, [s]ave")
+        elif 'e' == c:
+            signals.extend(add_signals(track_parts))
+        print("Location generation program, [t]rack, [c]onnection, s[e]in, [d]istance marker, [s]ave")
     print("Exit")
 
 def track_part():
@@ -130,6 +146,7 @@ def checktype(track_part):
 
 def connections(track_parts):
     print("Create a new connection between two track parts")
+    print("Give connection as: track_name_a track_name_b")
     for i in track_parts.values():
         print(f"{i}")
     for line in sys.stdin:
@@ -144,7 +161,24 @@ def connections(track_parts):
         track_parts[t2].bSide.append(track_parts[t1].id)
         checktype(track_parts[t1])
         checktype(track_parts[t2])
+        print(f"Added connection between {track_parts[t1]} and {track_parts[t2]}")
 
+
+def add_signals(track_parts):
+    new_signals = []
+    print("Create new signals")
+    while True:
+        try:
+            name = input("Signal name/id: ")
+            if (name.strip() == "q"):
+                return new_signals
+            print("A or B side, B side is in increasing kilometrage")
+            side = input("Side: ").strip()
+            track = input("Signal at end of track part: ").strip()
+            new_signals.append(Signal(name, side, track_parts[track].id))
+        except Exception as e:
+            print(e)
+            print("Invalid track name")
 
 def create_distance_markers(distance_markers):
     print("Create distance marker by {name} {km}")
@@ -159,11 +193,13 @@ def create_distance_markers(distance_markers):
         km = int(new_connection[1].replace(".", ""))
         distance_markers[name] = km
 
-def save(track_parts, distance_markers):
+def save(track_parts, signals, distance_markers):
     print("Save the track part")
     filename = input("Filename: ")
     with open(f"{filename}.json", "w", encoding='utf-8') as f:
-        output = OutputJSONEncoder(list(track_parts.values()), distanceMarkers=distance_markers)
+        output = OutputJSONEncoder(list(track_parts.values()),
+                                   signals=signals,
+                                   distanceMarkers=distance_markers)
         json.dump(output, f, ensure_ascii=False, indent=4, default=lambda o: o.__dict__, sort_keys=True)
 
 def object_load(obj):
@@ -174,7 +210,10 @@ def object_load(obj):
         try:
             return OutputJSONEncoder(**obj)
         except TypeError:
-            return obj
+            try:
+                return Signal(**obj)
+            except TypeError:
+                return obj
 
 
 def load():
@@ -182,7 +221,7 @@ def load():
     filename = input("Filename: ")
     with open(f"{filename}.json", "r", encoding='utf-8') as f:
         data = json.load(f, object_hook=object_load)
-    return data.trackParts, data.distanceMarkers
+    return data.trackParts, data.signals, data.distanceMarkers
 
 if __name__ == '__main__':
     main()

@@ -11,6 +11,118 @@
     "movementConstant": 0,
     "movementSwitchCoefficient": 0,
     "movementTrackCoefficient": 0,
+    "signals": [
+        {
+            "name": "268",
+            "side": "B",
+            "track": 20
+        },
+        {
+            "name": "270",
+            "side": "B",
+            "track": 19
+        },
+        {
+            "name": "276",
+            "side": "B",
+            "track": 18
+        },
+        {
+            "name": "286",
+            "side": "A",
+            "track": 1
+        },
+        {
+            "name": "284",
+            "side": "A",
+            "track": 2
+        },
+        {
+            "name": "2",
+            "side": "B",
+            "track": 1
+        },
+        {
+            "name": "4",
+            "side": "B",
+            "track": 2
+        },
+        {
+            "name": "16",
+            "side": "A",
+            "track": 5
+        },
+        {
+            "name": "12",
+            "side": "A",
+            "track": 6
+        },
+        {
+            "name": "10",
+            "side": "A",
+            "track": 7
+        },
+        {
+            "name": "20",
+            "side": "B",
+            "track": 5
+        },
+        {
+            "name": "22",
+            "side": "B",
+            "track": 6
+        },
+        {
+            "name": "24",
+            "side": "B",
+            "track": 7
+        },
+        {
+            "name": "28",
+            "side": "A",
+            "track": 10
+        },
+        {
+            "name": "38",
+            "side": "A",
+            "track": 11
+        },
+        {
+            "name": "36",
+            "side": "A",
+            "track": 13
+        },
+        {
+            "name": "42",
+            "side": "B",
+            "track": 11
+        },
+        {
+            "name": "44",
+            "side": "B",
+            "track": 13
+        },
+        {
+            "name": "54",
+            "side": "A",
+            "track": 16
+        },
+        {
+            "name": "48",
+            "side": "A",
+            "track": 17
+        },
+        {
+            "name": "62",
+            "side": "B",
+            "track": 16
+        },
+        {
+            "name": "64",
+            "side": "B",
+            "track": 17
+        }
+    ],
     "taskTypes": [],
     "trackParts": [
         {
