@@ -210,13 +210,14 @@ def read_graph(file):
                     if other_edge.to_node in e.from_node.opposites:
                         e.opposites.append(other_edge)
 
-    g.distance_markers = data["distanceMarkers"]
+    g.distance_markers = data["distanceMarkers"] if "distanceMarkers" in data else {"Start": 0}
     min_distance = min(g.distance_markers.values())
     for key, val in g.distance_markers.items():
         g.distance_markers[key] = val - min_distance
 
     # Extract signal locations
-    for signal in data["signals"]:
+    signals = data["signals"] if "signals" in data else []
+    for signal in signals:
         if signal["side"] == "A":
             track = g.nodes[nodes_per_id_A[signal["track"]][0]]
         else:
@@ -231,25 +232,26 @@ def read_graph(file):
         routes = generate_signal_blocks(signal, g.signals)
         for idx, route in enumerate(routes):
             # Add node in g
-            route_node = g_block.add_node(Node(f"r-{signal.id}_{idx}", "RailRoad"))
+            # route_node = g_block.add_node(Node(f"r-{signal.id}_{idx}", "RailRoad"))
 
-            length = get_length_of_edge(g, signal.track, route[0])
+            length = 0
 
             # Add reference in every node that is part of that route to the route node, also count total length of route
-            for idx, node in enumerate(route):
-                node.routes.append(route_node.name)
-                if idx < len(route) - 1:
-                    length += get_length_of_edge(g, node, route[idx + 1])
+            for idx2, node in enumerate(route):
+                # node.routes.append(route_node.name)
+                if 0 < idx2 < len(route) - 1:
+                    length += get_length_of_edge(g, node, route[idx2 + 1])
+                else:
+                    length += node.outgoing[0].length if node.outgoing else 0
 
             # Create edges in g_block
             from_signal_node = g_block.nodes[f"r-{signal.id}"]
-            g_block.add_edge(Edge(from_signal_node, route_node, 0))
 
             # Only add edge if a signal is found at the end of the route
             to_signal = [signal for signal in g.signals if signal.track == route[-1]]
             if len(to_signal) == 1:
                 to_signal_node = g_block.nodes[f"r-{to_signal[0].id}"]
-                g_block.add_edge(Edge(route_node, to_signal_node, length))
+                g_block.add_edge(Edge(from_signal_node, to_signal_node, length))
             else:
                 print(to_signal)
 

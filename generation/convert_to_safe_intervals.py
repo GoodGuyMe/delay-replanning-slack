@@ -1,4 +1,4 @@
-def create_safe_intervals(node_intervals, g, agent_speed=15, print_intervals=True):
+def create_safe_intervals(node_intervals, g, agent_speed=15, print_intervals=False):
     errors = []
     safe_node_intervals = {n: [] for n in g.nodes}
     safe_edge_intervals = []

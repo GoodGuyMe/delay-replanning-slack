@@ -143,7 +143,7 @@ def check_scenario(scenario, location, g, incoming_outgoing, show_error, show_wa
             path = generate.construct_path(g, move)
             if len(path) == 0:
                 errors.append(f"ERROR No path was found for move {move} of train {entry['trainNumber']}")
-            node_intervals, _ = generate.generate_unsafe_intervals(g, path, move, measures) 
+            node_intervals, _, _ = generate.generate_unsafe_intervals(g, path, move, measures)
             for tup in node_intervals[move["endLocation"]]:
                 # Only check the start of the interval due to headway times 
                 if tup[0] > move["endTime"]:
@@ -168,7 +168,7 @@ def check_scenario(scenario, location, g, incoming_outgoing, show_error, show_wa
                 if not disregard:
                     seen_intervals[n].append(int)
         # Run complete unsafe interval generation process
-        node_intervals, edge_intervals, agent_intervals, moves_per_agent = generate.process_scenario(scenario, g, train)
+        node_intervals, edge_intervals, block_intervals, agent_intervals, moves_per_agent = generate.process_scenario(scenario, g, train)
         safe_node_intervals, safe_edge_intervals, not_found_edges = generate.create_safe_intervals(node_intervals, g, agent_speed, False)
         errors.extend(not_found_edges)
     # print(f"Processed scenario with {len(scenario['trains'])} trains using {len(scenario['types'])} different types")

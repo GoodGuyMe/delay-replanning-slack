@@ -121,6 +121,56 @@
             "name": "64",
             "side": "B",
             "track": 17
+        },
+        {
+            "name": "72",
+            "side": "A",
+            "track": 36
+        },
+        {
+            "name": "70",
+            "side": "A",
+            "track": 37
+        },
+        {
+            "name": "80",
+            "side": "B",
+            "track": 36
+        },
+        {
+            "name": "82",
+            "side": "B",
+            "track": 37
+        },
+        {
+            "name": "86",
+            "side": "A",
+            "track": 42
+        },
+        {
+            "name": "90",
+            "side": "A",
+            "track": 43
+        },
+        {
+            "name": "88",
+            "side": "A",
+            "track": 45
+        },
+        {
+            "name": "94",
+            "side": "B",
+            "track": 42
+        },
+        {
+            "name": "96",
+            "side": "B",
+            "track": 43
+        },
+        {
+            "name": "98",
+            "side": "B",
+            "track": 45
         }
     ],
     "taskTypes": [],

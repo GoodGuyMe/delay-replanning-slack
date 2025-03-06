@@ -13,7 +13,7 @@
         {
             "name": "ICM-3",
             "length": 81,
-            "speed": 11.1
+            "speed": 15.1
         },
         {
             "name": "ICM-4",
@@ -28,7 +28,7 @@
         {
             "name": "SNG-3",
             "length": 60,
-            "speed": 14.7
+            "speed": 20.7
         },
         {
             "name": "SLT-4",
@@ -53,7 +53,7 @@
             "movements": [
                 {
                     "startLocation": "t-213B",
-                    "startTime": 660,
+                    "startTime": 465,
                     "endTime": 10,
                     "endLocation": "t-432B",
                     "stops": {}
@@ -66,7 +66,7 @@
                 8656
             ],
             "trainUnitTypes": [
-                "ICM-3"
+                "SNG-3"
             ],
             "movements": [
                 {
@@ -87,7 +87,7 @@
                 8657
             ],
             "trainUnitTypes": [
-                "ICM-3"
+                "SNG-3"
             ],
             "movements": [
                 {
@@ -99,6 +99,24 @@
                         "t-412B": 0,
                         "t-423B": 0
                     }
+                }
+            ]
+        },
+        {
+            "trainNumber": 5,
+            "trainUnits": [
+                8655
+            ],
+            "trainUnitTypes": [
+                "SNG-3"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-213B",
+                    "startTime": 1365,
+                    "endTime": 10,
+                    "endLocation": "t-432B",
+                    "stops": {}
                 }
             ]
         }

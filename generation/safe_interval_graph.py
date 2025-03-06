@@ -48,7 +48,7 @@ def plot_safe_node_intervals(safe_node_intervals, moves_per_agent=None):
         y_axis = list(node_map.values())
         ytics = list(node_map.keys())
 
-        # plt.xlim([0, 4000])
+        plt.xlim([0, 3000])
 
         plt.yticks(y_axis, ytics)
         plt.title(f"Agent {agent_id}")
@@ -67,31 +67,52 @@ def plot_safe_node_intervals(safe_node_intervals, moves_per_agent=None):
         plt.title(f"Agent {agent_id} opposite")
         plt.show()
 
-def plot_unsafe_node_intervals(unsafe_node_intervals, moves_per_agent, distance_markers, fixed_block=False):
+def plot_unsafe_node_intervals(unsafe_node_intervals, moves_per_agent, distance_markers, fixed_block=False, moves_per_agent_2=None):
     node_map = dict()
     y = 0
     ax = plt.gca()
-    max_time = 0
     hw = None
     train = None
+
+    x_axis = []
+    xtics = []
+
     for agent_id, movements in moves_per_agent.items():
         for movement in movements:
             for edge in movement:
                 node = edge.from_node.name
+                if "_" not in node and fixed_block:
+                    x_axis.append(y)
+                    xtics.append(node)
                 if node not in node_map:
                     node_map[node] = (y, edge)
                     y += edge.length
                 y_cur, old_len = node_map[node]
                 train, = plt.plot([y_cur, y_cur + edge.length], [edge.start_time, edge.depart_time], color='black', linestyle='--')
-                max_time = max(max_time, edge.depart_time)
         for node, (y, edge) in node_map.items():
-            for start, stop, duration in unsafe_node_intervals[node]:
-                if fixed_block:
+            if fixed_block:
+                for start, stop, duration in unsafe_node_intervals[node]:
                     occupied = patches.Rectangle((y, start), edge.length, duration, linewidth=1, edgecolor='red', facecolor='none')
                     ax.add_patch(occupied)
-                else:
+            else:
+                for start, stop, duration in unsafe_node_intervals[node]:
                     hw, = plt.plot([y, y+edge.length], [start + 180, start + duration + 180], color='red', linestyle='-')
-                # ax.add_patch(headway)
+                    # ax.add_patch(headway)
+
+    node_map2 = dict()
+    y2 = 0
+    if moves_per_agent_2:
+        for agent_id, movements in moves_per_agent_2.items():
+            for movement in movements:
+                for edge in movement[1:]:
+                    node = edge.from_node.name
+                    if node not in node_map2:
+                        node_map2[node] = (y2, edge)
+                        y2 += edge.length
+                    y_cur, old_len = node_map2[node]
+                    train, = plt.plot([y_cur, y_cur + edge.length], [edge.start_time, edge.depart_time], color='black',
+                                      linestyle='--')
+
 
     plt.ylabel(f"Time (s)")
     plt.xlabel(f"Distance")
@@ -104,10 +125,7 @@ def plot_unsafe_node_intervals(unsafe_node_intervals, moves_per_agent, distance_
     tracks = list(node_map.keys())
     print(tracks)
 
-    x_axis = []
-    xtics = []
-
-    max_distance = max(distances)
+    max_distance = 40000
 
     # for track, distance in zip(tracks, distances):
     #     if "t" in track:
