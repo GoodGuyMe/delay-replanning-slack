@@ -18,7 +18,7 @@ def process_scenario(data, g, g_block, agent):
         measures["trainLength"] = sum([types[x]["length"] for x in entry["trainUnitTypes"]])
         if len({types[i]["speed"] for i in entry["trainUnitTypes"]}) != 1:
             print("[ERROR] Not all train units have the same type")
-        measures["trainSpeed"] = types[entry["trainUnitTypes"][0]]["speed"] * 10 / 3.6
+        measures["trainSpeed"] = types[entry["trainUnitTypes"][0]]["speed"]
         measures["walkingSpeed"] = data["walkingSpeed"]
         measures["headwayFollowing"] = data["headwayFollowing"]
         measures["headwayCrossing"] = data["headwayCrossing"]
