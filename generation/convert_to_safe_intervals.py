@@ -1,9 +1,10 @@
-def create_safe_intervals(node_intervals, g, agent_speed=15, print_intervals=False):
+def create_safe_intervals(intervals, g, agent_speed=15, print_intervals=False):
     errors = []
     safe_node_intervals = {n: [] for n in g.nodes}
-    safe_edge_intervals = []
+    safe_edge_intervals = {e.get_identifier(): [] for e in g.edges}
+    arrival_time_functions = []
     safe_edge_node_references = {e.get_identifier(): [] for e in g.edges}
-    state_indices = {n: {} for n in g.nodes} # save the index per node and also the start of each interval
+    state_indices = {n: {} for n in g.nodes} | {e.get_identifier(): {} for e in g.edges}# save the index per node and also the start of each interval
     edge_durations = {n: {} for n in g.nodes}
     index = 0
     # Create safe intervals from the unsafe node intervals
@@ -12,9 +13,9 @@ def create_safe_intervals(node_intervals, g, agent_speed=15, print_intervals=Fal
         current = 0
         duration = 0
         # Make sure they are ordered in chronological order
-        node_intervals[node].sort()
+        intervals[node].sort()
         # Each tuple is (start, end, duration)
-        for start, end, dur in node_intervals[node]:
+        for start, end, dur in intervals[node]:
             if current > start:
                 interval = (current, start)
                 print(f"INTERVAL ERROR safe node interval {interval} on node {node} has later end than start.")
@@ -36,6 +37,33 @@ def create_safe_intervals(node_intervals, g, agent_speed=15, print_intervals=Fal
             state_indices[node][str(last_interval)] = index
             edge_durations[node][str(last_interval)] = duration
             index += 1
+
+    for edge in g.edges:
+        node = edge.get_identifier()
+        current = 0
+        # Make sure they are ordered in chronological order
+        intervals[node].sort()
+        # Each tuple is (start, end, duration)
+        for start, end, dur in intervals[node]:
+            if current > start:
+                interval = (current, start)
+                print(f"INTERVAL ERROR safe node interval {interval} on node {node} has later end than start.")
+            elif current == start:
+                # Don't add safe intervals like (0,0), but do update for the next interval
+                current = end
+            else:
+                interval = (current, start)
+                safe_edge_intervals[node].append(interval)
+                # Dictionary with node keys, each entry has a dictionary with interval keys and then the index value
+                state_indices[node][str(interval)] = index
+                index += 1
+                current = end
+        if current < g.global_end_time:
+            last_interval = (current, g.global_end_time)
+            safe_edge_intervals[node].append(last_interval)
+            state_indices[node][str(last_interval)] = index
+            index += 1
+
     ## Print safe node intervals
     if print_intervals:
         for node in safe_node_intervals:
@@ -49,35 +77,37 @@ def create_safe_intervals(node_intervals, g, agent_speed=15, print_intervals=Fal
             for o in g.nodes[node].outgoing:
                 from_index = state_indices[node][str(from_interval)]
                 to_index = -1
-                # The safe interval on the to node (start-time, end-time)
-                for to_interval in safe_node_intervals[o.to_node.name]:
-                    # If there is some overlap between the intervals, then map them together
-                    if to_interval[0] <= from_interval[1] and to_interval[1] >= from_interval[0]:
-                        to_index = state_indices[o.to_node.name][str(to_interval)]
-                        # zeta: start of u interval, so the interval is same as from node
-                        zeta = from_interval[0]
-                        # alpha: start of safe interval, without wait time, it will be the same as zeta
-                        alpha = max(from_interval[0], to_interval[0] - o.length / agent_speed)
-                        # beta: end of safe interval on u 
-                        beta = min(from_interval[1], to_interval[1] - o.length / agent_speed)
-                        # If the interval is too short to make the move, don't include it.
-                        if beta > alpha:
-                            safe_edge_intervals.append((
-                                from_index,
-                                to_index,
-                                zeta,
-                                alpha,
-                                beta,
-                                o.length # delta: length of the edge or in case of A-B edge the time to walk to the other side
-                            ))
-                            safe_edge_node_references[o.get_identifier()].append(((node, o.to_node.name), from_interval, to_interval, safe_edge_intervals[-1]))
-                        else:
-                            print(f"--------------------\nFound interval too short\nFrom: {node} to {o.to_node.name}\n{from_interval}, {to_interval}\nAlpha: {alpha}, Beta: {beta}")
-                if to_index < 0:
-                    # If this is an opposite edge which cannot be connected due to node occupied it is okay that is not found
-                    # This is true if this edge interval does not happen on the path of any agent
-                    # print(f"INFO - NOT FOUND an interval for edge <{o.from_node.name},{o.to_node.name}> interval on from node {from_interval} (state {from_index}) and intervals on to node are {safe_node_intervals[o.to_node.name]}")
-                    pass
+                for edge_interval in safe_edge_intervals[o.get_identifier()]:
+                    # The safe interval on the to node (start-time, end-time)
+                    for to_interval in safe_node_intervals[o.to_node.name]:
+                        # If there is some overlap between the intervals, then map them together
+                        if to_interval[0] <= from_interval[1] and to_interval[1] >= from_interval[0]:
+                            to_index = state_indices[o.to_node.name][str(to_interval)]
+                            # zeta: start of u interval, so the interval is same as from node
+                            zeta = from_interval[0]
+                            # alpha: start of safe interval, without wait time, it will be the same as zeta
+                            alpha = max(edge_interval[0], from_interval[0], to_interval[0] - o.length / agent_speed)
+                            # beta: end of safe interval on u
+                            beta = min(edge_interval[1], from_interval[1], to_interval[1] - o.length / agent_speed)
+                            # If the interval is too short to make the move, don't include it.
+                            if beta > alpha:
+                                arrival_time_functions.append((
+                                    from_index,
+                                    to_index,
+                                    zeta,
+                                    alpha,
+                                    beta,
+                                    o.length # delta: length of the edge or in case of A-B edge the time to walk to the other side
+                                ))
+                                safe_edge_node_references[o.get_identifier()].append(((node, o.to_node.name), from_interval, to_interval, arrival_time_functions[-1]))
+                            else:
+                                if print_intervals:
+                                    print(f"--------------------\nFound interval too short\nFrom: {node} to {o.to_node.name}\nf:{from_interval}, t:{to_interval}, e:{edge_interval}\nAlpha: {alpha}, Beta: {beta}")
+                    if to_index < 0:
+                        # If this is an opposite edge which cannot be connected due to node occupied it is okay that is not found
+                        # This is true if this edge interval does not happen on the path of any agent
+                        # print(f"INFO - NOT FOUND an interval for edge <{o.from_node.name},{o.to_node.name}> interval on from node {from_interval} (state {from_index}) and intervals on to node are {safe_node_intervals[o.to_node.name]}")
+                        pass
     ### To print edge intervals
     if print_intervals:
         for e in safe_edge_node_references:
@@ -86,4 +116,4 @@ def create_safe_intervals(node_intervals, g, agent_speed=15, print_intervals=Fal
                 print(f"Edge has interval from {data[0][0]} state {atf[0]} {data[1]} to {data[0][1]} state {atf[1]} {data[2]} with zeta {atf[2]}, alpha {atf[3]}, beta {atf[4]} and delta {atf[5]}")
         for node in safe_node_intervals:
             print(f"{node} safe intervals: {[str(x) for x in safe_node_intervals[node]]}")                
-    return safe_node_intervals, safe_edge_intervals, errors
+    return safe_node_intervals, safe_edge_intervals, arrival_time_functions, errors

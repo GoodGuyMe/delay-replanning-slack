@@ -22,9 +22,12 @@ def process_scenario(data, g, g_block, agent):
         measures["walkingSpeed"] = data["walkingSpeed"]
         measures["headwayFollowing"] = data["headwayFollowing"]
         measures["headwayCrossing"] = data["headwayCrossing"]
+        measures["releaseTime"] = data["releaseTime"] if "releaseTime" in data else 0
+        measures["setupTime"] = data["setupTime"] if "setupTime" in data else 0
+        measures["sightReactionTime"] = data["sightReactionTime"] if "sightReactionTime" in data else 0
         moves_per_agent[entry["trainNumber"]] = []
         node_intervals[entry["trainNumber"]] = {n:[] for n in g.nodes}
-        block_intervals[entry["trainNumber"]] = {n:[] for n in g_block.nodes}
+        block_intervals[entry["trainNumber"]] = {e.get_identifier():[] for e in g_block.edges} | {n: [] for n in g_block.nodes}
         edge_intervals[entry["trainNumber"]] = {e.get_identifier():[] for e in g.edges}
         # Each of the planned moves of the train must be converted to intervals
         process_moves(entry, g, g_block, measures, moves_per_agent, node_intervals, edge_intervals, block_intervals)
@@ -131,10 +134,57 @@ def construct_path(g, move, print_path_error=True):
 
     return path
 
+def calculate_blocking_time(e, cur_time, blocking_intervals, measures):
+
+    station_time = 0
+    if e.stops_at_station is not None:
+        station_time = max(60, e.stops_at_station - cur_time)
+    e.headway = measures["headwayFollowing"]
+
+    trainSpeed = min(e.max_speed, measures["trainSpeed"])
+    clearingTime = measures["trainLength"] / trainSpeed
+    end_occupation_time = cur_time + e.length / trainSpeed + clearingTime + station_time
+
+    # Calculate running time, clearing time and release time for current track
+
+    for route in e.from_node.routes:
+        blocking_intervals[route.get_identifier()].append((
+            cur_time,
+            end_occupation_time + measures["releaseTime"],
+            e.length / trainSpeed + station_time
+        ))
+
+    for x in e.from_node.associated:
+        for route in x.routes:
+            blocking_intervals[route.get_identifier()].append((
+                cur_time,
+                end_occupation_time + measures["releaseTime"],
+                e.length / trainSpeed + station_time
+            ))
+    for x in e.from_node.associated:
+        for route in x.routes:
+            blocking_intervals[route.get_identifier()].append((
+                cur_time,
+                end_occupation_time + measures["releaseTime"],
+                e.length / trainSpeed + station_time
+            ))
+
+    # Calculate the approach time for the next piece of track,
+    start_blocking_time = cur_time + station_time - measures["setupTime"] - measures["sightReactionTime"]
+    end_approach_time =   cur_time + station_time + (e.length / trainSpeed)
+
+    # TODO: This now sets the next node unsafe, this needs to be updated to make the next block unsafe
+    for route in e.to_node.routes:
+        blocking_intervals[route.get_identifier()].append((
+            start_blocking_time,
+            end_approach_time,
+            e.length / trainSpeed + station_time
+        ))
+
 def generate_unsafe_intervals(g, g_block, path, move, measures):
     cur_time = move["startTime"]
     node_intervals = {n:[] for n in g.nodes}
-    block_intervals = {n:[] for n in g_block.nodes}
+    block_intervals = {e.get_identifier():[] for e in g_block.edges} | {n: [] for n in g_block.nodes}
     edge_intervals = {e.get_identifier(): [] for e in g.edges}
     for e in path:
         # If the train reverses: going from an A to B side -> use walking speed
@@ -162,6 +212,7 @@ def generate_unsafe_intervals(g, g_block, path, move, measures):
             cur_time = end_time
         # In all other cases use train speed
         else:
+            calculate_blocking_time(e, cur_time, block_intervals, measures)
 
             trainSpeed = min(e.max_speed, measures["trainSpeed"])
 
@@ -176,12 +227,6 @@ def generate_unsafe_intervals(g, g_block, path, move, measures):
                 cur_time + (measures["trainLength"]) / trainSpeed + extra_stop_time + measures["headwayFollowing"],
                 e.length / trainSpeed + extra_stop_time
             ))
-            for route in e.from_node.routes:
-                block_intervals[route].append((
-                    cur_time,
-                    cur_time + (measures["trainLength"] + e.length) / trainSpeed + extra_stop_time + measures["headwayFollowing"],
-                    e.length / trainSpeed + extra_stop_time
-                ))
 
             # ASSOCIATED NODES
             for x in e.from_node.associated:
@@ -190,13 +235,6 @@ def generate_unsafe_intervals(g, g_block, path, move, measures):
                     cur_time + (e.length + measures["trainLength"]) / trainSpeed + extra_stop_time + measures["headwayFollowing"],
                     e.length / trainSpeed + extra_stop_time
                 ))
-            for x in e.from_node.associated:
-                for route in x.routes:
-                    block_intervals[route].append((
-                        cur_time,
-                        cur_time + (measures["trainLength"] + e.length) / trainSpeed + extra_stop_time + measures["headwayFollowing"],
-                        e.length / trainSpeed + extra_stop_time
-                    ))
 
             # OPPOSITE NODES
             for x in e.from_node.opposites:
@@ -205,13 +243,6 @@ def generate_unsafe_intervals(g, g_block, path, move, measures):
                     cur_time + (e.length + measures["trainLength"]) / trainSpeed + extra_stop_time + measures["headwayCrossing"],
                     e.length / trainSpeed + extra_stop_time
                 ))
-            for x in e.from_node.associated:
-                for route in x.routes:
-                    block_intervals[route].append((
-                        cur_time,
-                        cur_time + (measures["trainLength"] + e.length) / trainSpeed + extra_stop_time + measures["headwayCrossing"],
-                        e.length / trainSpeed + extra_stop_time
-                    ))
 
             # Time train leaves the node
             end_time = cur_time + e.length / trainSpeed + extra_stop_time
@@ -235,25 +266,6 @@ def generate_unsafe_intervals(g, g_block, path, move, measures):
                         end_time + (measures["trainLength"] / trainSpeed) + measures["headwayCrossing"],
                         e.length / trainSpeed
                     ))
-            # # Edge interval
-            # edge_intervals[e.get_identifier()].append((
-            #     cur_time,
-            #     cur_time + e.length / trainSpeed + measures["headwayFollowing"],
-            #     e.length / trainSpeed
-            # ))
-            # # Associated edges (same side of switch) get the same interval
-            # for x in e.associated:
-            #     edge_intervals[x.get_identifier()].append((
-            #         cur_time,
-            #         cur_time + e.length / trainSpeed + measures["headwayFollowing"],
-            #         e.length / trainSpeed
-            #     ))
-            # for x in e.opposites:
-            #     edge_intervals[x.get_identifier()].append((
-            #         cur_time,
-            #         cur_time + e.length / trainSpeed + measures["headwayCrossing"],
-            #         e.length / trainSpeed
-            #     ))
             e.set_start_time(cur_time)
             e.set_depart_time(end_time)
             cur_time = end_time
@@ -276,7 +288,8 @@ def combine_intervals(intervals, identifier, agent_intervals, combined, agent):
                     if train != int(agent):
                         combined[n].append(tup)
                     else:
-                        agent_intervals[identifier][n].append(tup)
+                        pass
+                        # agent_intervals[identifier][n].append(tup)
 
 def sort_and_merge(combined):
     for n in combined:
@@ -284,7 +297,7 @@ def sort_and_merge(combined):
         i = 0
         while i < len(combined[n]) - 1:
             # As list is sorted and contains no subcontained interval, we can simply check for overlap.
-            if combined[n][i+1][0] < combined[n][i][1]:
+            if combined[n][i+1][0] <= combined[n][i][1]:
                 duration = combined[n][i+1][2] + combined[n][i][2]
                 # Replace the two intervals with one combined interval
                 new_interval = (combined[n][i][0], combined[n][i+1][1], duration)
@@ -298,10 +311,10 @@ def combine_intervals_per_train(node_intervals, edge_intervals, block_intervals,
     """Combine the intervals for individual trains together per node/edge and remove duplicates/overlap."""
     combined_nodes = {n: [] for n in g.nodes}
     combined_edges = {e.get_identifier(): [] for e in g.edges}
-    combined_blocks = {n: [] for n in g_block.nodes}
+    combined_blocks = {e.get_identifier(): [] for e in g_block.edges} | {n: [] for n in g_block.nodes}
     agent_intervals = {"nodes": {n: [] for n in g.nodes},
                        "edges": {e.get_identifier(): [] for e in g.edges},
-                       "blocks": {n: [] for n in g_block.nodes}}
+                       "blocks": {e.get_identifier(): [] for e in g_block.edges}} | {n: [] for n in g_block.nodes}
 
     combine_intervals(node_intervals,  "nodes",  agent_intervals, combined_nodes,  agent)
     combine_intervals(edge_intervals,  "edges",  agent_intervals, combined_edges,  agent)
