@@ -1,49 +1,14 @@
 {
     "types": [
         {
-            "name": "VIRM-4",
-            "length": 108,
-            "speed": 40
-        },
-        {
-            "name": "VIRM-6",
-            "length": 162,
-            "speed": 40
-        },
-        {
-            "name": "ICM-3",
-            "length": 81,
-            "speed": 40
-        },
-        {
-            "name": "ICM-4",
-            "length": 107,
-            "speed": 40
-        },
-        {
-            "name": "SNG-4",
-            "length": 75,
-            "speed": 40
-        },        
-        {
             "name": "SNG-3",
             "length": 60,
             "speed": 60
-        },
-        {
-            "name": "SLT-4",
-            "length": 69,
-            "speed": 40
-        },
-        {
-            "name": "SLT-6",
-            "length": 100,
-            "speed": 40
         }
     ],
     "trains": [
         {
-            "trainNumber": 2,
+            "trainNumber": 1,
             "trainUnits": [
                 8656
             ],
@@ -56,15 +21,12 @@
                     "startTime": 100,
                     "endTime": 1400,
                     "endLocation": "t-432B",
-                    "stops": {
-                        "t-412B": 0,
-                        "t-423B": 0
-                    }
+                    "stops": {}
                 }
             ]
         },
         {
-            "trainNumber": 5,
+            "trainNumber": 2,
             "trainUnits": [
                 8655
             ],
@@ -74,10 +36,13 @@
             "movements": [
                 {
                     "startLocation": "t-213B",
-                    "startTime": 1500,
+                    "startTime": 700,
                     "endTime": 10,
                     "endLocation": "t-432B",
-                    "stops": {}
+                    "stops": {
+                        "t-412B": 0,
+                        "t-423B": 0
+                    }
                 }
             ]
         },
@@ -92,7 +57,7 @@
             "movements": [
                 {
                     "startLocation": "t-213B",
-                    "startTime": 900,
+                    "startTime": 1900,
                     "endTime": 10,
                     "endLocation": "t-432B",
                     "stops": {}
@@ -105,5 +70,6 @@
     "walkingSpeed": 1.4,
     "releaseTime": 20,
     "setupTime": 20,
-    "sightReactionTime": 10
+    "sightReactionTime": 10,
+    "minimumStopTime": 90
 }

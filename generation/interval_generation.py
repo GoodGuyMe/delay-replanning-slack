@@ -25,6 +25,7 @@ def process_scenario(data, g, g_block, agent):
         measures["releaseTime"] = data["releaseTime"] if "releaseTime" in data else 0
         measures["setupTime"] = data["setupTime"] if "setupTime" in data else 0
         measures["sightReactionTime"] = data["sightReactionTime"] if "sightReactionTime" in data else 0
+        measures["minimumStopTime"] = data["minimumStopTime"] if "minimumStopTime" in data else 60
         moves_per_agent[entry["trainNumber"]] = []
         node_intervals[entry["trainNumber"]] = {n:[] for n in g.nodes}
         block_intervals[entry["trainNumber"]] = {e.get_identifier():[] for e in g_block.edges} | {n: [] for n in g_block.nodes}
@@ -138,7 +139,7 @@ def calculate_blocking_time(e, cur_time, blocking_intervals, measures):
 
     station_time = 0
     if e.stops_at_station is not None:
-        station_time = max(60, e.stops_at_station - cur_time)
+        station_time = max(measures["minimumStopTime"], e.stops_at_station - cur_time)
     e.headway = measures["headwayFollowing"]
 
     trainSpeed = min(e.max_speed, measures["trainSpeed"])
@@ -218,7 +219,7 @@ def generate_unsafe_intervals(g, g_block, path, move, measures):
 
             extra_stop_time = 0
             if e.stops_at_station is not None:
-                extra_stop_time = max(60, e.stops_at_station - cur_time)
+                extra_stop_time = max(measures["minimumStopTime"], e.stops_at_station - cur_time)
             e.headway = measures["headwayFollowing"]
 
             # NODES TRAIN ENTERS
