@@ -12,15 +12,15 @@
 #include "constants.hpp"
 #include "segment.hpp"
 
-//using NeighbouringTrain = std::tuple<int, intervalTime_t>;
+//using NeightbouringAgent = std::tuple<int, intervalTime_t>;
 
-struct NeighbouringTrain{
-    int id;
+struct NeightbouringAgent{
+    long id;
     intervalTime_t max_buffer_time;
-    NeighbouringTrain() = default;
-    NeighbouringTrain(int _id, intervalTime_t _max_buffer_time): id(_id),max_buffer_time(_max_buffer_time){}
+    NeightbouringAgent() = default;
+    NeightbouringAgent(long _id, intervalTime_t _max_buffer_time): id(_id), max_buffer_time(_max_buffer_time){}
 
-    inline friend std::ostream& operator<< (std::ostream& stream, const NeighbouringTrain& train){
+    inline friend std::ostream& operator<< (std::ostream& stream, const NeightbouringAgent& train){
         stream << train.id << " " << train.max_buffer_time;
         return stream;
     }
@@ -34,8 +34,8 @@ struct EdgeATF{
     intervalTime_t beta;
     intervalTime_t delta;
     std::vector<EdgeATF*> successors;
-    NeighbouringTrain agent_before;
-    NeighbouringTrain agent_after;
+    NeightbouringAgent agent_before;
+    NeightbouringAgent agent_after;
     gamma_t gamma;
     EdgeATF() = default;
 
@@ -54,8 +54,8 @@ struct EdgeATF{
             alpha(_alpha),
             beta(_beta),
             delta(_delta),
-            agent_before(NeighbouringTrain(id_b, max_buf_b)),
-            agent_after(NeighbouringTrain(id_a, max_buf_a))
+            agent_before(NeightbouringAgent(id_b, max_buf_b)),
+            agent_after(NeightbouringAgent(id_a, max_buf_a))
         {};
 
 // Constructor for CATF
