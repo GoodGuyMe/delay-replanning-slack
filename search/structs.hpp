@@ -7,14 +7,14 @@
 #include "constants.hpp"
 
 
-using SafeInterval = std::pair<intervalTime_t, intervalTime_t>;
+using SafeInterval = std::tuple<intervalTime_t, intervalTime_t, int, intervalTime_t, int, intervalTime_t>;
 
 inline intervalTime_t begin(const SafeInterval& si){
-    return si.second;
+    return std::get<1>(si);
 }
 
 inline intervalTime_t end(const SafeInterval& si){
-    return si.first;
+    return std::get<0>(si);
 }
 
 inline bool contains(const SafeInterval& si, intervalTime_t t){
@@ -54,12 +54,12 @@ struct State{
     Location loc;
     SafeInterval interval;
     State() = default;
-    State(std::string n, double s, double e):loc(n),interval(e,s){}; 
+    State(std::string n, double s, double e, double id_b, double buf_b, double id_a, double buf_a):loc(n),interval(e,s, id_b, buf_b, id_a, buf_a){};
     constexpr bool operator ==(const State & s) const{
         return loc == s.loc && interval == s.interval;
     }
     inline friend std::ostream& operator<< (std::ostream& stream, const State& s){
-        stream << s.loc << " <" << s.interval.second << "," << s.interval.first << ">";
+        stream << s.loc << " <" << begin(s.interval) << "," << end(s.interval) << ">";
         return stream;
     }
 };
@@ -70,8 +70,8 @@ namespace std {
         inline std::size_t operator()(const State& s) const {
             std::size_t seed = 0;
             boost::hash_combine(seed, s.loc.name);
-            boost::hash_combine(seed, s.interval.second);
-            boost::hash_combine(seed, s.interval.second);
+            boost::hash_combine(seed, get<1>(s.interval));
+            boost::hash_combine(seed, get<1>(s.interval));
             return seed;
         }
     };

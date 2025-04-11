@@ -12,6 +12,7 @@
 #include "constants.hpp"
 #include "segment.hpp"
 
+
 struct EdgeATF;
 
 struct EdgeATF{
@@ -20,8 +21,44 @@ struct EdgeATF{
     intervalTime_t beta;
     intervalTime_t delta;
     std::vector<EdgeATF*> successors;
+    NeighbouringTrain agent_before;
+    NeighbouringTrain agent_after;
+    gamma_t gamma;
     EdgeATF() = default;
-    EdgeATF(intervalTime_t _zeta, intervalTime_t _alpha, intervalTime_t _beta, intervalTime_t _delta):zeta(_zeta),alpha(_alpha),beta(_beta),delta(_delta){}
+
+// Constructor for initial edge ATF
+    EdgeATF(
+            intervalTime_t _zeta,
+            intervalTime_t _alpha,
+            intervalTime_t _beta,
+            intervalTime_t _delta,
+            int id_b,
+            intervalTime_t max_buf_b,
+            int id_a,
+            intervalTime_t max_buf_a)
+        :
+            zeta(_zeta),
+            alpha(_alpha),
+            beta(_beta),
+            delta(_delta),
+            agent_before(NeighbouringTrain(id_b, max_buf_b)),
+            agent_after(NeighbouringTrain(id_a, max_buf_a))
+        {};
+
+// Constructor for CATF
+    EdgeATF(
+            intervalTime_t _zeta,
+            intervalTime_t _alpha,
+            intervalTime_t _beta,
+            intervalTime_t _delta,
+            gamma_t _gamma)
+        :
+            zeta(_zeta),
+            alpha(_alpha),
+            beta(_beta),
+            delta(_delta),
+            gamma(_gamma)
+    {}
 
     inline intervalTime_t earliest_arrival_time() const{
         return alpha + delta;
@@ -87,7 +124,8 @@ struct CompoundATF{
             0,
             0,
             std::numeric_limits<double>::infinity(),
-            std::numeric_limits<double>::infinity()
+            std::numeric_limits<double>::infinity(),
+            gamma_t()
         );
         payload.emplace_back(init);
         segments.emplace(

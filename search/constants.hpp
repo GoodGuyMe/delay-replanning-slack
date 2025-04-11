@@ -6,6 +6,7 @@
 
 using gIndex_t = uint16_t;
 using intervalTime_t = double;
+using gamma_t = std::vector<intervalTime_t>;
 
 constexpr double epsilon(){
     return 0.0001;

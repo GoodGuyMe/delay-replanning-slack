@@ -12,12 +12,13 @@ struct inATF{
     inATF(long s, long d, EdgeATF e):source(s),dest(d),eATF(e){}
 };
 
-void read_ATF(std::istream& i, std::vector<inATF>& res, double agentSpeed, double walkingSpeed){
+void read_ATF(std::istream& i, std::vector<inATF>& res){
     long x, y;
     std::string s;
     if(!(i >> x)){return;}
     i >> y;
-    intervalTime_t zeta, alpha, beta, delta;
+    intervalTime_t zeta, alpha, beta, delta, max_buf_b, max_buf_a;
+    int id_b, id_a;
     i >> s;
     zeta = stod(s);
     i >> s;
@@ -25,17 +26,20 @@ void read_ATF(std::istream& i, std::vector<inATF>& res, double agentSpeed, doubl
     i >> s;
     beta = stod(s);
     i >> s;
-    double length = stod(s);
-    if (length == 0) {
-        delta = length / walkingSpeed;
-    } else {
-        delta = length / agentSpeed;
-    }
-    EdgeATF edge(zeta, alpha, beta, delta);
+    delta = stod(s);
+    i >> s;
+    id_b = stoi(s);
+    i >> s;
+    max_buf_b = stod(s);
+    i >> s;
+    id_a = stoi(s);
+    i >> s;
+    max_buf_a = stod(s);
+    EdgeATF edge(zeta, alpha, beta, delta, id_b, max_buf_b, id_a, max_buf_a);
     res.emplace_back(x, y, edge); 
 }
 
-Graph read_graph(std::string filename, double agentSpeed, double walkingSpeed){
+Graph read_graph(std::string filename){
     std::ifstream file(filename, std::ios_base::in | std::ios_base::binary);
     boost::iostreams::filtering_streambuf<boost::iostreams::input> inbuf;
     inbuf.push(boost::iostreams::gzip_decompressor());
@@ -44,29 +48,43 @@ Graph read_graph(std::string filename, double agentSpeed, double walkingSpeed){
     std::vector<inATF> res;
     Graph g;
     long n_nodes;
+    long n_edges;
+    long n_agents;
     std::string s;
     std::string name;
     instream >> s >> s >> n_nodes;
+    instream >> s >> s >> n_edges;
     g.nodes.reserve(n_nodes);
     g.node_array.reserve(n_nodes);
     for (long i = 0; i < n_nodes; i++){
-        double st, en;
+        double st, en, buf_b, buf_a;
+        int id_b, id_a;
         instream >> name;
         instream >> s;
         st = stod(s);
         instream >> s;
         en = stod(s);
-        State state(name, st, en);
+        instream >> s;
+        id_b = stoi(s);
+        instream >> s;
+        buf_b = stod(s);
+        instream >> s;
+        id_a = stoi(s);
+        instream >> s;
+        buf_a = stod(s);
+        State state(name, st, en, id_b, buf_b, id_a, buf_a);
         g.node_array.emplace_back(state);
         g.nodes.emplace(state, &g.node_array.back());
     }
     std::cerr << "nodes read\n";
-    while(!instream.eof()){
-        read_ATF(instream, res, agentSpeed, walkingSpeed);
+    for (long i = 0; i < n_edges; i++){
+        read_ATF(instream, res);
     }
+    instream >> s >> n_agents;
     file.close();
+    g.n_agents = n_agents;
     g.edges.reserve(2*res.size());
-    for (const auto & entry: res){ 
+    for (const auto & entry: res){
         g.edges.emplace_back(entry.eATF);
         g.edges.back().source = &g.node_array[entry.source];
         g.edges.back().destination = &g.node_array[entry.dest];

@@ -86,9 +86,9 @@ namespace asipp{
     }
 
     template <typename Node_t, typename Open_t>
-    inline void expand(const Node_t& cur, Open_t& open_list, const Location& goal_loc, MetaData & m){
-        (void)goal_loc;
-        m.expanded++;
+    inline void extendOpen(const Node_t& cur, Open_t& open_list, MetaData & m, GraphEdge * successor, gamma_t gamma) {
+        intervalTime_t gamma_after = gamma[successor->edge.agent_after.id];
+        intervalTime_t gamma_before = gamma[successor->edge.agent_before.id];
         double zeta = cur.g.zeta;
         for(GraphEdge * successor: cur.node->successors){
             if(cur.g.earliest_arrival_time() >= successor->edge.beta || cur.g.supremum_arrival_time() <= successor->edge.zeta){
@@ -114,6 +114,62 @@ namespace asipp{
                 double h = 0;
                 open_list.emplace(arrival_time_function, h, successor->destination, successor->source);
             }
+        double alpha = std::max(cur.g.alpha, successor->edge.alpha - cur.g.delta + gamma_before);
+        double beta = std::min(cur.g.beta, successor->edge.beta - cur.g.delta + gamma_after);
+        double delta = successor->edge.delta + cur.g.delta;
+        EdgeATF arrival_time_function(zeta, alpha, beta, delta, gamma);
+        if (open_list.handles.contains(successor->destination)){
+            auto handle = open_list.handles[successor->destination];
+            if(arrival_time_function.earliest_arrival_time() < (*handle).g.earliest_arrival_time()){
+                m.decreased++;
+                double h = 0;
+                open_list.decrease_key(handle ,arrival_time_function, h, successor->destination, successor->source);
+            }
+        }
+        else{
+            m.generated++;
+            double h = 0;
+            open_list.emplace(arrival_time_function, h, successor->destination, successor->source);
+        }
+    }
+
+    inline void expand(const Node cur, Open open_list, const Location& goal_loc, MetaData & m){
+        (void)goal_loc;
+        m.expanded++;
+
+        std::cerr << cur.node->state << "\n";
+        for(GraphEdge * successor: cur.node->successors){
+            if(open_list.expanded.contains(successor->destination)){
+                continue; // Already visited location and added all outgoing edges to the queue, thus the new found path to that node is worse
+            }
+            intervalTime_t gamma_after = cur.g.gamma[successor->edge.agent_after.id];
+            intervalTime_t gamma_before = cur.g.gamma[successor->edge.agent_before.id];
+// || cur.g.supremum_arrival_time() <= successor->edge.zeta
+
+//              Scenario 1 & 3
+            if(cur.g.earliest_arrival_time() >= (successor->edge.beta + gamma_after)) {
+                intervalTime_t buffer_needed = cur.g.earliest_arrival_time() - successor->edge.beta;
+                if (buffer_needed < successor->edge.agent_after.max_buffer_time) {
+                    std::cerr << "from " << successor->source->state << " to " << successor->destination->state << "\n";
+                    std::cerr << "Using " << buffer_needed << " buffer time from " << successor->edge.agent_after << "\n";
+                    gamma_t new_gamma = gamma_t(cur.g.gamma);
+//                    OR maybe max buffer and then later reduce buffer size
+                    new_gamma[successor->edge.agent_after.id] = successor->edge.agent_after.max_buffer_time;
+//                    new_gamma[successor->edge.agent_after.id] = std::min(successor->edge.agent_after.max_buffer_time, buffer_needed + 1);
+                    extendOpen(cur, open_list, m, successor, new_gamma);
+                    for (intervalTime_t gamma : new_gamma) {
+                        std::cerr << gamma << ' ';
+                    }
+                    std::cerr << std::endl;
+                }
+                continue;
+            }
+//            Scenario 2
+//            if(cur.g.earliest_arrival_time() < successor->edge.alpha + gamma_before) {
+//                cur.g.
+//            }
+
+            extendOpen(cur, open_list, m, successor, cur.g.gamma);
         }
     }
 
@@ -139,6 +195,7 @@ namespace asipp{
             open_list.pop();
             expand(cur, open_list, dest, m);
         }
+        std::cerr << "No path found " << "\n";
         return std::make_pair(std::vector<GraphNode *>(), EdgeATF());
     }
 

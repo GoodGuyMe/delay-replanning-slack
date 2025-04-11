@@ -44,6 +44,7 @@ struct GraphEdge{
 struct Graph{
     std::vector<GraphEdge> edges;
     std::vector<GraphNode> node_array;
+    long n_agents;
     boost::unordered::unordered_flat_map<State, GraphNode *, std::hash<State>> nodes;
     Graph() = default;
     inline void dump() const{
@@ -65,5 +66,5 @@ struct Graph{
     }
 };
 
-Graph read_graph(std::string filename, double agentSpeed, double walkingSpeed);
+Graph read_graph(std::string filename);
 GraphNode * find_earliest(Graph& g, Location loc, double start_time);

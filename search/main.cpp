@@ -19,8 +19,6 @@ int main(int argc, char* argv[]) {
         ("edgegraph,g", po::value<std::filesystem::path>(),"gzip'd file containing the edge arrival time functions.")
         ("search,s", po::value<std::string>()->default_value("repeat"), "Search algorithm to use")
         ("startTime,t", po::value<double>()->default_value(0.0), "Start Time of search.")
-        ("agentSpeed,a", po::value<double>()->default_value(15.0), "Traveling speed of the agent.")
-        ("walkingSpeed,w", po::value<double>()->default_value(1.0), "Walking speed for reversing train.")
         ("lookups,l", po::value<long>()->default_value(100), "Number of lookups to test repeat")
         ;
         po::variables_map vm;
@@ -33,10 +31,8 @@ int main(int argc, char* argv[]) {
         else if(vm.count("edgegraph") && std::filesystem::is_regular_file(vm["edgegraph"].as<std::filesystem::path>())){
             Location source_loc(vm["start"].as<std::string>());
             Location goal_loc(vm["goal"].as<std::string>());
-            double walkingSpeed(vm["walkingSpeed"].as<double>());
-            double agentSpeed(vm["agentSpeed"].as<double>());
 
-            Graph g = read_graph(vm["edgegraph"].as<std::filesystem::path>().string(), agentSpeed, walkingSpeed);
+            Graph g = read_graph(vm["edgegraph"].as<std::filesystem::path>().string());
 
             bool foundStart = false;
             bool foundGoal = false;
@@ -55,15 +51,18 @@ int main(int argc, char* argv[]) {
             GraphNode * source = find_earliest(g, source_loc, start_time);
 
             MetaData m;
+            gamma_t initial_gamma(g.n_agents + 1, 0.0);
 
             auto search_start_time = std::chrono::high_resolution_clock::now();
-            auto res = rePEAT::search(source, goal_loc, m, start_time);
+            auto res = rePEAT::search(source, goal_loc, m, start_time, initial_gamma);
             auto search_time = std::chrono::high_resolution_clock::now();
             auto search_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(search_time - search_start_time);
 
+            std::flush(std::cerr);
             std::cout << m << "\n";
             std::cout << res;
             std::cout << "Search time: " << search_duration.count() << " nanoseconds\n";
+            std::flush(std::cout);
 
             auto c = res.time_lookup(vm["lookups"].as<long>());
         }
