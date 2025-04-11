@@ -7,9 +7,14 @@
 namespace rePEAT{
     struct Node;
 
-    class rePEATNode: public Node {
-//        Sort priority queue on this
-        inline friend bool operator>(const rePEATNode a, const rePEATNode b){
+    struct Node{
+        EdgeATF g;
+        double f;
+        GraphNode * node;
+        Node() = default;
+        Node(EdgeATF e, double _h, GraphNode * _node):g(e),f(e.earliest_arrival_time() + _h),node(_node){}
+
+        inline friend bool operator>(const Node& a, const Node& b){
             if(a.f == b.f){
                 if(a.g.alpha == b.g.alpha){
                     return a.g.beta < b.g.beta;
@@ -32,7 +37,7 @@ namespace rePEAT{
     };
     using Queue = boost::heap::d_ary_heap<Node, boost::heap::arity<4>, boost::heap::mutable_<true>, boost::heap::compare<std::greater<Node>>>;
     typedef typename Queue::handle_type handle_t;
-    
+
     struct Open{
         Queue queue;
         std::unordered_map<GraphNode *, GraphNode *> parent;
@@ -64,8 +69,6 @@ namespace rePEAT{
         }
     };
 
-namespace rePEAT{
-   CompoundATF<std::vector<GraphNode *>> search(GraphNode * source, const Location& dest, MetaData & m, double start_time,
-                                                gamma_t gamma);
+    CompoundATF<std::vector<GraphNode *>> search(GraphNode * source, const Location& dest, MetaData & m, double start_time, gamma_t gamma);
 }
 

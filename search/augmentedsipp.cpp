@@ -3,8 +3,9 @@
 #include "structs.hpp"
 #include "graph.hpp"
 #include "augmentedsipp.hpp"
+#include "repeat.hpp"
 
-using namespace asipp;
+using namespace rePEAT;
 
 std::pair<std::vector<GraphNode *>, EdgeATF> asipp::search(GraphNode * source, const Location& dest, MetaData & m, double start_time){
     Open open_list;

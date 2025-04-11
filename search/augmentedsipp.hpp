@@ -6,66 +6,6 @@
 #include "graph.hpp"
 
 namespace asipp{
-    struct Node;
-
-    struct Node{
-        EdgeATF g;
-        double f;
-        GraphNode * node;
-        Node() = default;
-        Node(EdgeATF e, double _h, GraphNode * _node):g(e),f(e.earliest_arrival_time() + _h),node(_node){}
-
-        inline friend bool operator>(const Node& a, const Node& b){
-            if(a.f == b.f){
-                return a.g < b.g;
-            }
-            return a.f > b.f;
-        }
-
-        inline friend std::ostream& operator<< (std::ostream& stream, const Node& n){
-            stream << *n.node << " g:" << n.g << ", f:" << n.f;
-            return stream;
-        }
-    };
-
-    struct NodeComp{
-        bool operator()(const Node * a, const Node * b){
-            return *a > *b;
-        }
-    };
-
-    using Queue = boost::heap::d_ary_heap<Node, boost::heap::arity<4>, boost::heap::mutable_<true>, boost::heap::compare<std::greater<Node>>>;
-    typedef typename Queue::handle_type handle_t;
-    struct Open{
-        Queue queue;
-        std::unordered_map<GraphNode *, GraphNode *> parent;
-        std::unordered_map<GraphNode *, handle_t> handles;
-        std::unordered_map<GraphNode *, double> expanded;
-
-        inline void emplace(EdgeATF e, double h, GraphNode * n, GraphNode * p){
-            parent[n] = p;
-            handles[n] = queue.push(Node(e, h, n));
-        }
-
-        inline bool empty() const{
-            return queue.empty();
-        }
-
-        inline Node top() const{
-            return queue.top();
-        }
-
-        inline void pop(){
-            Node n = top();
-            expanded[n.node] = n.g.earliest_arrival_time();
-            queue.pop();
-        }
-
-        inline void decrease_key(handle_t handle , EdgeATF e, double h, GraphNode * n, GraphNode * p){
-            parent[n] = p;
-            queue.increase(handle, Node(e, h, n));
-        }
-    };
 
     template <typename Node_t>
     bool isGoal(const Node_t& n, const Location& goal_loc){
@@ -109,7 +49,8 @@ namespace asipp{
         }
     }
 
-    inline void expand(const Node cur, Open open_list, const Location& goal_loc, MetaData & m){
+    template <typename Node_t, typename Open_t>
+    inline void expand(const Node_t& cur, Open_t& open_list, const Location& goal_loc, MetaData & m){
         (void)goal_loc;
         m.expanded++;
 
@@ -175,5 +116,5 @@ namespace asipp{
         return std::make_pair(std::vector<GraphNode *>(), EdgeATF());
     }
 
-   std::pair<std::vector<GraphNode *>, EdgeATF> search(GraphNode * source, const Location& dest, MetaData & m, double start_time = 0.0);
+   std::pair<std::vector<GraphNode *>, EdgeATF> search(GraphNode * source, const Location& dest, MetaData & m, double start_time);
 }

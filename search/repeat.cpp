@@ -2,26 +2,10 @@
 #include "augmentedsipp.hpp"
 #include "repeat.hpp"
 
-double update_reference_time(const EdgeATF& path, Open open_list){
+double update_reference_time(const EdgeATF& path, rePEAT::Open open_list){
     double upper_bound = path.beta;
     double lower_bound = path.alpha;
     std::cerr << "Starting update tref with alpha " << lower_bound << " beta " << upper_bound << " delta " << path.delta << std::endl;
-//    while(lower_bound < upper_bound){
-//        std::cout << "++ Loop ++" << std::endl;
-//        if(open_list.empty()){
-//            std::cout << "-------END------INF-------" << std::endl;
-//            return std::numeric_limits<double>::infinity();
-//        }
-//        auto n = open_list.top();
-//        open_list.pop();
-//        std::cout << n << std::endl;
-//        lower_bound = n.f - path.delta;
-//        if (n.g.alpha > lower_bound){
-//            std::cout << "-------END------" << lower_bound << "-------" << std::endl;
-//            return lower_bound;
-//        }
-//    }
-//    std::cout << "-------END------" << upper_bound << "-------" << std::endl;
     return upper_bound;
 }
 
