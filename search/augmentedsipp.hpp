@@ -90,30 +90,6 @@ namespace asipp{
         intervalTime_t gamma_after = gamma[successor->edge.agent_after.id];
         intervalTime_t gamma_before = gamma[successor->edge.agent_before.id];
         double zeta = cur.g.zeta;
-        for(GraphEdge * successor: cur.node->successors){
-            if(cur.g.earliest_arrival_time() >= successor->edge.beta || cur.g.supremum_arrival_time() <= successor->edge.zeta){
-                continue;
-            } 
-            double alpha = std::max(cur.g.alpha, successor->edge.alpha - cur.g.delta);
-            double beta = std::min(cur.g.beta, successor->edge.beta - cur.g.delta);
-            double delta = successor->edge.delta + cur.g.delta;
-            EdgeATF arrival_time_function(zeta, alpha, beta, delta);
-            if(open_list.expanded.contains(successor->destination)){
-                continue;
-            }
-            else if (open_list.handles.contains(successor->destination)){
-                auto handle = open_list.handles[successor->destination];
-                if(arrival_time_function.earliest_arrival_time() < (*handle).g.earliest_arrival_time()){
-                    m.decreased++;
-                    double h = 0;
-                    open_list.decrease_key(handle ,arrival_time_function, h, successor->destination, successor->source);
-                }
-            }
-            else{
-                m.generated++;
-                double h = 0;
-                open_list.emplace(arrival_time_function, h, successor->destination, successor->source);
-            }
         double alpha = std::max(cur.g.alpha, successor->edge.alpha - cur.g.delta + gamma_before);
         double beta = std::min(cur.g.beta, successor->edge.beta - cur.g.delta + gamma_after);
         double delta = successor->edge.delta + cur.g.delta;

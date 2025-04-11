@@ -12,6 +12,19 @@
 #include "constants.hpp"
 #include "segment.hpp"
 
+//using NeighbouringTrain = std::tuple<int, intervalTime_t>;
+
+struct NeighbouringTrain{
+    int id;
+    intervalTime_t max_buffer_time;
+    NeighbouringTrain() = default;
+    NeighbouringTrain(int _id, intervalTime_t _max_buffer_time): id(_id),max_buffer_time(_max_buffer_time){}
+
+    inline friend std::ostream& operator<< (std::ostream& stream, const NeighbouringTrain& train){
+        stream << train.id << " " << train.max_buffer_time;
+        return stream;
+    }
+};
 
 struct EdgeATF;
 

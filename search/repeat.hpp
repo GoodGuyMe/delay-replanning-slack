@@ -7,14 +7,9 @@
 namespace rePEAT{
     struct Node;
 
-    struct Node{
-        EdgeATF g;
-        double f;
-        GraphNode * node;
-        Node() = default;
-        Node(EdgeATF e, double _h, GraphNode * _node):g(e),f(e.earliest_arrival_time() + _h),node(_node){}
-
-        inline friend bool operator>(const Node& a, const Node& b){
+    class rePEATNode: public Node {
+//        Sort priority queue on this
+        inline friend bool operator>(const rePEATNode a, const rePEATNode b){
             if(a.f == b.f){
                 if(a.g.alpha == b.g.alpha){
                     return a.g.beta < b.g.beta;
@@ -69,7 +64,7 @@ namespace rePEAT{
         }
     };
 
-   CompoundATF<std::vector<GraphNode *>> search(GraphNode * source, const Location& dest, MetaData & m, double start_time = 0.0);
+namespace rePEAT{
    CompoundATF<std::vector<GraphNode *>> search(GraphNode * source, const Location& dest, MetaData & m, double start_time,
                                                 gamma_t gamma);
 }
