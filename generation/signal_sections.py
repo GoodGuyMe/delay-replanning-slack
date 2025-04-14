@@ -71,7 +71,7 @@ def convertMovesToBlock(moves_per_agent, g):
                     if routes:
                         assert len(routes) == 1
                         block_route.append(list(routes)[0])
-                    routes = set(move.to_node.routes)
+                    routes = set([route for route in move.to_node.routes if isinstance(route, Edge)])
                 routes = routes & set(move.to_node.routes)
         block_routes[agent] = [block_route]
     return block_routes

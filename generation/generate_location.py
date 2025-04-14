@@ -116,10 +116,10 @@ def track_part():
     stationPlatform = False
 
     # If name starts with a t, it can be a station, turnaround station or parking spot
-    if name[0].lower() == "t":
-        sawMovement = defaultFalse("Saw movement")
-        parkingAllowed = defaultFalse("Parking allowed")
-        stationPlatform = defaultFalse("Station platform")
+    # if name[0].lower() == "t":
+    #     sawMovement = defaultFalse("Saw movement")
+    #     parkingAllowed = defaultFalse("Parking allowed")
+    #     stationPlatform = defaultFalse("Station platform")
 
     trackType = "RailRoad"
     # Determine type of switch if it's a switch
@@ -149,19 +149,23 @@ def connections(track_parts):
     print("Give connection as: track_name_a track_name_b")
     for i in track_parts.values():
         print(f"{i}")
-    for line in sys.stdin:
-        if 'q' == line.strip():
-            break
-        new_connection = line.strip().split(" ")
-        if len(new_connection) != 2:
-            continue
-        t1 = new_connection[0]
-        t2 = new_connection[1]
-        track_parts[t1].aSide.append(track_parts[t2].id)
-        track_parts[t2].bSide.append(track_parts[t1].id)
-        checktype(track_parts[t1])
-        checktype(track_parts[t2])
-        print(f"Added connection between {track_parts[t1]} and {track_parts[t2]}")
+    try:
+        for line in sys.stdin:
+            if 'q' == line.strip():
+                break
+            new_connection = line.strip().split(" ")
+            if len(new_connection) != 2:
+                continue
+            t1 = new_connection[0]
+            t2 = new_connection[1]
+            track_parts[t1].aSide.append(track_parts[t2].id)
+            track_parts[t2].bSide.append(track_parts[t1].id)
+            checktype(track_parts[t1])
+            checktype(track_parts[t2])
+            print(f"Added connection between {track_parts[t1]} and {track_parts[t2]}")
+    except Exception as e:
+        print(e)
+        connections(track_parts)
 
 
 def add_signals(track_parts):

@@ -1,0 +1,76 @@
+{
+    "types": [
+        {
+            "name": "SNG",
+            "length": 60,
+            "speed": 10
+        },{
+            "name": "VIRM",
+            "length": 60,
+            "speed": 20
+        }
+    ],
+    "trains": [
+        {
+            "trainNumber": 1,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "VIRM"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-n1_1B",
+                    "startTime": 100,
+                    "endTime": 750,
+                    "endLocation": "t-14B",
+                    "stops": {}
+                }
+            ]
+        },
+        {
+            "trainNumber": 2,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "SNG"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-n1_2B",
+                    "startTime": 400,
+                    "endTime": 0,
+                    "endLocation": "t-14B",
+                    "stops": {}
+                }
+            ]
+        },
+        {
+            "trainNumber": 3,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "VIRM"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-n1_1B",
+                    "startTime": 1900,
+                    "endTime": 2000,
+                    "endLocation": "t-14B",
+                    "stops": {}
+                }
+            ]
+        }
+    ],
+    "headwayFollowing": 180,
+    "headwayCrossing": 120,
+    "walkingSpeed": 1.4,
+    "releaseTime": 20,
+    "setupTime": 20,
+    "sightReactionTime": 10,
+    "minimumStopTime": 90
+}

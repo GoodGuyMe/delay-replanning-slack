@@ -1,0 +1,55 @@
+{
+    "types": [
+        {
+            "name": "SNG-3",
+            "length": 60,
+            "speed": 10
+        }
+    ],
+    "trains": [
+        {
+            "trainNumber": 1,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "SNG-3"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-1B",
+                    "startTime": 100,
+                    "endTime": 1400,
+                    "endLocation": "t-14B",
+                    "stops": {}
+                }
+            ]
+        },{
+            "trainNumber": 2,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "SNG-3"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-14A",
+                    "startTime": 400,
+                    "endTime": 1400,
+                    "endLocation": "t-1A",
+                    "stops": {
+                        "t-10_2A": 1100
+                    }
+                }
+            ]
+        }
+    ],
+    "headwayFollowing": 180,
+    "headwayCrossing": 120,
+    "walkingSpeed": 1.4,
+    "releaseTime": 20,
+    "setupTime": 20,
+    "sightReactionTime": 10,
+    "minimumStopTime": 90
+}

@@ -11,20 +11,25 @@ def create_safe_intervals(intervals, g, agent_speed=15, print_intervals=False):
     # Also store the state indices
     for node in g.nodes:
         current = 0
+        train_before = 0
         duration = 0
         # Make sure they are ordered in chronological order
         intervals[node].sort()
-        # Each tuple is (start, end, duration)
-        for start, end, dur in intervals[node]:
+        # Each tuple is (start, end, duration, train)
+        for start, end, dur, train in intervals[node]:
             if current > start:
-                interval = (current, start)
+                interval = (current, start, train_before, train)
+                train_before = train
                 print(f"INTERVAL ERROR safe node interval {interval} on node {node} has later end than start.")
             elif current == start:
                 # Don't add safe intervals like (0,0), but do update for the next interval
+                print(f"INTERVAL ERROR current == end.")
+                train_before = train
                 current = end
             else:
-                interval = (current, start)
+                interval = (current, start, train_before, train)
                 safe_node_intervals[node].append(interval)
+                train_before = train
                 # Dictionary with node keys, each entry has a dictionary with interval keys and then the index value
                 state_indices[node][str(interval)] = index
                 duration = dur
@@ -32,7 +37,7 @@ def create_safe_intervals(intervals, g, agent_speed=15, print_intervals=False):
                 index += 1
                 current = end
         if current < g.global_end_time:
-            last_interval = (current, g.global_end_time)
+            last_interval = (current, g.global_end_time, train_before, 0)
             safe_node_intervals[node].append(last_interval)
             state_indices[node][str(last_interval)] = index
             edge_durations[node][str(last_interval)] = duration
@@ -41,25 +46,30 @@ def create_safe_intervals(intervals, g, agent_speed=15, print_intervals=False):
     for edge in g.edges:
         node = edge.get_identifier()
         current = 0
+        train_before = 0
         # Make sure they are ordered in chronological order
         intervals[node].sort()
         # Each tuple is (start, end, duration)
-        for start, end, dur in intervals[node]:
+        for start, end, dur, train in intervals[node]:
             if current > start:
-                interval = (current, start)
+                interval = (current, start, train_before, train)
+                train_before = train
                 print(f"INTERVAL ERROR safe node interval {interval} on node {node} has later end than start.")
             elif current == start:
                 # Don't add safe intervals like (0,0), but do update for the next interval
+                print(f"INTERVAL ERROR current == end.")
+                train_before = train
                 current = end
             else:
-                interval = (current, start)
+                interval = (current, start, train_before, train)
                 safe_edge_intervals[node].append(interval)
+                train_before = train
                 # Dictionary with node keys, each entry has a dictionary with interval keys and then the index value
                 state_indices[node][str(interval)] = index
                 index += 1
                 current = end
         if current < g.global_end_time:
-            last_interval = (current, g.global_end_time)
+            last_interval = (current, g.global_end_time, train_before, 0)
             safe_edge_intervals[node].append(last_interval)
             state_indices[node][str(last_interval)] = index
             index += 1
@@ -89,6 +99,12 @@ def create_safe_intervals(intervals, g, agent_speed=15, print_intervals=False):
                             alpha = max(edge_interval[0], from_interval[0], to_interval[0] - o.length / agent_speed)
                             # beta: end of safe interval on u
                             beta = min(edge_interval[1], from_interval[1], to_interval[1] - o.length / agent_speed)
+
+                            # TODO: check why the alpha is what it is, from that interval we select the train_before/after.
+                            #  It's most likely the edge (maybe always?)
+                            train_before = edge_interval[2]
+                            train_after = edge_interval[3]
+
                             # If the interval is too short to make the move, don't include it.
                             if beta > alpha:
                                 arrival_time_functions.append((
@@ -97,7 +113,9 @@ def create_safe_intervals(intervals, g, agent_speed=15, print_intervals=False):
                                     zeta,
                                     alpha,
                                     beta,
-                                    o.length # delta: length of the edge or in case of A-B edge the time to walk to the other side
+                                    o.length / agent_speed, # delta: length of the edge or in case of A-B edge the time to walk to the other side
+                                    train_before,
+                                    train_after
                                 ))
                                 safe_edge_node_references[o.get_identifier()].append(((node, o.to_node.name), from_interval, to_interval, arrival_time_functions[-1]))
                             else:
@@ -113,7 +131,7 @@ def create_safe_intervals(intervals, g, agent_speed=15, print_intervals=False):
         for e in safe_edge_node_references:
             for data in safe_edge_node_references[e]:
                 atf = data[3]
-                print(f"Edge has interval from {data[0][0]} state {atf[0]} {data[1]} to {data[0][1]} state {atf[1]} {data[2]} with zeta {atf[2]}, alpha {atf[3]}, beta {atf[4]} and delta {atf[5]}")
+                print(f"Edge has interval from {data[0][0]} state {atf[0]} {data[1]} to {data[0][1]} state {atf[1]} {data[2]} with zeta {atf[2]}, alpha {atf[3]}, beta {atf[4]}, delta {atf[5]}, train_before {atf[6]} and train_after {atf[7]}.")
         for node in safe_node_intervals:
             print(f"{node} safe intervals: {[str(x) for x in safe_node_intervals[node]]}")                
     return safe_node_intervals, safe_edge_intervals, arrival_time_functions, errors

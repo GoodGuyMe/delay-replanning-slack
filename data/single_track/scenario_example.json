@@ -1,0 +1,97 @@
+{
+    "types": [
+        {
+            "name": "Normal",
+            "length": 60,
+            "speed": 10
+        },
+        {
+            "name": "Fast",
+            "length": 60,
+            "speed": 80
+        },
+        {
+            "name": "Slow",
+            "length": 60,
+            "speed": 3.3
+        }
+    ],
+    "trains": [
+        {
+            "trainNumber": 4,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "Normal"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-1B",
+                    "startTime": 1000,
+                    "endTime": 1400,
+                    "endLocation": "t-8B",
+                    "stops": {}
+                }
+            ]
+        },{
+            "trainNumber": 3,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "Normal"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-8A",
+                    "startTime": 750,
+                    "endTime": 1400,
+                    "endLocation": "t-4A",
+                    "stops": {}
+                }
+            ]
+        },{
+            "trainNumber": 2,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "Fast"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-1B",
+                    "startTime": 1350,
+                    "endTime": 1400,
+                    "endLocation": "t-4B",
+                    "stops": {}
+                }
+            ]
+        },{
+            "trainNumber": 1,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "Slow"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-1B",
+                    "startTime": 100,
+                    "endTime": 1400,
+                    "endLocation": "t-4B",
+                    "stops": {}
+                }
+            ]
+        }
+    ],
+    "headwayFollowing": 180,
+    "headwayCrossing": 120,
+    "walkingSpeed": 1.4,
+    "releaseTime": 20,
+    "setupTime": 20,
+    "sightReactionTime": 10,
+    "minimumStopTime": 90
+}

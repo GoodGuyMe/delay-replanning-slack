@@ -103,3 +103,6 @@ class Signal:
     def __init__(self, id, track):
         self.id = id
         self.track = track
+
+    def __repr__(self) -> str:
+        return f"Signal {self.id} on track {self.track}"

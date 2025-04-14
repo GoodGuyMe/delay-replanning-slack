@@ -22,16 +22,22 @@ def plot_train_path(moves_per_agent):
     y2 = 0
     if moves_per_agent:
         for agent_id, movements in moves_per_agent.items():
+            color=None
             for movement in movements:
                 for edge in movement[1:]:
                     node = edge.from_node.name
                     if node not in node_map2:
                         node_map2[node] = (y2, edge)
                         y2 += edge.length
-                    y_cur, old_len = node_map2[node]
-                    train, = plt.plot([y_cur, y_cur + edge.length], [edge.start_time, edge.depart_time], color='black',
-                                      linestyle='--')
-    return train
+                    if node in node_map2:
+                        y_cur, old_len = node_map2[node]
+                        linestyle = "-"
+                        train, = plt.plot([y_cur, y_cur + edge.length], [edge.start_time, edge.depart_time], color=color,
+                                          linestyle=linestyle)
+                        color=train.get_color()
+            train_label = f"Agent {agent_id}"
+            train.set_label(train_label) if train is not None else None
+            train = None
 
 def plot_safe_node_intervals(safe_node_intervals, moves_per_agent=None):
     if moves_per_agent is None:
@@ -63,7 +69,7 @@ def plot_safe_node_intervals(safe_node_intervals, moves_per_agent=None):
                     node_map[node] = y
                     y += 1
         for node, y in node_map.items():
-            for start, stop in safe_node_intervals[node.get_identifier()]:
+            for start, stop, train_before, train_after in safe_node_intervals[node.get_identifier()]:
                 plt.plot([start, stop], [y, y], color='green')
 
         y_axis = list(node_map.values())
@@ -97,19 +103,18 @@ def plot_unsafe_node_intervals(unsafe_node_intervals, moves_per_agent, distance_
         for node, (y, edge) in node_map.items():
             if fixed_block:
                 pass
-                for start, stop, duration in unsafe_node_intervals[node]:
+                for start, stop, duration, train in unsafe_node_intervals[node]:
                     blocking_time = patches.Rectangle((y, start), edge.length, duration, linewidth=1, edgecolor='red', facecolor='none')
                     ax.add_patch(blocking_time)
             else:
-                for start, stop, duration in unsafe_node_intervals[node]:
+                for start, stop, duration, train in unsafe_node_intervals[node]:
                     hw, = plt.plot([y, y+edge.length], [start + 180, start + duration + 180], color='red', linestyle='-')
 
 
     plt.ylabel(f"Time (s)")
     plt.xlabel(f"Distance")
 
-    train = plot_train_path(moves_per_agent)
-    train.set_label("Train") if train else None
+    plot_train_path(moves_per_agent)
     hw.set_label("Headway") if hw else None
     plt.legend()
 
@@ -141,16 +146,15 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, dista
                 if node not in node_map:
                     node_map[str(node)] = (y, edge)
                     y += edge.length
-        for node, (y, edge) in node_map.items():
-            for start, stop, duration in blocking_times[edge.get_identifier()]:
-                blocking_time = patches.Rectangle((y, start), edge.length, stop - start, linewidth=1, edgecolor='red', facecolor='none')
-                ax.add_patch(blocking_time)
+    for node, (y, edge) in node_map.items():
+        for start, stop, duration, train in blocking_times[edge.get_identifier()]:
+            blocking_time = patches.Rectangle((y, start), edge.length, stop - start, linewidth=1, edgecolor='red', facecolor='none')
+            ax.add_patch(blocking_time)
 
     plt.ylabel(f"Time (s)")
     plt.xlabel(f"Distance")
 
-    train = plot_train_path(moves_per_agent)
-    train.set_label("Train") if train else None
+    plot_train_path(moves_per_agent)
     plt.legend()
 
     for (dist, edge) in node_map.values():

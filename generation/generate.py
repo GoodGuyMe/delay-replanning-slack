@@ -36,18 +36,31 @@ def read_scenario(file, g, g_block, agent=-1):
     end_time = time.time()
     return node_intervals, edge_intervals, block_intervals, agent_intervals, moves_per_agent, end_time - start_time
 
-def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals):
+def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, max_buffer_time=120):
     """Write SIPP graph to gzip file for the search procedure"""
     with gzip.open(file, "wt") as f:
         f.write("vertex count: " + str(len([x for node in safe_node_intervals for x in safe_node_intervals[node]])) + "\n")
-        for node in safe_node_intervals:
-            for interval in safe_node_intervals[node]:
-                f.write(node + " " + str(interval[0]) + " " + str(interval[1]) + "\n")
-        for tup in safe_edge_intervals:
-            # In our domain there is not really a difference between alpha and zeta since we have no waiting time, so they are the same, but we keep both for extendability. 
-            f.write(str(tup[0]) + " " + str(tup[1]) + " " + str(tup[2]) + " " + str(tup[3]) + " " + str(tup[4]) + " " + str(tup[5]) + "\n")
+        f.write("edge count: " + str(len(safe_edge_intervals)) + "\n")
 
-def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output):
+        max_buffer_before = max_buffer_time
+        max_buffer_after = max_buffer_time
+
+        num_trains = 0
+
+        """ Write safe node intervals, as 'node_name start end id_before id_after'"""
+        for node in safe_node_intervals:
+            for start, end, id_before, id_after in safe_node_intervals[node]:
+                num_trains = max(num_trains, id_before, id_after)
+                f.write(f"{node} {start} {end} {id_before} {max_buffer_before} {id_after} {max_buffer_after}\n")
+
+        """Write atfs, as 'from_id to_id zeta alpha beta delta id_before id_after'"""
+        for from_id, to_id, zeta, alpha, beta, delta, id_before, id_after in safe_edge_intervals:
+            # In our domain there is not really a difference between alpha and zeta since we have no waiting time, so they are the same, but we keep both for extendability.
+            num_trains = max(num_trains, id_before, id_after)
+            f.write(f"{from_id} {to_id} {zeta} {alpha} {beta} {delta} {id_before} {max_buffer_before} {id_after} {max_buffer_after}\n")
+        f.write(f"num_trains {num_trains}\n")
+
+def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output, max_buffer_time=120):
     """For testing the time to get the safe intervals. Also writes to file (without timing). Used for experiments."""
     g = read_graph(location)
     g_block = create_graph_blocks(g)
@@ -55,7 +68,7 @@ def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, out
     start_time = time.time()
     safe_block_intervals, safe_block_edges_intervals, atfs, _ = create_safe_intervals(block_intervals, g_block, float(agent_speed), print_intervals=False)
     safe_computation_time = time.time() - start_time
-    write_intervals_to_file(output, safe_block_intervals, atfs)
+    write_intervals_to_file(output, safe_block_intervals, atfs, max_buffer_time)
     return unsafe_computation_time + safe_computation_time
 
 if __name__ == "__main__":
