@@ -26,7 +26,7 @@ namespace asipp{
     }
 
     template <typename Node_t, typename Open_t>
-    inline void extendOpen(const Node_t& cur, Open_t& open_list, MetaData & m, GraphEdge * successor, gamma_t gamma) {
+    inline void extendOpen(const Node_t& cur, Open_t& open_list, MetaData & m, GraphEdge * successor, gamma_t gamma, long prev_id, const Node_t* previous_catf) {
         intervalTime_t gamma_after = gamma[successor->edge.agent_after.id];
         intervalTime_t gamma_before = gamma[successor->edge.agent_before.id];
         double zeta = cur.g.zeta;
@@ -39,13 +39,13 @@ namespace asipp{
             if(arrival_time_function.earliest_arrival_time() < (*handle).g.earliest_arrival_time()){
                 m.decreased++;
                 double h = 0;
-                open_list.decrease_key(handle ,arrival_time_function, h, successor->destination, successor->source);
+                open_list.decrease_key(handle ,arrival_time_function, h, successor->destination, successor->source, prev_id, previous_catf);
             }
         }
         else{
             m.generated++;
             double h = 0;
-            open_list.emplace(arrival_time_function, h, successor->destination, successor->source);
+            open_list.emplace(arrival_time_function, h, successor->destination, successor->source, prev_id, previous_catf);
         }
     }
 
@@ -53,12 +53,21 @@ namespace asipp{
     inline void expand(const Node_t& cur, Open_t& open_list, const Location& goal_loc, MetaData & m){
         (void)goal_loc;
         m.expanded++;
-
-        std::cerr << cur.node->state << "\n";
         for(GraphEdge * successor: cur.node->successors){
             if(open_list.expanded.contains(successor->destination)){
                 continue; // Already visited location and added all outgoing edges to the queue, thus the new found path to that node is worse
             }
+
+            const Node_t *prev_catf = cur.previous_agent;
+            long prev_id = cur.previous_id;
+            if (prev_id != successor->edge.agent_before.id) {
+//                New agent in front, store a new CATF
+                Node_t copy_catf;
+                copy_catf = cur;
+                prev_catf = &copy_catf;
+                prev_id = successor->edge.agent_before.id;
+            }
+
             intervalTime_t gamma_after = cur.g.gamma[successor->edge.agent_after.id];
             intervalTime_t gamma_before = cur.g.gamma[successor->edge.agent_before.id];
 // || cur.g.supremum_arrival_time() <= successor->edge.zeta
@@ -67,26 +76,43 @@ namespace asipp{
             if(cur.g.earliest_arrival_time() >= (successor->edge.beta + gamma_after)) {
                 intervalTime_t buffer_needed = cur.g.earliest_arrival_time() - successor->edge.beta;
                 if (buffer_needed < successor->edge.agent_after.max_buffer_time) {
-                    std::cerr << "from " << successor->source->state << " to " << successor->destination->state << "\n";
-                    std::cerr << "Using " << buffer_needed << " buffer time from " << successor->edge.agent_after << "\n";
+                    std::cout << "----------Scenario 1-----------\n";
+                    std::cout << "from " << successor->source->state << " to " << successor->destination->state << "\n";
+                    std::cout << "Using " << buffer_needed << " buffer time from " << successor->edge.agent_after << "\n";
                     gamma_t new_gamma = gamma_t(cur.g.gamma);
 //                    OR maybe max buffer and then later reduce buffer size
                     new_gamma[successor->edge.agent_after.id] = successor->edge.agent_after.max_buffer_time;
 //                    new_gamma[successor->edge.agent_after.id] = std::min(successor->edge.agent_after.max_buffer_time, buffer_needed + 1);
-                    extendOpen(cur, open_list, m, successor, new_gamma);
+                    extendOpen(cur, open_list, m, successor, new_gamma, prev_id, prev_catf);
                     for (intervalTime_t gamma : new_gamma) {
-                        std::cerr << gamma << ' ';
+                        std::cout << gamma << ' ';
                     }
-                    std::cerr << std::endl;
+                    std::cout << std::endl;
                 }
                 continue;
             }
 //            Scenario 2
-//            if(cur.g.earliest_arrival_time() < successor->edge.alpha + gamma_before) {
-//                cur.g.
-//            }
+            if((cur.g.earliest_arrival_time() < successor->edge.alpha + gamma_before) && (cur.previous_agent != nullptr)) {
+                intervalTime_t buffer_needed = cur.g.earliest_arrival_time() - successor->edge.alpha;
 
-            extendOpen(cur, open_list, m, successor, cur.g.gamma);
+                if (buffer_needed < successor->edge.agent_before.max_buffer_time && buffer_needed > 0) {
+                    std::cout << "----------Scenario 2-----------\n";
+                    std::cout << "from " << successor->source->state << " to " << successor->destination->state << "\n";
+                    std::cout << "Using " << buffer_needed << " buffer time from " << successor->edge.agent_after << "\n";
+
+                    const Node_t catf = *cur.previous_agent;
+                    gamma_t new_gamma = catf.g.gamma;
+                    //                new_gamma[successor->edge.agent_before.id] = cur.g.earliest_arrival_time() - successor->edge.alpha;
+                    new_gamma[successor->edge.agent_before.id] = successor->edge.agent_before.max_buffer_time;
+                    extendOpen(catf, open_list, m, successor, new_gamma, prev_id, catf.previous_agent);
+                    for (intervalTime_t gamma: new_gamma) {
+                        std::cout << gamma << ' ';
+                    }
+                    std::cout << std::endl;
+                }
+            }
+
+            extendOpen(cur, open_list, m, successor, cur.g.gamma, prev_id, prev_catf);
         }
     }
 
