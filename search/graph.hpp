@@ -17,6 +17,14 @@ struct GraphNode{
         stream << gn.state << " ns:" << gn.successors.size();
         return stream;
     }
+
+    bool operator==(const GraphNode &rhs) const {
+        return state == rhs.state;
+    }
+
+    bool operator!=(const GraphNode &rhs) const {
+        return !(rhs == *this);
+    }
 };
 
 struct GraphEdge{

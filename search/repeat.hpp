@@ -11,10 +11,8 @@ namespace rePEAT{
         EdgeATF g;
         double f;
         GraphNode * node;
-        long previous_id;
-        const Node *previous_agent;
         Node() = default;
-        Node(EdgeATF e, double _h, GraphNode * _node, long prev_id, const Node *prev_a):g(e),f(e.earliest_arrival_time() + _h),node(_node),previous_id(prev_id), previous_agent(prev_a){}
+        Node(EdgeATF e, double _h, GraphNode * _node):g(e),f(e.earliest_arrival_time() + _h),node(_node){}
 
         inline friend bool operator>(const Node& a, const Node& b){
             if(a.f == b.f){
@@ -46,9 +44,11 @@ namespace rePEAT{
         std::unordered_map<GraphNode *, handle_t> handles;
         std::unordered_map<GraphNode *, double> expanded;
 
-        inline void emplace(EdgeATF e, double h, GraphNode * n, GraphNode * p, long prev_id, const Node *prev_a){
+        inline Node emplace(EdgeATF e, double h, GraphNode * n, GraphNode * p){
             parent[n] = p;
-            handles[n] = queue.push(Node(e, h, n, prev_id, prev_a));
+            Node new_node = Node(e, h, n);
+            handles[n] = queue.push(new_node);
+            return new_node;
         }
 
         inline bool empty() const{
@@ -65,9 +65,11 @@ namespace rePEAT{
             queue.pop();
         }
 
-        inline void decrease_key(handle_t handle , EdgeATF e, double h, GraphNode * n, GraphNode * p, long prev_id, const Node *prev_a){
+        inline Node decrease_key(handle_t handle , EdgeATF e, double h, GraphNode * n, GraphNode * p){
             parent[n] = p;
-            queue.increase(handle, Node(e, h, n, prev_id, prev_a));
+            Node new_node = Node(e, h, n);
+            queue.increase(handle, new_node);
+            return new_node;
         }
     };
 

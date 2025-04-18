@@ -17,11 +17,12 @@
 struct NeightbouringAgent{
     long id;
     intervalTime_t max_buffer_time;
+    intervalTime_t length_unsafe;
     NeightbouringAgent() = default;
-    NeightbouringAgent(long _id, intervalTime_t _max_buffer_time): id(_id), max_buffer_time(_max_buffer_time){}
+    NeightbouringAgent(long _id, intervalTime_t _max_buffer_time, intervalTime_t _length_unsafe): id(_id), max_buffer_time(_max_buffer_time), length_unsafe(_length_unsafe){}
 
     inline friend std::ostream& operator<< (std::ostream& stream, const NeightbouringAgent& train){
-        stream << train.id << " " << train.max_buffer_time;
+        stream << train.id << " max: " << train.max_buffer_time << " unsafe_time: " << train.length_unsafe;
         return stream;
     }
 };
@@ -47,15 +48,18 @@ struct EdgeATF{
             intervalTime_t _delta,
             int id_b,
             intervalTime_t max_buf_b,
+            intervalTime_t len_uns_b,
             int id_a,
-            intervalTime_t max_buf_a)
+            intervalTime_t max_buf_a,
+            intervalTime_t len_uns_a)
         :
             zeta(_zeta),
             alpha(_alpha),
             beta(_beta),
             delta(_delta),
-            agent_before(NeightbouringAgent(id_b, max_buf_b)),
-            agent_after(NeightbouringAgent(id_a, max_buf_a))
+            agent_before(NeightbouringAgent(id_b, max_buf_b, len_uns_b)),
+            agent_after(NeightbouringAgent(id_a, max_buf_a, len_uns_a)),
+            gamma(0, 0.0)
         {};
 
 // Constructor for CATF
@@ -106,7 +110,11 @@ struct EdgeATF{
     }
     
     inline friend std::ostream& operator<< (std::ostream& stream, const EdgeATF& eatf){
-        stream << "<" << eatf.zeta << "," << eatf.alpha << "," << eatf.beta << "," << eatf.delta << ">";
+        stream << "<" << eatf.zeta << "," << eatf.alpha << "," << eatf.beta << "," << eatf.delta << ",[";
+        for (intervalTime_t gam: eatf.gamma) {
+            stream << gam << ";";
+        }
+        stream <<  "]>";
         return stream;
     }
 
