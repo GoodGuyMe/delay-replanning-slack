@@ -4,6 +4,7 @@
 #include <utility>
 #include <boost/heap/d_ary_heap.hpp>
 #include "graph.hpp"
+#include "repeat.hpp"
 
 namespace asipp{
 
@@ -49,29 +50,33 @@ namespace asipp{
             return;
         }
 
-        Node_t new_node;
+//        Node_t new_node;
 
-        if (open_list.handles.contains(successor->destination)){
-            auto handle = open_list.handles[successor->destination];
-            if(arrival_time_function.earliest_arrival_time() < (*handle).g.earliest_arrival_time()){
+        if (open_list.handles.contains(MapNode(successor->destination, gamma))){
+            auto handle = open_list.handles[MapNode(successor->destination, gamma)];
+//            if(arrival_time_function.earliest_arrival_time() < (*handle).g.earliest_arrival_time()){
                 m.decreased++;
-                double h = 0;
-                new_node = open_list.decrease_key(handle, arrival_time_function, h, successor->destination, successor->source);
-            }
+                double h = arrival_time_function.sum_of_delays();
+                Node_t new_node = open_list.decrease_key(handle, arrival_time_function, h, successor->destination, successor->source);
+                std::cerr << "New node decreased: " << new_node << std::endl;
+//            } else {
+//                std::cerr << "This line fucked with it" << std::endl;
+//            }
         }
         else{
             m.generated++;
-            double h = 0;
-            new_node = open_list.emplace(arrival_time_function, h, successor->destination, successor->source);
+            double h = arrival_time_function.sum_of_delays();
+//            double h = 0.0;
+            Node_t new_node = open_list.emplace(arrival_time_function, h, successor->destination, successor->source);
+            std::cerr << "New node added: " << new_node << std::endl;
         }
-        std::cerr << "New node: " << new_node << std::endl;
     }
 
     template <typename Node_t, typename Open_t>
     inline void expand(const Node_t& cur, Open_t& open_list, const Location& goal_loc, MetaData & m){
         (void)goal_loc;
         m.expanded++;
-        std::cerr << "---------------- new node ----------------"<< std::endl;
+//        std::cerr << "---------------- new node ----------------"<< std::endl;
         std::cerr << "Currently at node " << *cur.node << " at time " << cur.g.earliest_arrival_time() << " with outgoing edges destination: [";
         for(GraphEdge * successor: cur.node->successors){
             std::cerr << *successor->destination << ", ";
@@ -84,10 +89,10 @@ namespace asipp{
         std::cerr << "]" << std::endl;
 
         for(GraphEdge * successor: cur.node->successors){
-            if(open_list.expanded.contains(successor->destination)){
+            if(open_list.expanded.contains(MapNode(successor->destination, successor->edge.gamma))){
+                std::cerr << "Skipped successor " << successor << std::endl;
                 continue; // Already visited location and added all outgoing edges to the queue, thus the new found path to that node is worse
             }
-            std::cerr << "+++++++++++++ new successor +++++++++++++"<< std::endl;
             intervalTime_t gamma_after  = cur.g.gamma[successor->edge.agent_after.id];
             intervalTime_t gamma_before = cur.g.gamma[successor->edge.agent_before.id];
 // || cur.g.supremum_arrival_time() <= successor->edge.zeta
@@ -98,26 +103,28 @@ namespace asipp{
 //            intervalTime_t buffer_needed = cur.g.earliest_arrival_time() - successor->edge.beta;
 
             intervalTime_t length_unsafe_after = successor->edge.agent_after.length_unsafe;
-            std::cerr << "----------Scenario 1-----------\n";
-            std::cerr << "from " << successor->source->state << " to " << successor->destination->state << "\n";
+//            std::cerr << "----------Scenario 1-----------\n";
+//            std::cerr << "from " << successor->source->state << " to " << successor->destination->state << "\n";
 //            std::cerr << "Using " << buffer_needed << " buffer time from " << successor->edge.agent_after << "\n";
-            std::cerr << "Length unsafe after: " << length_unsafe_after << "\n";
+//            std::cerr << "Length unsafe after: " << length_unsafe_after << "\n";
 
 //            buffer_needed = std::min(buffer_needed, length_unsafe_after);
 
 //            if (buffer_needed < successor->edge.agent_after.max_buffer_time) {
             if (length_unsafe_after < successor->edge.agent_after.max_buffer_time) {
+//                std::cerr << "Addition scenario 1" << std::endl;
                 gamma_t gamma_1 = gamma_t(cur.g.gamma);
                 gamma_1[successor->edge.agent_after.id] = length_unsafe_after;
-                std::cerr << "Addition scenario 1" << std::endl;
                 extendOpen(cur, open_list, m, successor, gamma_1);
             }
-            gamma_t gamma_2 = gamma_t(cur.g.gamma);
-            gamma_2[successor->edge.agent_after.id] = successor->edge.agent_after.max_buffer_time;
-            extendOpen(cur, open_list, m, successor, gamma_2);
-//            }
-            std::cerr << "Standard addition" << std::endl;
-            extendOpen(cur, open_list, m, successor, cur.g.gamma);
+            if (successor->edge.agent_after.max_buffer_time > 0) {
+//                std::cerr << "Addition scenario 2" << std::endl;
+                gamma_t gamma_2 = gamma_t(cur.g.gamma);
+                gamma_2[successor->edge.agent_after.id] = successor->edge.agent_after.max_buffer_time;
+                extendOpen(cur, open_list, m, successor, gamma_2);
+            }
+//            std::cerr << "Standard addition" << std::endl;
+            extendOpen(cur, open_list, m, successor, gamma_t(cur.g.gamma));
         }
     }
 

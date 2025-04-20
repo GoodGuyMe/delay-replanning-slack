@@ -11,15 +11,21 @@ struct GraphNode;
 struct GraphNode{
     State state;
     boost::container::flat_set<GraphEdge *> successors;
+    gamma_t gamma;
     GraphNode() = default;
     GraphNode(const State& s):state(s){}
     inline friend std::ostream& operator<<(std::ostream& stream, const GraphNode& gn){
-        stream << gn.state << " ns:" << gn.successors.size();
+        stream << gn.state << " ns:" << gn.successors.size() << " [";
+        for (intervalTime_t gam: gn.gamma) {
+            stream << gam << ", ";
+        }
+        stream << "]";
         return stream;
     }
 
     bool operator==(const GraphNode &rhs) const {
-        return state == rhs.state;
+        return state == rhs.state &&
+        gamma == rhs.gamma;
     }
 
     bool operator!=(const GraphNode &rhs) const {

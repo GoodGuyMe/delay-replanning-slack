@@ -9,6 +9,7 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <iostream>
+#include <numeric>
 #include "constants.hpp"
 #include "segment.hpp"
 
@@ -75,7 +76,9 @@ struct EdgeATF{
             beta(_beta),
             delta(_delta),
             gamma(_gamma)
-    {}
+    {
+        gamma = gamma_t(_gamma);
+    }
 
     inline intervalTime_t earliest_arrival_time() const{
         return alpha + delta;
@@ -103,6 +106,10 @@ struct EdgeATF{
 
     inline intervalTime_t supremum_arrival_time() const{
         return std::numeric_limits<double>::infinity();
+    }
+
+    inline intervalTime_t sum_of_delays() const{
+        return std::reduce(gamma.begin(), gamma.end());
     }
 
     inline bool operator<(const EdgeATF& rhs) const{
