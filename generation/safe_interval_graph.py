@@ -69,7 +69,7 @@ def plot_safe_node_intervals(safe_node_intervals, moves_per_agent=None):
                     node_map[node] = y
                     y += 1
         for node, y in node_map.items():
-            for start, stop, train_before, train_after in safe_node_intervals[node.get_identifier()]:
+            for start, stop, train_before, train_after, _, _ in safe_node_intervals[node.get_identifier()]:
                 plt.plot([start, stop], [y, y], color='green')
 
         y_axis = list(node_map.values())

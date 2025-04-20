@@ -21,7 +21,7 @@
             ],
             "movements": [
                 {
-                    "startLocation": "t-n1_1B",
+                    "startLocation": "t-n3_1B",
                     "startTime": 100,
                     "endTime": 750,
                     "endLocation": "t-14B",
@@ -35,13 +35,13 @@
                 8656
             ],
             "trainUnitTypes": [
-                "SNG"
+                "VIRM"
             ],
             "movements": [
                 {
-                    "startLocation": "t-n1_2B",
-                    "startTime": 400,
-                    "endTime": 0,
+                    "startLocation": "t-n3_1B",
+                    "startTime": 600,
+                    "endTime": 750,
                     "endLocation": "t-14B",
                     "stops": {}
                 }
@@ -53,13 +53,31 @@
                 8656
             ],
             "trainUnitTypes": [
+                "SNG"
+            ],
+            "movements": [
+                {
+                    "startLocation": "t-n3_1B",
+                    "startTime": 900,
+                    "endTime": 0,
+                    "endLocation": "t-14B",
+                    "stops": {}
+                }
+            ]
+        },
+        {
+            "trainNumber": 4,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
                 "VIRM"
             ],
             "movements": [
                 {
-                    "startLocation": "t-n1_1B",
-                    "startTime": 1900,
-                    "endTime": 2000,
+                    "startLocation": "t-n3_1B",
+                    "startTime": 2400,
+                    "endTime": 2500,
                     "endLocation": "t-14B",
                     "stops": {}
                 }

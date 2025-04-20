@@ -36,28 +36,29 @@ def read_scenario(file, g, g_block, agent=-1):
     end_time = time.time()
     return node_intervals, edge_intervals, block_intervals, agent_intervals, moves_per_agent, end_time - start_time
 
-def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, max_buffer_time=120):
+def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, max_buffer_time=600):
     """Write SIPP graph to gzip file for the search procedure"""
     with gzip.open(file, "wt") as f:
         f.write("vertex count: " + str(len([x for node in safe_node_intervals for x in safe_node_intervals[node]])) + "\n")
         f.write("edge count: " + str(len(safe_edge_intervals)) + "\n")
 
-        max_buffer_before = max_buffer_time
-        max_buffer_after = max_buffer_time
-
         num_trains = 0
 
         """ Write safe node intervals, as 'node_name start end id_before id_after'"""
         for node in safe_node_intervals:
-            for start, end, id_before, id_after in safe_node_intervals[node]:
+            for start, end, id_before, id_after, _, _ in safe_node_intervals[node]:
+                max_buffer_before = 0 if id_before == 0 else max_buffer_time
+                max_buffer_after  = 0 if id_after == 0 else max_buffer_time
                 num_trains = max(num_trains, id_before, id_after)
                 f.write(f"{node} {start} {end} {id_before} {max_buffer_before} {id_after} {max_buffer_after}\n")
 
-        """Write atfs, as 'from_id to_id zeta alpha beta delta id_before id_after'"""
-        for from_id, to_id, zeta, alpha, beta, delta, id_before, id_after in safe_edge_intervals:
+        """Write atfs, as 'from_id to_id zeta alpha beta delta id_before max_buf_before len_unsafe_before id_after max_buf_after len_unsafe_after'"""
+        for from_id, to_id, zeta, alpha, beta, delta, id_before, len_uns_b, id_after, len_uns_a in safe_edge_intervals:
             # In our domain there is not really a difference between alpha and zeta since we have no waiting time, so they are the same, but we keep both for extendability.
+            max_buffer_before = 0 if id_before == 0 else max_buffer_time
+            max_buffer_after = 0 if id_after == 0 else max_buffer_time
             num_trains = max(num_trains, id_before, id_after)
-            f.write(f"{from_id} {to_id} {zeta} {alpha} {beta} {delta} {id_before} {max_buffer_before} {id_after} {max_buffer_after}\n")
+            f.write(f"{from_id} {to_id} {zeta} {alpha} {beta} {delta} {id_before} {max_buffer_before} {len_uns_b} {id_after} {max_buffer_after} {len_uns_a}\n")
         f.write(f"num_trains {num_trains}\n")
 
 def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output, max_buffer_time=120):

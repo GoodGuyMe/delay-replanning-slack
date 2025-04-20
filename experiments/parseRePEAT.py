@@ -22,7 +22,9 @@ def parse_list_of_outputs(s):
             paths[-1].append(s[i].split(" ")[0])
             i += 1
         atf = s[i]
-        atf = tuple(atf.strip("<").strip(">").split(","))
+        atf = atf.strip("<").strip(">").split(",")
+        atf[-1] = atf[-1][1:-2].split(";")
+        atf = tuple(atf)
         eatfs.append(atf)
         i += 1
     if [] in paths:

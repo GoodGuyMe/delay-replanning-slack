@@ -6,6 +6,16 @@
     "movementTrackCoefficient": 0,
     "signals": [
         {
+            "name": "n1_2",
+            "side": "B",
+            "track": 23
+        },
+        {
+            "name": "n1_1",
+            "side": "B",
+            "track": 22
+        },
+        {
             "name": "2",
             "side": "B",
             "track": 2
@@ -41,14 +51,19 @@
             "track": 8
         },
         {
-            "name": "10_1",
+            "name": "9",
+            "side": "B",
+            "track": 9
+        },
+        {
+            "name": "10",
             "side": "B",
             "track": 12
         },
         {
-            "name": "10_2",
+            "name": "11",
             "side": "B",
-            "track": 13
+            "track": 14
         },
         {
             "name": "12",
@@ -81,14 +96,19 @@
             "track": 17
         },
         {
-            "name": "10_1A",
+            "name": "11A",
+            "side": "A",
+            "track": 14
+        },
+        {
+            "name": "10A",
             "side": "A",
             "track": 12
         },
         {
-            "name": "10_2A",
+            "name": "9A",
             "side": "A",
-            "track": 13
+            "track": 9
         },
         {
             "name": "8A",
@@ -126,24 +146,54 @@
             "track": 2
         },
         {
-            "name": "n1_1",
-            "side": "B",
-            "track": 22
-        },
-        {
             "name": "n1_1A",
             "side": "A",
             "track": 22
         },
         {
-            "name": "n1_2",
-            "side": "B",
-            "track": 23
-        },
-        {
             "name": "n1_2A",
             "side": "A",
             "track": 23
+        },
+        {
+            "name": "n2_1",
+            "side": "B",
+            "track": 24
+        },
+        {
+            "name": "n2_2",
+            "side": "B",
+            "track": 25
+        },
+        {
+            "name": "n3_2",
+            "side": "B",
+            "track": 27
+        },
+        {
+            "name": "n3_1",
+            "side": "B",
+            "track": 26
+        },
+        {
+            "name": "n2_1A",
+            "side": "A",
+            "track": 24
+        },
+        {
+            "name": "n2_2A",
+            "side": "A",
+            "track": 25
+        },
+        {
+            "name": "n3_2A",
+            "side": "A",
+            "track": 27
+        },
+        {
+            "name": "n3_1A",
+            "side": "A",
+            "track": 26
         }
     ],
     "taskTypes": [],
@@ -157,7 +207,7 @@
                 21
             ],
             "id": 1,
-            "length": 1000,
+            "length": 300,
             "name": "t-1",
             "parkingAllowed": false,
             "sawMovementAllowed": false,
@@ -172,7 +222,7 @@
                 1
             ],
             "id": 2,
-            "length": 1000,
+            "length": 400,
             "name": "t-2",
             "parkingAllowed": false,
             "sawMovementAllowed": false,
@@ -274,45 +324,15 @@
                 12
             ],
             "bSide": [
-                11
-            ],
-            "id": 9,
-            "length": 500,
-            "name": "t-9_1",
-            "parkingAllowed": false,
-            "sawMovementAllowed": false,
-            "stationPlatform": false,
-            "type": "RailRoad"
-        },
-        {
-            "aSide": [
-                13
-            ],
-            "bSide": [
-
-            ],
-            "id": 10,
-            "length": 500,
-            "name": "t-9_2",
-            "parkingAllowed": false,
-            "sawMovementAllowed": false,
-            "stationPlatform": false,
-            "type": "RailRoad"
-        },
-        {
-            "aSide": [
-                9
-            ],
-            "bSide": [
                 8
             ],
-            "id": 11,
-            "length": 25,
-            "name": "s-1",
+            "id": 9,
+            "length": 1000,
+            "name": "t-9",
             "parkingAllowed": false,
             "sawMovementAllowed": false,
             "stationPlatform": false,
-            "type": "Switch"
+            "type": "RailRoad"
         },
         {
             "aSide": [
@@ -322,52 +342,8 @@
                 9
             ],
             "id": 12,
-            "length": 500,
-            "name": "t-10_1",
-            "parkingAllowed": false,
-            "sawMovementAllowed": false,
-            "stationPlatform": false,
-            "type": "RailRoad"
-        },
-        {
-            "aSide": [
-                15
-            ],
-            "bSide": [
-                10
-            ],
-            "id": 13,
-            "length": 500,
-            "name": "t-10_2",
-            "parkingAllowed": false,
-            "sawMovementAllowed": false,
-            "stationPlatform": false,
-            "type": "RailRoad"
-        },
-        {
-            "aSide": [
-                16
-            ],
-            "bSide": [
-                12
-            ],
-            "id": 14,
-            "length": 500,
-            "name": "t-11_1",
-            "parkingAllowed": false,
-            "sawMovementAllowed": false,
-            "stationPlatform": false,
-            "type": "RailRoad"
-        },
-        {
-            "aSide": [
-            ],
-            "bSide": [
-                13
-            ],
-            "id": 15,
-            "length": 500,
-            "name": "t-11_2",
+            "length": 1000,
+            "name": "t-10",
             "parkingAllowed": false,
             "sawMovementAllowed": false,
             "stationPlatform": false,
@@ -378,22 +354,22 @@
                 17
             ],
             "bSide": [
-                14
+                12
             ],
-            "id": 16,
-            "length": 25,
-            "name": "s-2",
+            "id": 14,
+            "length": 1000,
+            "name": "t-11",
             "parkingAllowed": false,
             "sawMovementAllowed": false,
             "stationPlatform": false,
-            "type": "Switch"
+            "type": "RailRoad"
         },
         {
             "aSide": [
                 18
             ],
             "bSide": [
-                16
+                14
             ],
             "id": 17,
             "length": 1000,
@@ -439,7 +415,7 @@
                 22
             ],
             "id": 20,
-            "length": 1000,
+            "length": 500,
             "name": "t-0_1",
             "parkingAllowed": false,
             "sawMovementAllowed": false,
@@ -454,7 +430,7 @@
                 23
             ],
             "id": 21,
-            "length": 1000,
+            "length": 300,
             "name": "t-0_2",
             "parkingAllowed": false,
             "sawMovementAllowed": false,
@@ -465,9 +441,11 @@
             "aSide": [
                 20
             ],
-            "bSide": [],
+            "bSide": [
+                24
+            ],
             "id": 22,
-            "length": 1000,
+            "length": 300,
             "name": "t-n1_1",
             "parkingAllowed": false,
             "sawMovementAllowed": false,
@@ -478,10 +456,68 @@
             "aSide": [
                 21
             ],
-            "bSide": [],
+            "bSide": [
+                25
+            ],
             "id": 23,
-            "length": 1000,
+            "length": 500,
             "name": "t-n1_2",
+            "parkingAllowed": false,
+            "sawMovementAllowed": false,
+            "stationPlatform": false,
+            "type": "RailRoad"
+        },
+        {
+            "aSide": [
+                22
+            ],
+            "bSide": [
+                26
+            ],
+            "id": 24,
+            "length": 1000,
+            "name": "t-n2_1",
+            "parkingAllowed": false,
+            "sawMovementAllowed": false,
+            "stationPlatform": false,
+            "type": "RailRoad"
+        },
+        {
+            "aSide": [
+                23
+            ],
+            "bSide": [
+                27
+            ],
+            "id": 25,
+            "length": 1000,
+            "name": "t-n2_2",
+            "parkingAllowed": false,
+            "sawMovementAllowed": false,
+            "stationPlatform": false,
+            "type": "RailRoad"
+        },
+        {
+            "aSide": [
+                24
+            ],
+            "bSide": [],
+            "id": 26,
+            "length": 1000,
+            "name": "t-n3_1",
+            "parkingAllowed": false,
+            "sawMovementAllowed": false,
+            "stationPlatform": false,
+            "type": "RailRoad"
+        },
+        {
+            "aSide": [
+                25
+            ],
+            "bSide": [],
+            "id": 27,
+            "length": 1000,
+            "name": "t-n3_2",
             "parkingAllowed": false,
             "sawMovementAllowed": false,
             "stationPlatform": false,
