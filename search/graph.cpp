@@ -30,10 +30,6 @@ void read_ATF(std::istream& i, std::vector<inATF>& res){
     i >> s;
     id_b = stoi(s);
     i >> s;
-    max_buf_b = stod(s);
-    i >> s;
-    len_uns_b = stod(s);
-    i >> s;
     id_a = stoi(s);
     i >> s;
     max_buf_a = stod(s);

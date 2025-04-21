@@ -85,6 +85,8 @@ def create_safe_intervals(intervals, g, agent_speed=15, print_intervals=False):
             for interval in safe_node_intervals[node]:
                 print(f"    Interval {interval} with index {state_indices[node][str(interval)]}")
     # Assign the safe edge intervals
+
+
     for node in safe_node_intervals:
         # Interval is the safe interval on the from node: (start-time, end-time)
         for from_interval in safe_node_intervals[node]:
@@ -108,9 +110,6 @@ def create_safe_intervals(intervals, g, agent_speed=15, print_intervals=False):
                             #  It's most likely the edge (maybe always?)
                             train_before = edge_interval[2]
                             train_after = edge_interval[3]
-                            len_unsafe_before = edge_interval[4]
-                            len_unsafe_after = edge_interval[5]
-
 
                             # If the interval is too short to make the move, don't include it.
                             if beta > alpha:
@@ -122,9 +121,7 @@ def create_safe_intervals(intervals, g, agent_speed=15, print_intervals=False):
                                     beta,
                                     o.length / agent_speed, # delta: length of the edge or in case of A-B edge the time to walk to the other side
                                     train_before,
-                                    len_unsafe_before,
-                                    train_after,
-                                    len_unsafe_after
+                                    train_after
                                 ))
                                 safe_edge_node_references[o.get_identifier()].append(((node, o.to_node.name), from_interval, to_interval, arrival_time_functions[-1]))
                             else:
