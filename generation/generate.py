@@ -44,9 +44,9 @@ def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, max_
 
         num_trains = 0
 
-
-        for from_id, to_id, _, alpha, _, _, _, _ in safe_edge_intervals:
-
+        
+        for from_id, to_id, _, alpha, beta, _, _, _ in safe_edge_intervals:
+            pass
 
         """ Write safe node intervals, as 'node_name start end id_before id_after'"""
         for node in safe_node_intervals:

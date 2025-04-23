@@ -27,13 +27,13 @@ namespace asipp{
     }
 
     template <typename Node_t, typename Open_t>
-    inline void extendOpen(const Node_t& cur, Open_t& open_list, MetaData & m, GraphEdge * successor, gamma_t gamma) {
+    inline void extendOpen(const Node_t& cur, Open_t& open_list, MetaData & m, GraphEdge * successor, gamma_t gamma, intervalTime_t succ_alpha, intervalTime_t succ_beta) {
         intervalTime_t gamma_after = gamma[successor->edge.agent_after.id];
         intervalTime_t gamma_before = gamma[successor->edge.agent_before.id];
-        double zeta = cur.g.zeta;
-        double alpha = std::max(cur.g.alpha, successor->edge.alpha - cur.g.delta + gamma_before);
-        double beta = std::min(cur.g.beta, successor->edge.beta - cur.g.delta + gamma_after);
-        double delta = successor->edge.delta + cur.g.delta;
+        intervalTime_t zeta = cur.g.zeta;
+        intervalTime_t alpha = std::max(cur.g.alpha, succ_alpha);
+        intervalTime_t beta = std::min(cur.g.beta, successor->edge.beta - cur.g.delta + gamma_after);
+        intervalTime_t delta = successor->edge.delta + cur.g.delta;
         EdgeATF arrival_time_function(zeta, alpha, beta, delta, gamma);
 
         if (beta <= alpha) {
@@ -95,12 +95,6 @@ namespace asipp{
             }
             intervalTime_t gamma_after  = cur.g.gamma[successor->edge.agent_after.id];
             intervalTime_t gamma_before = cur.g.gamma[successor->edge.agent_before.id];
-// || cur.g.supremum_arrival_time() <= successor->edge.zeta
-
-//              Scenario 1 & 3
-//            if(cur.g.earliest_arrival_time() >= (successor->edge.beta + gamma_after)) {
-//                Limit usage of buffer time by how long the unsafe interval is that follows the safe interval
-//            intervalTime_t buffer_needed = cur.g.earliest_arrival_time() - successor->edge.beta;
 
             intervalTime_t length_unsafe_after = successor->edge.agent_after.length_unsafe;
 //            std::cerr << "----------Scenario 1-----------\n";
@@ -112,16 +106,21 @@ namespace asipp{
 
 //            if (buffer_needed < successor->edge.agent_after.max_buffer_time) {
             if (length_unsafe_after < successor->edge.agent_after.max_buffer_time) {
+//              // Add two edges, one from the edge.beta to edge.beta + length_unsafe, and from that point till the max buffer time
 //                std::cerr << "Addition scenario 1" << std::endl;
                 gamma_t gamma_1 = gamma_t(cur.g.gamma);
                 gamma_1[successor->edge.agent_after.id] = length_unsafe_after;
-                extendOpen(cur, open_list, m, successor, gamma_1);
+                intervalTime_t succ_alpha = successor->edge.alpha - cur.g.delta + gamma_before;
+                intervalTime_t succ_beta = succ_alpha + length_unsafe_after;
+                extendOpen(cur, open_list, m, successor, gamma_1, succ_alpha, succ_beta);
             }
             if (successor->edge.agent_after.max_buffer_time > 0) {
 //                std::cerr << "Addition scenario 2" << std::endl;
                 gamma_t gamma_2 = gamma_t(cur.g.gamma);
                 gamma_2[successor->edge.agent_after.id] = successor->edge.agent_after.max_buffer_time;
-                extendOpen(cur, open_list, m, successor, gamma_2);
+                intervalTime_t succ_alpha = successor->edge.alpha - cur.g.delta + gamma_after + length_unsafe_after;
+                intervalTime_t succ_beta = successor->edge.beta - cur.g.delta + successor->edge.agent_after.max_buffer_time;
+                extendOpen(cur, open_list, m, successor, gamma_2, succ_alpha, succ_beta);
             }
 //            std::cerr << "Standard addition" << std::endl;
             extendOpen(cur, open_list, m, successor, gamma_t(cur.g.gamma));
