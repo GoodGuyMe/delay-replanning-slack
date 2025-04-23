@@ -32,25 +32,14 @@ namespace asipp{
         intervalTime_t gamma_before = gamma[successor->edge.agent_before.id];
         intervalTime_t zeta = cur.g.zeta;
         intervalTime_t alpha = std::max(cur.g.alpha, succ_alpha);
-        intervalTime_t beta = std::min(cur.g.beta, successor->edge.beta - cur.g.delta + gamma_after);
+        intervalTime_t beta = std::min(cur.g.beta, succ_beta);
         intervalTime_t delta = successor->edge.delta + cur.g.delta;
         EdgeATF arrival_time_function(zeta, alpha, beta, delta, gamma);
 
         if (beta <= alpha) {
             std::cerr << "Beta smaller than Alpha! " << alpha << ", " << beta << std::endl;
-//            std::cerr << "Alpha cur: " << cur.g.alpha << ", edge: " << successor->edge.alpha - cur.g.delta + gamma_before << std::endl;
-//            std::cerr << "Beta cur: " << cur.g.beta << ", beta: " << successor->edge.beta - cur.g.delta + gamma_after << std::endl;
-//            std::cerr << "Agent before: " << successor->edge.agent_before.id << ", after: " << successor->edge.agent_before.id << std::endl;
-//            std::cerr << "Gamma before: " << gamma_before << ", after: " << gamma_after << std::endl;
-//            std::cerr << "Gamma: [";
-//            for (intervalTime_t gam: gamma) {
-//                std::cerr << gam << ", ";
-//            }
-//            std::cerr << "]" << std::endl;
             return;
         }
-
-//        Node_t new_node;
 
         if (open_list.handles.contains(MapNode(successor->destination, gamma))){
             auto handle = open_list.handles[MapNode(successor->destination, gamma)];
@@ -66,7 +55,6 @@ namespace asipp{
         else{
             m.generated++;
             double h = arrival_time_function.sum_of_delays();
-//            double h = 0.0;
             Node_t new_node = open_list.emplace(arrival_time_function, h, successor->destination, successor->source);
             std::cerr << "New node added: " << new_node << std::endl;
         }
@@ -96,34 +84,32 @@ namespace asipp{
             intervalTime_t gamma_after  = cur.g.gamma[successor->edge.agent_after.id];
             intervalTime_t gamma_before = cur.g.gamma[successor->edge.agent_before.id];
 
+            intervalTime_t alpha = successor->edge.alpha - cur.g.delta + gamma_before;
+            intervalTime_t beta  = successor->edge.beta  - cur.g.delta + gamma_after;
+
             intervalTime_t length_unsafe_after = successor->edge.agent_after.length_unsafe;
-//            std::cerr << "----------Scenario 1-----------\n";
-//            std::cerr << "from " << successor->source->state << " to " << successor->destination->state << "\n";
-//            std::cerr << "Using " << buffer_needed << " buffer time from " << successor->edge.agent_after << "\n";
-//            std::cerr << "Length unsafe after: " << length_unsafe_after << "\n";
 
-//            buffer_needed = std::min(buffer_needed, length_unsafe_after);
-
-//            if (buffer_needed < successor->edge.agent_after.max_buffer_time) {
             if (length_unsafe_after < successor->edge.agent_after.max_buffer_time) {
 //              // Add two edges, one from the edge.beta to edge.beta + length_unsafe, and from that point till the max buffer time
 //                std::cerr << "Addition scenario 1" << std::endl;
                 gamma_t gamma_1 = gamma_t(cur.g.gamma);
                 gamma_1[successor->edge.agent_after.id] = length_unsafe_after;
-                intervalTime_t succ_alpha = successor->edge.alpha - cur.g.delta + gamma_before;
-                intervalTime_t succ_beta = succ_alpha + length_unsafe_after;
+                intervalTime_t succ_alpha = beta;
+                intervalTime_t succ_beta =  beta + length_unsafe_after;
                 extendOpen(cur, open_list, m, successor, gamma_1, succ_alpha, succ_beta);
+            } else {
+                length_unsafe_after = 0;
             }
             if (successor->edge.agent_after.max_buffer_time > 0) {
 //                std::cerr << "Addition scenario 2" << std::endl;
                 gamma_t gamma_2 = gamma_t(cur.g.gamma);
                 gamma_2[successor->edge.agent_after.id] = successor->edge.agent_after.max_buffer_time;
-                intervalTime_t succ_alpha = successor->edge.alpha - cur.g.delta + gamma_after + length_unsafe_after;
-                intervalTime_t succ_beta = successor->edge.beta - cur.g.delta + successor->edge.agent_after.max_buffer_time;
+                intervalTime_t succ_alpha = beta + length_unsafe_after;
+                intervalTime_t succ_beta  = beta + successor->edge.agent_after.max_buffer_time;
                 extendOpen(cur, open_list, m, successor, gamma_2, succ_alpha, succ_beta);
             }
 //            std::cerr << "Standard addition" << std::endl;
-            extendOpen(cur, open_list, m, successor, gamma_t(cur.g.gamma));
+            extendOpen(cur, open_list, m, successor, gamma_t(cur.g.gamma), alpha, beta);
         }
     }
 
