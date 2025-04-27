@@ -47,7 +47,7 @@ namespace rePEAT{
                     }
                     return a.g.alpha < b.g.alpha;
                 }
-                return a.g.sum_of_delays() < b.g.sum_of_delays();
+                return a.g.sum_of_delays() > b.g.sum_of_delays();
             }
             return a.f > b.f;
         }
@@ -98,6 +98,10 @@ namespace rePEAT{
             Node new_node = Node(e, h, n);
             queue.increase(handle, new_node);
             return new_node;
+        }
+
+        inline size_t size() {
+            return queue.size();
         }
     };
 
