@@ -36,22 +36,31 @@ def read_scenario(file, g, g_block, agent=-1):
     end_time = time.time()
     return node_intervals, edge_intervals, block_intervals, agent_intervals, moves_per_agent, end_time - start_time
 
-def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, max_buffer_time=600):
+def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, max_buffer_time, indices_to_states):
     """Write SIPP graph to gzip file for the search procedure"""
-    with open(file + "_unzipped", "wt") as f:
+    # with open(file + "_unzipped", "wt") as f:
+    with gzip.open(file, "wt") as f:
         f.write("vertex count: " + str(len([x for node in safe_node_intervals for x in safe_node_intervals[node]])) + "\n")
         f.write("edge count: " + str(len(safe_edge_intervals)) + "\n")
 
         num_trains = 0
 
-        
+        alpha_store = {}
+        length_unsafe_list = {}
         for from_id, to_id, _, alpha, beta, _, _, _ in safe_edge_intervals:
-            pass
+            from_node = indices_to_states[from_id]
+            if from_node not in alpha_store:
+                alpha_store[from_node] = []
+            alpha_store[from_node].append((alpha, beta))
+        for from_node, list in alpha_store.items():
+            list.sort(key=lambda x: x[0])
+            for (_, beta), (alpha, _) in zip(list, list[1:]):
+                length_unsafe_list[(from_node, beta)] = alpha - beta
 
         """ Write safe node intervals, as 'node_name start end id_before id_after'"""
         for node in safe_node_intervals:
             for start, end, id_before, id_after, _, _ in safe_node_intervals[node]:
-                max_buffer  = 0 if id_after == 0 else max_buffer_time
+                max_buffer  = 0.0 if id_after == 0 else max_buffer_time
                 num_trains = max(num_trains, id_before, id_after)
                 f.write(f"{node} {start} {end} {id_before} {id_after} {max_buffer}\n")
 
@@ -60,19 +69,20 @@ def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, max_
             # In our domain there is not really a difference between alpha and zeta since we have no waiting time, so they are the same, but we keep both for extendability.
             max_buffer = 0 if id_after == 0 else max_buffer_time
             num_trains = max(num_trains, id_before, id_after)
-            len_uns_a = 120
+            from_node = indices_to_states[from_id]
+            len_uns_a = length_unsafe_list[(from_node, beta)] if (from_node, beta) in length_unsafe_list else 0
             f.write(f"{from_id} {to_id} {zeta} {alpha} {beta} {delta} {id_before} {id_after} {max_buffer} {len_uns_a}\n")
         f.write(f"num_trains {num_trains}\n")
 
-def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output, max_buffer_time=120):
+def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output, max_buffer_time=80):
     """For testing the time to get the safe intervals. Also writes to file (without timing). Used for experiments."""
     g = read_graph(location)
     g_block = create_graph_blocks(g)
     _, _, block_intervals, _, _, unsafe_computation_time = read_scenario(scenario, g, g_block, agent_id)
     start_time = time.time()
-    safe_block_intervals, safe_block_edges_intervals, atfs, _ = create_safe_intervals(block_intervals, g_block, float(agent_speed), print_intervals=False)
+    safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, float(agent_speed), print_intervals=False)
     safe_computation_time = time.time() - start_time
-    write_intervals_to_file(output, safe_block_intervals, atfs, max_buffer_time)
+    write_intervals_to_file(output, safe_block_intervals, atfs, max_buffer_time, indices_to_states)
     return unsafe_computation_time + safe_computation_time
 
 if __name__ == "__main__":
@@ -82,6 +92,6 @@ if __name__ == "__main__":
     unsafe_node_intervals, unsafe_edge_intervals, block_intervals, agent_intervals, moves_per_agent, computation_time = read_scenario(args.scenario, g, g_block, args.agent_id)
     block_routes = convertMovesToBlock(moves_per_agent, g)
     plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g.distance_markers)
-    safe_block_intervals, safe_block_edges_intervals, atfs, _ = create_safe_intervals(block_intervals, g_block, float(args.agent_speed), print_intervals=args.printing == "True")
-    write_intervals_to_file(args.output, safe_block_intervals, atfs)
+    safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, float(args.agent_speed), print_intervals=args.printing == "True")
+    write_intervals_to_file(args.output, safe_block_intervals, atfs, 300, indices_to_states)
     plot_safe_node_intervals(safe_block_intervals | safe_block_edges_intervals, block_routes)

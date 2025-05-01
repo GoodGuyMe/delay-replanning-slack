@@ -6,6 +6,7 @@ def create_safe_intervals(intervals, g, agent_speed=15, print_intervals=False):
     safe_edge_node_references = {e.get_identifier(): [] for e in g.edges}
     state_indices = {n: {} for n in g.nodes} | {e.get_identifier(): {} for e in g.edges}# save the index per node and also the start of each interval
     edge_durations = {n: {} for n in g.nodes}
+    indices_to_states = {}
     index = 0
     # Create safe intervals from the unsafe node intervals
     # Also store the state indices
@@ -32,6 +33,7 @@ def create_safe_intervals(intervals, g, agent_speed=15, print_intervals=False):
                 train_before = train
                 # Dictionary with node keys, each entry has a dictionary with interval keys and then the index value
                 state_indices[node][str(interval)] = index
+                indices_to_states[index] = node
                 duration = dur
                 edge_durations[node][str(interval)] = duration
                 index += 1
@@ -40,6 +42,7 @@ def create_safe_intervals(intervals, g, agent_speed=15, print_intervals=False):
             last_interval = (current, g.global_end_time, train_before, 0, 0, 0)
             safe_node_intervals[node].append(last_interval)
             state_indices[node][str(last_interval)] = index
+            indices_to_states[index] = node
             edge_durations[node][str(last_interval)] = duration
             index += 1
 
@@ -140,4 +143,4 @@ def create_safe_intervals(intervals, g, agent_speed=15, print_intervals=False):
                 print(f"Edge has interval from {data[0][0]} state {atf[0]} {data[1]} to {data[0][1]} state {atf[1]} {data[2]} with zeta {atf[2]}, alpha {atf[3]}, beta {atf[4]}, delta {atf[5]}, train_before {atf[6]} and train_after {atf[7]}.")
         for node in safe_node_intervals:
             print(f"{node} safe intervals: {[str(x) for x in safe_node_intervals[node]]}")                
-    return safe_node_intervals, safe_edge_intervals, arrival_time_functions, errors
+    return safe_node_intervals, safe_edge_intervals, arrival_time_functions, errors, indices_to_states

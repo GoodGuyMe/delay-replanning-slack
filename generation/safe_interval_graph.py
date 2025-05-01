@@ -155,12 +155,12 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, dista
     plt.xlabel(f"Distance")
 
     plot_train_path(moves_per_agent)
-    plt.legend()
+    # plt.legend()
 
     for (dist, edge) in node_map.values():
         if "r" in edge.from_node.name:
             x_axis.append(dist)
-            xtics.append(edge.from_node.name)
+            xtics.append(edge.from_node.name.replace("r", "s"))
 
     max_distance = 40000
 
@@ -170,5 +170,7 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, dista
             xtics.append(key)
 
     plt.xticks(x_axis, xtics, rotation=90)
+
+    plt.gca().invert_yaxis()
     plt.title(f"Agents")
     plt.show()
