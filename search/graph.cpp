@@ -17,7 +17,7 @@ void read_ATF(std::istream& i, std::vector<inATF>& res){
     std::string s;
     if(!(i >> x)){return;}
     i >> y;
-    intervalTime_t zeta, alpha, beta, delta, max_buf_b, max_buf_a, len_uns_b, len_uns_a;
+    intervalTime_t zeta, alpha, beta, delta, max_buf_a, len_uns_a;
     int id_b, id_a;
     i >> s;
     zeta = stod(s);
@@ -35,7 +35,7 @@ void read_ATF(std::istream& i, std::vector<inATF>& res){
     max_buf_a = stod(s);
     i >> s;
     len_uns_a = stod(s);
-    EdgeATF edge(zeta, alpha, beta, delta, id_b, max_buf_b, len_uns_b, id_a, max_buf_a, len_uns_a);
+    EdgeATF edge(zeta, alpha, beta, delta, id_b, id_a, max_buf_a, len_uns_a);
     res.emplace_back(x, y, edge); 
 }
 
@@ -56,8 +56,10 @@ Graph read_graph(std::string filename){
     instream >> s >> s >> n_edges;
     g.nodes.reserve(n_nodes);
     g.node_array.reserve(n_nodes);
+    std::cerr << "start nodes read\n";
+    std::flush(std::cerr);
     for (long i = 0; i < n_nodes; i++){
-        double st, en, buf_b, buf_a;
+        double st, en, buf_a;
         int id_b, id_a;
         instream >> name;
         instream >> s;
@@ -67,16 +69,16 @@ Graph read_graph(std::string filename){
         instream >> s;
         id_b = stoi(s);
         instream >> s;
-        buf_b = stod(s);
-        instream >> s;
         id_a = stoi(s);
         instream >> s;
         buf_a = stod(s);
-        State state(name, st, en, id_b, buf_b, id_a, buf_a);
+        State state(name, st, en, id_b, id_a, buf_a);
         g.node_array.emplace_back(state);
         g.nodes.emplace(state, &g.node_array.back());
+        std::cerr << state << std::endl;
     }
     std::cerr << "nodes read\n";
+    std::flush(std::cerr);
     for (long i = 0; i < n_edges; i++){
         read_ATF(instream, res);
     }

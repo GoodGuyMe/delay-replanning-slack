@@ -7,7 +7,7 @@
 #include "constants.hpp"
 
 
-using SafeInterval = std::tuple<intervalTime_t, intervalTime_t, int, intervalTime_t, int, intervalTime_t>;
+using SafeInterval = std::tuple<intervalTime_t, intervalTime_t, int, int, intervalTime_t>;
 
 inline intervalTime_t begin(const SafeInterval& si){
     return std::get<1>(si);
@@ -54,7 +54,7 @@ struct State{
     Location loc;
     SafeInterval interval;
     State() = default;
-    State(std::string n, double s, double e, double id_b, double buf_b, double id_a, double buf_a):loc(n),interval(e,s, id_b, buf_b, id_a, buf_a){};
+    State(std::string n, double s, double e, double id_b, double id_a, double buf_a):loc(n),interval(e,s, id_b, id_a, buf_a){};
     constexpr bool operator ==(const State & s) const{
         return loc == s.loc && interval == s.interval;
     }
