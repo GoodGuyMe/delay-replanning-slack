@@ -22,7 +22,6 @@ namespace asipp{
             cur = open_list.parent[cur];
         }
         std::reverse(res.begin(), res.end());
-        std::cerr << "Arrival time: " << n.f << "\n";
         return res;
     }
 
@@ -32,6 +31,12 @@ namespace asipp{
         intervalTime_t alpha = std::max(cur.g.alpha, succ_alpha);
         intervalTime_t beta = std::min(cur.g.beta, succ_beta);
         intervalTime_t delta = successor->edge.delta + cur.g.delta;
+
+        intervalTime_t duration_available = beta-alpha;
+        gam_item_t gam_after = gamma[successor->edge.agent_after.id];
+        intervalTime_t max_gamma = std::min(duration_available + gam_after.first, gam_after.second);
+        gamma[successor->edge.agent_after.id].second = max_gamma;
+
         EdgeATF arrival_time_function(zeta, alpha, beta, delta, gamma);
 
         if (beta <= alpha) {
@@ -46,7 +51,7 @@ namespace asipp{
 //                double h = arrival_time_function.sum_of_delays();
                 double h = 0;
                 Node_t new_node = open_list.decrease_key(handle, arrival_time_function, h, successor->destination, successor->source);
-                std::cerr << "New node decreased: " << new_node << std::endl;
+//                std::cerr << "Decreased: " << new_node << std::endl;
             } else {
 //                std::cerr << "This line fucked with it" << std::endl;
             }
@@ -56,7 +61,7 @@ namespace asipp{
 //            double h = arrival_time_function.sum_of_delays();
             double h = 0;
             Node_t new_node = open_list.emplace(arrival_time_function, h, successor->destination, successor->source);
-            std::cerr << "New node added: " << new_node << std::endl;
+//            std::cerr << "Added: " << new_node << std::endl;
         }
     }
 
@@ -65,56 +70,57 @@ namespace asipp{
         (void)goal_loc;
         m.expanded++;
 //        std::cerr << "---------------- new node ----------------"<< std::endl;
-        std::cerr << "Currently at node " << *cur.node << " at time " << cur.g.earliest_arrival_time() << " with outgoing edges destination: [";
-        for(GraphEdge * successor: cur.node->successors){
-            std::cerr << *successor->destination << ", ";
-        }
-        std::cerr << "], gamma: [";
-
-        for (intervalTime_t gamma : cur.g.gamma) {
-            std::cerr << gamma << ", ";
-        }
-        std::cerr << "]" << std::endl;
-        std::cerr << "g: " << cur.g << std::endl;
+//        std::cerr << "At node " << *cur.node << ", time " << cur.g.earliest_arrival_time();
+//        std::cerr << "\n  g: " << cur.g << std::endl;
 
         for(GraphEdge * successor: cur.node->successors){
             if(open_list.expanded.contains(MapNode(successor->destination, successor->edge.gamma))){
                 std::cerr << "Skipped successor " << successor << std::endl;
                 continue; // Already visited location and added all outgoing edges to the queue, thus the new found path to that node is worse
             }
-            intervalTime_t gamma_after  = cur.g.gamma[successor->edge.agent_after.id];
-            intervalTime_t gamma_before = cur.g.gamma[successor->edge.agent_before.id];
+            gam_item_t gamma_after  = cur.g.gamma[successor->edge.agent_after.id];
+            gam_item_t gamma_before = cur.g.gamma[successor->edge.agent_before.id];
 
-            intervalTime_t alpha = successor->edge.alpha - cur.g.delta + gamma_before;
-            intervalTime_t beta  = successor->edge.beta  - cur.g.delta + gamma_after;
+            intervalTime_t alpha = successor->edge.alpha - cur.g.delta + gamma_before.second;
+            intervalTime_t beta  = successor->edge.beta  - cur.g.delta + gamma_after.second;
 
-            intervalTime_t length_unsafe_after = successor->edge.agent_after.length_unsafe;
+            intervalTime_t length_unsafe_after = std::max(0.0, successor->edge.agent_after.length_unsafe - gamma_after.second);
 
-//            std::cerr << "Length unsafe after: " << length_unsafe_after << std::endl;
+            intervalTime_t minimum_gamma = std::max(gamma_after.first, cur.g.earliest_arrival_time() - successor->edge.beta);
+//            std::cerr << "Minimum gamma: " << minimum_gamma <<  ", length unsafe: " << length_unsafe_after <<std::endl;
 
-            if (length_unsafe_after + gamma_after < successor->edge.agent_after.max_buffer_time) {
-//              // Add two edges, one from the edge.beta to edge.beta + length_unsafe, and from that point till the max buffer time
-//                std::cerr << "Addition scenario 1" << std::endl;
-                gamma_t gamma_1 = gamma_t(cur.g.gamma);
-                gamma_1[successor->edge.agent_after.id] = length_unsafe_after + gamma_after;
-                intervalTime_t succ_alpha = beta;
-//                intervalTime_t succ_alpha = alpha;
-                intervalTime_t succ_beta =  beta + length_unsafe_after;
-                extendOpen(cur, open_list, m, successor, gamma_1, succ_alpha, succ_beta);
-            } else {
-                length_unsafe_after = 0;
-            }
+            // Three possibilities:
+//                  cur.g.earliest_arrival_time() < successor->edge.beta (no buffer time is used yet, and path is fine)
+//                      Create 3 edges, normal, with length_unsafe_after, and till max_buffer_time
+//                  cur.g.earliest_arrival_time() < successor->edge.beta + length_unsafe_after (used an amount of buffer time between
+//                  cur.g.earliest_arrival_time() > successor->edge.beta + length_unsafe_after
+//
+
+//            if (length_unsafe_after + gamma_after.second < successor->edge.agent_after.max_buffer_time && length_unsafe_after > epsilon()) {
+////              // Add two edges, one from the edge.beta to edge.beta + length_unsafe, and from that point till the max buffer time
+////                std::cerr << "Addition scenario 1" << std::endl;
+//                gamma_t gamma_1 = gamma_t(cur.g.gamma);
+//                gamma_1[successor->edge.agent_after.id] = gam_item_t(minimum_gamma, length_unsafe_after + gamma_after.second);
+//                intervalTime_t succ_alpha = beta;
+////                intervalTime_t succ_alpha = alpha;
+//                intervalTime_t succ_beta =  beta + length_unsafe_after;
+//                extendOpen(cur, open_list, m, successor, gamma_1, succ_alpha, succ_beta);
+//            } else {
+//                length_unsafe_after = 0;
+//            }
             if (successor->edge.agent_after.max_buffer_time > 0) {
 //                std::cerr << "Addition scenario 2" << std::endl;
                 gamma_t gamma_2 = gamma_t(cur.g.gamma);
-                gamma_2[successor->edge.agent_after.id] = successor->edge.agent_after.max_buffer_time;
-                intervalTime_t succ_alpha = beta + length_unsafe_after;
+                gamma_2[successor->edge.agent_after.id] = gam_item_t(minimum_gamma, successor->edge.agent_after.max_buffer_time);
+                intervalTime_t succ_alpha = beta;
 //                intervalTime_t succ_alpha = alpha;
                 intervalTime_t succ_beta  = beta + successor->edge.agent_after.max_buffer_time;
                 extendOpen(cur, open_list, m, successor, gamma_2, succ_alpha, succ_beta);
             }
 //            std::cerr << "Standard addition" << std::endl;
-            extendOpen(cur, open_list, m, successor, gamma_t(cur.g.gamma), alpha, beta);
+            gamma_t gamma_3 = gamma_t(cur.g.gamma);
+            gamma_3[successor->edge.agent_after.id] = gam_item_t(minimum_gamma, gamma_after.second);
+            extendOpen(cur, open_list, m, successor, gamma_3, alpha, beta);
         }
     }
 
@@ -137,6 +143,7 @@ namespace asipp{
             if(isGoal(cur, dest)){
                 auto res = std::make_pair(backup(cur, open_list), cur.g);
 //                open_list.pop();
+                std::cerr << "found path: " << cur.g << std::endl;
                 return res;             
             }
             open_list.pop();

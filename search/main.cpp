@@ -51,7 +51,7 @@ int main(int argc, char* argv[]) {
             GraphNode * source = find_earliest(g, source_loc, start_time);
 
             MetaData m;
-            gamma_t initial_gamma(g.n_agents + 1, 0.0);
+            gamma_t initial_gamma(g.n_agents + 1);
 
             auto search_start_time = std::chrono::high_resolution_clock::now();
             auto res = rePEAT::search(source, goal_loc, m, start_time, initial_gamma);

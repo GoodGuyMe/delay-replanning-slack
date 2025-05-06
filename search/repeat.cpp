@@ -5,11 +5,11 @@
 double update_reference_time(const EdgeATF& path, rePEAT::Open& open_list){
     intervalTime_t upper_bound = path.beta;
     intervalTime_t lower_bound = path.alpha;
-    std::cerr << "Starting update tref with alpha " << lower_bound << " beta " << upper_bound << " delta " << path.delta << " gamma [";
-    for (intervalTime_t gam: path.gamma) {
-        std::cerr << gam << ", ";
-    }
-    std::cerr << "]\n";
+//    std::cerr << "Starting update tref with alpha " << lower_bound << " beta " << upper_bound << " delta " << path.delta << " gamma [";
+//    for (gam_item_t gamma : path.gamma) {
+//        std::cerr << "<" << gamma.first << ", " << gamma.second << ">, ";
+//    }
+//    std::cerr << "]\n";
 //    std::cerr << "Queue has " << open_list.size() << " elements." << std::endl;
     while(lower_bound < upper_bound){
         if(open_list.empty()){

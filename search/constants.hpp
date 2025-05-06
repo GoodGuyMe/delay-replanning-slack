@@ -6,7 +6,8 @@
 
 using gIndex_t = uint16_t;
 using intervalTime_t = double;
-using gamma_t = std::vector<intervalTime_t>;
+using gam_item_t = std::pair<intervalTime_t, intervalTime_t>;
+using gamma_t = std::vector<gam_item_t>;
 
 
 namespace std {
@@ -15,7 +16,8 @@ namespace std {
         std::size_t operator()(gamma_t const &vec) const {
             std::size_t seed = vec.size();
             for (auto x: vec) {
-                seed ^= std::hash<intervalTime_t>()(x);
+//                seed ^= std::hash<intervalTime_t>()(x.first);
+                seed ^= std::hash<intervalTime_t>()(x.second);
             }
             return seed;
         }
