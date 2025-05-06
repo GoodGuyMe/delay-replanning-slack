@@ -23,7 +23,8 @@ def parse_list_of_outputs(s):
             i += 1
         atf = s[i]
         atf = atf.strip("<").strip(">").split(",")
-        atf[-1] = atf[-1][1:-2].split(";")
+        gammas = [gamma[1:-1].split(": ") for gamma in atf[-1][1:-1].split("; ")[0:-1]]
+        atf[-1] = gammas
         atf = tuple(atf)
         eatfs.append(atf)
         i += 1

@@ -93,5 +93,5 @@ if __name__ == "__main__":
     block_routes = convertMovesToBlock(moves_per_agent, g)
     plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g.distance_markers)
     safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, float(args.agent_speed), print_intervals=args.printing == "True")
-    write_intervals_to_file(args.output, safe_block_intervals, atfs, 300, indices_to_states)
+    write_intervals_to_file(args.output, safe_block_intervals, atfs, 700, indices_to_states)
     plot_safe_node_intervals(safe_block_intervals | safe_block_edges_intervals, block_routes)
