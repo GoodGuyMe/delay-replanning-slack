@@ -22,7 +22,7 @@
             "movements": [
                 {
                     "startLocation": "t-n3_1B",
-                    "startTime": 100,
+                    "startTime": 50,
                     "endTime": 750,
                     "endLocation": "t-14B",
                     "stops": {}
@@ -77,7 +77,7 @@
                 {
                     "startLocation": "t-n3_1B",
                     "startTime": 2400,
-                    "endTime": 2500,
+                    "endTime": 2000,
                     "endLocation": "t-14B",
                     "stops": {}
                 }

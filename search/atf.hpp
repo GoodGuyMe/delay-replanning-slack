@@ -59,7 +59,7 @@ struct EdgeATF{
             delta(_delta),
             agent_before(NeightbouringAgent(id_b)),
             agent_after(NeightbouringAgent(id_a, max_buf_a, len_uns_a)),
-            gamma(0, 0.0)
+            gamma(0)
         {};
 
 // Constructor for CATF
@@ -108,7 +108,11 @@ struct EdgeATF{
     }
 
     inline intervalTime_t sum_of_delays() const{
-        return std::reduce(gamma.begin(), gamma.end());
+        intervalTime_t total_delay = intervalTime_t();
+        for (gam_item_t gam: gamma) {
+            total_delay += gam.second;
+        }
+        return total_delay;
     }
 
     inline bool operator<(const EdgeATF& rhs) const{
@@ -117,8 +121,9 @@ struct EdgeATF{
     
     inline friend std::ostream& operator<< (std::ostream& stream, const EdgeATF& eatf){
         stream << "<" << eatf.zeta << "," << eatf.alpha << "," << eatf.beta << "," << eatf.delta << ",[";
-        for (intervalTime_t gam: eatf.gamma) {
-            stream << gam << ";";
+
+        for (gam_item_t gamma : eatf.gamma) {
+            stream << "<" << gamma.first << ": " << gamma.second << ">; ";
         }
         stream <<  "]>";
         return stream;
