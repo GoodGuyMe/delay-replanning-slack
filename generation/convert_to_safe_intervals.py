@@ -1,4 +1,4 @@
-def create_safe_intervals(intervals, g, agent_speed=15, print_intervals=False):
+def create_safe_intervals(intervals, g, buffer_times, agent_speed=15, print_intervals=False):
     errors = []
     safe_node_intervals = {n: [] for n in g.nodes}
     safe_edge_intervals = {e.get_identifier(): [] for e in g.edges}
@@ -114,6 +114,13 @@ def create_safe_intervals(intervals, g, agent_speed=15, print_intervals=False):
                             train_before = edge_interval[2]
                             train_after = edge_interval[3]
 
+                            buffer_after = 0
+                            if train_after != 0 and o.get_identifier() in buffer_times[train_after]:
+                                buffer_after = buffer_times[train_after][o.get_identifier()]
+                            elif train_after != 0 and print_intervals:
+                                print(f"ERROR - Buffer time not found while it should have one for train {train_after} "
+                                      f"at {o.get_identifier()}")
+
                             # If the interval is too short to make the move, don't include it.
                             if beta > alpha:
                                 arrival_time_functions.append((
@@ -124,7 +131,8 @@ def create_safe_intervals(intervals, g, agent_speed=15, print_intervals=False):
                                     beta,
                                     o.length / agent_speed, # delta: length of the edge or in case of A-B edge the time to walk to the other side
                                     train_before,
-                                    train_after
+                                    train_after,
+                                    buffer_after
                                 ))
                                 safe_edge_node_references[o.get_identifier()].append(((node, o.to_node.name), from_interval, to_interval, arrival_time_functions[-1]))
                             else:

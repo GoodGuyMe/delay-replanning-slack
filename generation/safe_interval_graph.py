@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import numpy as np
+
 
 def replaceAB(node, intervals):
     if "A" in node:
@@ -16,7 +18,7 @@ def replaceAB(node, intervals):
         return node + "L"
     return node
 
-def plot_train_path(moves_per_agent):
+def plot_train_path(moves_per_agent, color_map=None):
     train = None
     node_map2 = dict()
     y2 = 0
@@ -38,6 +40,8 @@ def plot_train_path(moves_per_agent):
             train_label = f"Agent {agent_id}"
             train.set_label(train_label) if train is not None else None
             train = None
+            if color_map is not None:
+                color_map[agent_id] = color
 
 def plot_safe_node_intervals(safe_node_intervals, moves_per_agent=None):
     if moves_per_agent is None:
@@ -131,7 +135,7 @@ def plot_unsafe_node_intervals(unsafe_node_intervals, moves_per_agent, distance_
     plt.show()
 
 
-def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, distance_markers):
+def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, distance_markers, buffer_times):
     node_map = dict()
     y = 0
     ax = plt.gca()
@@ -146,16 +150,23 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, dista
                 if node not in node_map:
                     node_map[str(node)] = (y, edge)
                     y += edge.length
+
+    color_map = {}
+
+    plot_train_path(moves_per_agent, color_map)
+
     for node, (y, edge) in node_map.items():
         for start, stop, duration, train in blocking_times[edge.get_identifier()]:
             blocking_time = patches.Rectangle((y, start), edge.length, stop - start, linewidth=1, edgecolor='red', facecolor='none')
             ax.add_patch(blocking_time)
+            if train != 0 and node in buffer_times[train]:
+                errors = np.zeros((2, 1))
+                errors[1, 0] = buffer_times[train][node]
+                ax.errorbar((2 * y + edge.length) / 2, stop, yerr=errors, fmt="none", color=color_map[train])
 
     plt.ylabel(f"Time (s)")
     plt.xlabel(f"Distance")
-
-    plot_train_path(moves_per_agent)
-    # plt.legend()
+    plt.legend()
 
     for (dist, edge) in node_map.values():
         if "r" in edge.from_node.name:
