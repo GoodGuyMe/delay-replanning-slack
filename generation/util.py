@@ -1,25 +1,24 @@
 import json 
 from pathlib import Path
 
-from generation.graph import Graph, Node, Edge, Signal
-from generation.signal_sections import create_graph_blocks
+from generation.graph import TrackGraph, Signal, TrackNode, TrackEdge
     
-def read_graph(file):
+def read_graph(file) -> TrackGraph:
     try:
         base_path = Path(__file__).parent
         file_path = (base_path / file).resolve()
         data = json.load(open(file_path))
     except:
         data = json.load(open(file))
-    g = Graph()
+    g = TrackGraph()
     nodes_per_id_A = {}
     nodes_per_id_B = {}
     track_lengths = {}
     for track in data["trackParts"]:
         track_lengths[track["id"]] = track["length"]
         if track["type"] == "RailRoad":
-            a = g.add_node(Node(track["name"] + "A", track["type"]))
-            b = g.add_node(Node(track["name"] + "B", track["type"]))
+            a = g.add_node(TrackNode(track["name"] + "A", track["type"]))
+            b = g.add_node(TrackNode(track["name"] + "B", track["type"]))
             if track["stationPlatform"]:
                 a.stationPlatform = True
                 b.stationPlatform = True
@@ -37,28 +36,28 @@ def read_graph(file):
         # Nodes on the same side of a switch are not associated -> they do not have same intervals, but the edges do
         elif track["type"] == "Switch":
             if len(track["aSide"]) > len(track["bSide"]):
-                a = g.add_node(Node(track["name"] + "AR", track["type"]))
-                b = g.add_node(Node(track["name"] + "AL", track["type"]))
-                c = g.add_node(Node(track["name"] + "B", track["type"]))
+                a = g.add_node(TrackNode(track["name"] + "AR", track["type"]))
+                b = g.add_node(TrackNode(track["name"] + "AL", track["type"]))
+                c = g.add_node(TrackNode(track["name"] + "B", track["type"]))
                 a.opposites.extend([c])
                 b.opposites.extend([c])
                 c.opposites.extend([a, b])
                 nodes_per_id_A[track["id"]] = [track["name"] + "AR", track["name"] + "AL"]
                 nodes_per_id_B[track["id"]] = [track["name"] + "B"]
             else:
-                a = g.add_node(Node(track["name"] + "A", track["type"]))
-                b = g.add_node(Node(track["name"] + "BR", track["type"]))
-                c = g.add_node(Node(track["name"] + "BL", track["type"]))
+                a = g.add_node(TrackNode(track["name"] + "A", track["type"]))
+                b = g.add_node(TrackNode(track["name"] + "BR", track["type"]))
+                c = g.add_node(TrackNode(track["name"] + "BL", track["type"]))
                 a.opposites.extend([b, c])
                 b.opposites.extend([a])
                 c.opposites.extend([a])
                 nodes_per_id_A[track["id"]] = [track["name"] + "A"]
                 nodes_per_id_B[track["id"]] = [track["name"] + "BR", track["name"] + "BL"]
         elif track["type"] == "EnglishSwitch":
-            a = g.add_node(Node(track["name"] + "AR", track["type"]))
-            b = g.add_node(Node(track["name"] + "AL", track["type"]))
-            c = g.add_node(Node(track["name"] + "BR", track["type"]))
-            d = g.add_node(Node(track["name"] + "BL", track["type"]))
+            a = g.add_node(TrackNode(track["name"] + "AR", track["type"]))
+            b = g.add_node(TrackNode(track["name"] + "AL", track["type"]))
+            c = g.add_node(TrackNode(track["name"] + "BR", track["type"]))
+            d = g.add_node(TrackNode(track["name"] + "BL", track["type"]))
             a.opposites.extend([c, d])
             b.opposites.extend([c, d])
             c.opposites.extend([a, b])
@@ -77,12 +76,12 @@ def read_graph(file):
                     # Connect the aSide node(s) to the respective edges
                     for aSideToTrack in nodes_per_id_A[aSideId]:
                         length = track_lengths[aSideId]
-                        e = g.add_edge(Edge(g.nodes[aSideToTrack], g.nodes[fromNode], length))
+                        e = g.add_edge(TrackEdge(g.nodes[aSideToTrack], g.nodes[fromNode], length))
                         aEdges.append(e)
                 # This side is a bumper, so the other side attaches to itself
                 elif g.nodes[fromNode].type == "RailRoad" and track["sawMovementAllowed"]:
                     toNode = nodes_per_id_B[track["id"]][i]
-                    g.add_edge(Edge(g.nodes[toNode], g.nodes[fromNode], 0))
+                    g.add_edge(TrackEdge(g.nodes[toNode], g.nodes[fromNode], 0))
             for i, bSideId in enumerate(track["bSide"]):
                 fromNode = nodes_per_id_B[track["id"]][i]
                 if bSideId in nodes_per_id_B:
@@ -90,16 +89,16 @@ def read_graph(file):
                     # Connect the bSide node(s) to the respective neighbors
                     for bSideToTrack in nodes_per_id_B[bSideId]:
                         length = track_lengths[bSideId]
-                        e = g.add_edge(Edge(g.nodes[bSideToTrack], g.nodes[fromNode], length))
+                        e = g.add_edge(TrackEdge(g.nodes[bSideToTrack], g.nodes[fromNode], length))
                         bEdges.append(e) 
                 # This side is a bumper, so the other side attaches
                 elif g.nodes[nodes_per_id_B[track["id"]][i]].type == "RailRoad" and track["sawMovementAllowed"]:
                     toNode = nodes_per_id_A[track["id"]][i]
-                    g.add_edge(Edge(g.nodes[toNode], g.nodes[fromNode], 0))
+                    g.add_edge(TrackEdge(g.nodes[toNode], g.nodes[fromNode], 0))
             # If it is a double-ended (not dead-end) track where parking is allowed, then we can go from A->B and B->A
             if track["type"] == "RailRoad" and track["sawMovementAllowed"] and not bumperAside and not bumperBside:
-                g.add_edge(Edge(g.nodes[nodes_per_id_A[track["id"]][i]], g.nodes[nodes_per_id_B[track["id"]][i]], 0))
-                g.add_edge(Edge(g.nodes[nodes_per_id_B[track["id"]][i]], g.nodes[nodes_per_id_A[track["id"]][i]], 0))
+                g.add_edge(TrackEdge(g.nodes[nodes_per_id_A[track["id"]][i]], g.nodes[nodes_per_id_B[track["id"]][i]], 0))
+                g.add_edge(TrackEdge(g.nodes[nodes_per_id_B[track["id"]][i]], g.nodes[nodes_per_id_A[track["id"]][i]], 0))
             # Assign the associated edges (same side of switch)                  
             for x in aEdges:
                 for y in aEdges:

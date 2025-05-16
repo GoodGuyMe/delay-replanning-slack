@@ -1,4 +1,4 @@
-from generation.util import get_all_affected_blocks
+from generation.graph import BlockGraph
 
 
 # TODO maybe should use smarter form off search, as list is most likely sorted on agent id right? or maybe it does not have to...
@@ -11,7 +11,7 @@ def get_single_buffer_time(intervals, agent):
 
     return buffer_time
 
-def buffer_time(block_intervals, block_routes, g):
+def buffer_time(block_intervals, block_routes, g: BlockGraph):
 
     buffer_times = {}
     for agent in block_routes:
@@ -24,7 +24,7 @@ def buffer_time(block_intervals, block_routes, g):
                 blocks = block_intervals[block]
                 time = get_single_buffer_time(blocks, agent)
                 last_time = min(last_time, time)
-                for affected_block in get_all_affected_blocks(block_intervals, block, g):
-                    buffer_times[agent][affected_block] = last_time
+                for affected_block in edge.get_affected_blocks():
+                    buffer_times[agent][affected_block.get_identifier()] = last_time
 
     return buffer_times

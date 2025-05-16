@@ -148,8 +148,8 @@ def calculate_blocking_time(e, cur_time, blocking_intervals, measures, current_t
 
     # Calculate running time, clearing time and release time for current track
 
-    for route in e.from_node.routes:
-        blocking_intervals[route.get_identifier()].append((
+    for block in e.from_node.blocks:
+        blocking_intervals[block.get_identifier()].append((
             cur_time,
             end_occupation_time + measures["releaseTime"],
             e.length / trainSpeed + station_time,
@@ -157,16 +157,16 @@ def calculate_blocking_time(e, cur_time, blocking_intervals, measures, current_t
         ))
 
     for x in e.from_node.opposites:
-        for route in x.routes:
-            blocking_intervals[route.get_identifier()].append((
+        for block in x.blocks:
+            blocking_intervals[block.get_identifier()].append((
                 cur_time,
                 end_occupation_time + measures["releaseTime"],
                 e.length / trainSpeed + station_time,
                 current_train
             ))
     for x in e.from_node.associated:
-        for route in x.routes:
-            blocking_intervals[route.get_identifier()].append((
+        for block in x.blocks:
+            blocking_intervals[block.get_identifier()].append((
                 cur_time,
                 end_occupation_time + measures["releaseTime"],
                 e.length / trainSpeed + station_time,
@@ -177,9 +177,9 @@ def calculate_blocking_time(e, cur_time, blocking_intervals, measures, current_t
     start_blocking_time = cur_time + station_time - measures["setupTime"] - measures["sightReactionTime"]
     end_approach_time =   cur_time + station_time + (e.length / trainSpeed)
 
-    # TODO: This now sets the next node unsafe, this needs to be updated to make the next block unsafe
-    for route in e.to_node.routes:
-        blocking_intervals[route.get_identifier()].append((
+    # TODO: This now sets the next node unsafe, this needs to be updated to make the next N blocks unsafe
+    for block in e.to_node.blocks:
+        blocking_intervals[block.get_identifier()].append((
             start_blocking_time,
             end_approach_time,
             0,

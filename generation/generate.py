@@ -1,14 +1,12 @@
 #! /usr/bin/env python
 import time
-import numpy as np
 import argparse
 import gzip
-from pathlib import Path
 
 from generation.buffer_time import buffer_time
-from generation.safe_interval_graph import plot_safe_node_intervals, plot_unsafe_node_intervals, plot_blocking_staircase
+from generation.graph import BlockGraph
+from generation.safe_interval_graph import plot_safe_node_intervals, plot_blocking_staircase
 from generation.signal_sections import convertMovesToBlock
-from util import *
 from interval_generation import *
 from convert_to_safe_intervals import *
 
@@ -40,7 +38,7 @@ def read_scenario(file, g, g_block, agent=-1):
 def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, max_buffer_time, indices_to_states):
     """Write SIPP graph to gzip file for the search procedure"""
     # with open(file + "_unzipped", "wt") as f:
-    with gzip.open(file, "wt") as f:
+    with open(file + "unzipped", "wt") as f:
         f.write("vertex count: " + str(len([x for node in safe_node_intervals for x in safe_node_intervals[node]])) + "\n")
         f.write("edge count: " + str(len(safe_edge_intervals)) + "\n")
 
@@ -77,10 +75,10 @@ def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, max_
 def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output, max_buffer_time=80):
     """For testing the time to get the safe intervals. Also writes to file (without timing). Used for experiments."""
     g = read_graph(location)
-    g_block = create_graph_blocks(g)
+    g_block = BlockGraph(g)
     _, _, block_intervals, _, _, unsafe_computation_time = read_scenario(scenario, g, g_block, agent_id)
     block_routes = convertMovesToBlock(moves_per_agent, g)
-    buffer_times = buffer_time(block_intervals, block_routes)
+    buffer_times = buffer_time(block_intervals, block_routes, g_block)
     start_time = time.time()
     safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, buffer_times, float(agent_speed), print_intervals=False)
     safe_computation_time = time.time() - start_time
@@ -90,7 +88,7 @@ def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, out
 if __name__ == "__main__":
     args = parser.parse_args()
     g = read_graph(args.location)
-    g_block = create_graph_blocks(g)
+    g_block = BlockGraph(g)
     unsafe_node_intervals, unsafe_edge_intervals, block_intervals, agent_intervals, moves_per_agent, computation_time = read_scenario(args.scenario, g, g_block, args.agent_id)
     block_routes = convertMovesToBlock(moves_per_agent, g)
     buffer_times = buffer_time(block_intervals, block_routes, g_block)
