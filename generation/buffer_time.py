@@ -11,12 +11,12 @@ def get_single_buffer_time(intervals, agent):
 
     return buffer_time
 
-def buffer_time(block_intervals, block_routes, g: BlockGraph):
+def buffer_time(block_intervals, block_routes, g: BlockGraph, max_buffer=float("inf")):
 
     buffer_times = {}
     for agent in block_routes:
         buffer_times[agent] = {}
-        last_time = float("inf")
+        last_time = max_buffer
         # TODO: Need to do this for all blocks the train made unsafe, not only the blocks on the exact route
         for movement in block_routes[agent]:
             for edge in movement[::-1]:

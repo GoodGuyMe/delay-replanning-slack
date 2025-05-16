@@ -174,7 +174,6 @@ class BlockGraph(Graph):
                             opposite.blocks.append(route_edge)
                         for associated in node.associated:
                             associated.blocks.append(route_edge)
-        print("Hi!")
 
 
     def expand_block(self, track, end_tracks):

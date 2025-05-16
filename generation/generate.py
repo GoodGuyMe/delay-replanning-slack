@@ -35,7 +35,7 @@ def read_scenario(file, g, g_block, agent=-1):
     end_time = time.time()
     return node_intervals, edge_intervals, block_intervals, agent_intervals, moves_per_agent, end_time - start_time
 
-def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, max_buffer_time, indices_to_states):
+def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, indices_to_states):
     """Write SIPP graph to gzip file for the search procedure"""
     # with open(file + "_unzipped", "wt") as f:
     with gzip.open(file, "wt") as f:
@@ -72,17 +72,17 @@ def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, max_
             f.write(f"{from_id} {to_id} {zeta} {alpha} {beta} {delta} {id_before} {id_after} {buffer_after} {len_uns_a}\n")
         f.write(f"num_trains {num_trains}\n")
 
-def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output, max_buffer_time=80):
+def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output, max_buffer_time):
     """For testing the time to get the safe intervals. Also writes to file (without timing). Used for experiments."""
     g = read_graph(location)
     g_block = BlockGraph(g)
-    _, _, block_intervals, _, _, unsafe_computation_time = read_scenario(scenario, g, g_block, agent_id)
+    _, _, block_intervals, _, moves_per_agent, unsafe_computation_time = read_scenario(scenario, g, g_block, agent_id)
     block_routes = convertMovesToBlock(moves_per_agent, g)
-    buffer_times = buffer_time(block_intervals, block_routes, g_block)
+    buffer_times = buffer_time(block_intervals, block_routes, g_block, max_buffer_time)
     start_time = time.time()
     safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, buffer_times, float(agent_speed), print_intervals=False)
     safe_computation_time = time.time() - start_time
-    write_intervals_to_file(output, safe_block_intervals, atfs, buffer_times, indices_to_states)
+    write_intervals_to_file(output, safe_block_intervals, atfs, indices_to_states)
     return unsafe_computation_time + safe_computation_time
 
 if __name__ == "__main__":
@@ -94,5 +94,5 @@ if __name__ == "__main__":
     buffer_times = buffer_time(block_intervals, block_routes, g_block)
     plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g.distance_markers, buffer_times)
     safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, buffer_times, float(args.agent_speed), print_intervals=args.printing == "True")
-    write_intervals_to_file(args.output, safe_block_intervals, atfs, buffer_times, indices_to_states)
+    write_intervals_to_file(args.output, safe_block_intervals, atfs, indices_to_states)
     plot_safe_node_intervals(safe_block_intervals | safe_block_edges_intervals, block_routes)
