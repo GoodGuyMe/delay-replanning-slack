@@ -38,7 +38,7 @@ def read_scenario(file, g, g_block, agent=-1):
 def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, max_buffer_time, indices_to_states):
     """Write SIPP graph to gzip file for the search procedure"""
     # with open(file + "_unzipped", "wt") as f:
-    with open(file + "unzipped", "wt") as f:
+    with gzip.open(file, "wt") as f:
         f.write("vertex count: " + str(len([x for node in safe_node_intervals for x in safe_node_intervals[node]])) + "\n")
         f.write("edge count: " + str(len(safe_edge_intervals)) + "\n")
 
