@@ -39,6 +39,10 @@ namespace asipp{
 
         EdgeATF arrival_time_function(zeta, alpha, beta, delta, gamma);
 
+//        if (gamma[successor->edge.agent_after.id].first >= max_gamma) {
+//            return;
+//        }
+
         if (beta <= alpha) {
 //            std::cerr << "Beta smaller than Alpha! " << alpha << ", " << beta << std::endl;
             return;
@@ -84,38 +88,16 @@ namespace asipp{
             intervalTime_t alpha = successor->edge.alpha - cur.g.delta + gamma_before.second;
             intervalTime_t beta  = successor->edge.beta  - cur.g.delta + gamma_after.second;
 
-            intervalTime_t length_unsafe_after = std::max(0.0, successor->edge.agent_after.length_unsafe - gamma_after.second);
-
             intervalTime_t minimum_gamma = std::max(gamma_after.first, cur.g.earliest_arrival_time() - successor->edge.beta);
-//            std::cerr << "Minimum gamma: " << minimum_gamma <<  ", length unsafe: " << length_unsafe_after <<std::endl;
 
-            // Three possibilities:
-//                  cur.g.earliest_arrival_time() < successor->edge.beta (no buffer time is used yet, and path is fine)
-//                      Create 3 edges, normal, with length_unsafe_after, and till max_buffer_time
-//                  cur.g.earliest_arrival_time() < successor->edge.beta + length_unsafe_after (used an amount of buffer time between
-//                  cur.g.earliest_arrival_time() > successor->edge.beta + length_unsafe_after
-//
-
-//            if (length_unsafe_after + gamma_after.second < successor->edge.agent_after.max_buffer_time && length_unsafe_after > epsilon()) {
-////              // Add two edges, one from the edge.beta to edge.beta + length_unsafe, and from that point till the max buffer time
-////                std::cerr << "Addition scenario 1" << std::endl;
-//                gamma_t gamma_1 = gamma_t(cur.g.gamma);
-//                gamma_1[successor->edge.agent_after.id] = gam_item_t(minimum_gamma, length_unsafe_after + gamma_after.second);
-//                intervalTime_t succ_alpha = beta;
-////                intervalTime_t succ_alpha = alpha;
-//                intervalTime_t succ_beta =  beta + length_unsafe_after;
-//                extendOpen(cur, open_list, m, successor, gamma_1, succ_alpha, succ_beta);
-//            } else {
-//                length_unsafe_after = 0;
-//            }
-            if (successor->edge.agent_after.max_buffer_time > 0) {
-//                std::cerr << "Addition scenario 2" << std::endl;
-                gamma_t gamma_2 = gamma_t(cur.g.gamma);
-                gamma_2[successor->edge.agent_after.id] = gam_item_t(minimum_gamma, successor->edge.agent_after.max_buffer_time);
+//            If there is available buffer time to use, create an edge that uses it.
+            if (successor->edge.agent_after.max_buffer_time - gamma_after.second > 0) {
+//                std::cerr << "Addition with buffer time" << std::endl;
                 intervalTime_t succ_alpha = beta;
-//                intervalTime_t succ_alpha = alpha;
-                intervalTime_t succ_beta  = beta + successor->edge.agent_after.max_buffer_time;
-                extendOpen(cur, open_list, m, successor, gamma_2, succ_alpha, succ_beta);
+                intervalTime_t succ_beta  = beta + successor->edge.agent_after.max_buffer_time - gamma_after.second;
+                gamma_t gamma_buffer = gamma_t(cur.g.gamma);
+                gamma_buffer[successor->edge.agent_after.id] = gam_item_t(minimum_gamma, successor->edge.agent_after.max_buffer_time);
+                extendOpen(cur, open_list, m, successor, gamma_buffer, succ_alpha, succ_beta);
             }
 //            std::cerr << "Standard addition" << std::endl;
             gamma_t gamma_3 = gamma_t(cur.g.gamma);
