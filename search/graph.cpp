@@ -17,7 +17,7 @@ void read_ATF(std::istream& i, std::vector<inATF>& res){
     std::string s;
     if(!(i >> x)){return;}
     i >> y;
-    intervalTime_t zeta, alpha, beta, delta, max_buf_a, len_uns_a;
+    intervalTime_t zeta, alpha, beta, delta, crt_b, max_buf_a, crt_a;
     int id_b, id_a;
     i >> s;
     zeta = stod(s);
@@ -30,12 +30,14 @@ void read_ATF(std::istream& i, std::vector<inATF>& res){
     i >> s;
     id_b = stoi(s);
     i >> s;
+    crt_b = stod(s);
+    i >> s;
     id_a = stoi(s);
     i >> s;
     max_buf_a = stod(s);
     i >> s;
-    len_uns_a = stod(s);
-    EdgeATF edge(zeta, alpha, beta, delta, id_b, id_a, max_buf_a, len_uns_a);
+    crt_a = stod(s);
+    EdgeATF edge(zeta, alpha, beta, delta, id_b, crt_b, id_a, max_buf_a, crt_a);
     res.emplace_back(x, y, edge); 
 }
 

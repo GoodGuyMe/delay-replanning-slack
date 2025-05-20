@@ -6,6 +6,8 @@
 
 using gIndex_t = uint16_t;
 using intervalTime_t = double;
+
+// Gamma is stored as <min_gamma, max_gamma>
 using gam_item_t = std::pair<intervalTime_t, intervalTime_t>;
 using gamma_t = std::vector<gam_item_t>;
 
@@ -15,7 +17,7 @@ namespace std {
     struct hash<gamma_t> {
         std::size_t operator()(gamma_t const &vec) const {
             std::size_t seed = vec.size();
-            for (auto x: vec) {
+            for (gam_item_t x: vec) {
 //                seed ^= std::hash<intervalTime_t>()(x.first);
                 seed ^= std::hash<intervalTime_t>()(x.second);
             }
