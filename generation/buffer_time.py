@@ -42,7 +42,7 @@ def flexibility(block_intervals, block_routes, max_buffer=float("inf"), use_reco
                     compound_recovery_time += recovery
                     # Recovery time cannot be larger than buffer time
                     compound_recovery_time = min(compound_recovery_time, last_buffer_time)
-                    last_buffer_time += recovery
+                    last_buffer_time = min(last_buffer_time + recovery, max_buffer)
 
 
     return buffer_times, recovery_times

@@ -60,13 +60,13 @@ def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, indi
             f.write(f"{from_id} {to_id} {zeta} {alpha} {beta} {delta} {id_before} {crt_b} {id_after} {buffer_after} {crt_a}\n")
         f.write(f"num_trains {num_trains}\n")
 
-def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output, max_buffer_time):
+def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output, max_buffer_time, use_recovery_time):
     """For testing the time to get the safe intervals. Also writes to file (without timing). Used for experiments."""
     g = read_graph(location)
     g_block = BlockGraph(g)
     _, _, block_intervals, _, moves_per_agent, unsafe_computation_time = read_scenario(scenario, g, g_block, agent_id)
     block_routes = convertMovesToBlock(moves_per_agent, g)
-    buffer_times, recovery_times = flexibility(block_intervals, block_routes, max_buffer_time)
+    buffer_times, recovery_times = flexibility(block_intervals, block_routes, max_buffer_time, use_recovery_time)
     start_time = time.time()
     safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, buffer_times, recovery_times, float(agent_speed), print_intervals=False)
     safe_computation_time = time.time() - start_time
@@ -79,8 +79,8 @@ if __name__ == "__main__":
     g_block = BlockGraph(g)
     unsafe_node_intervals, unsafe_edge_intervals, block_intervals, agent_intervals, moves_per_agent, computation_time = read_scenario(args.scenario, g, g_block, args.agent_id)
     block_routes = convertMovesToBlock(moves_per_agent, g)
-    buffer_times, recovery_times = flexibility(block_intervals, block_routes, args.buffer, args.recovery.strip().lower() == "true")
+    buffer_times, recovery_times = flexibility(block_intervals, block_routes, float(args.buffer), args.recovery.strip().lower() == "true")
     plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g.distance_markers, buffer_times)
-    safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, buffer_times, recovery_times, float(args.agent_speed), print_intervals=args.printing == "True")
+    safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, buffer_times, recovery_times, float(args.agent_speed), args.recovery.strip().lower() == "true")
     write_intervals_to_file(args.output, safe_block_intervals, atfs, indices_to_states)
     plot_safe_node_intervals(safe_block_intervals | safe_block_edges_intervals, block_routes)
