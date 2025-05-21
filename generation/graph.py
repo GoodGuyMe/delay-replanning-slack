@@ -86,9 +86,6 @@ class BlockEdge(Edge):
             affected_blocks = affected_blocks.union(set(node.blocks))
         return list(affected_blocks)
 
-    def get_recovery_time(self, recovery: float, crt: float) -> float:
-        return crt + recovery
-
 
 class TrackEdge(Edge):
     def __init__(self, f, t, l):
