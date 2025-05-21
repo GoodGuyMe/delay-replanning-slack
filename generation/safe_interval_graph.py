@@ -156,7 +156,7 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, dista
     plot_train_path(moves_per_agent, color_map)
 
     for node, (y, edge) in node_map.items():
-        for start, stop, duration, train in blocking_times[edge.get_identifier()]:
+        for start, stop, duration, train, recovery in blocking_times[edge.get_identifier()]:
             blocking_time = patches.Rectangle((y, start), edge.length, stop - start, linewidth=1, edgecolor='red', facecolor='none')
             ax.add_patch(blocking_time)
             if train != 0 and node in buffer_times[train]:

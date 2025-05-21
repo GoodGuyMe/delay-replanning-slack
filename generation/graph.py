@@ -44,6 +44,7 @@ class TrackNode(Node):
         if self.direction != "A" and self.direction != "B":
             print("WTF")
 
+
 class Edge:
     __last_id = 1
     def __init__(self, f:Node, t:Node, l):
@@ -84,6 +85,9 @@ class BlockEdge(Edge):
         for node in self.trackNodes:
             affected_blocks = affected_blocks.union(set(node.blocks))
         return list(affected_blocks)
+
+    def get_recovery_time(self, recovery: float, crt: float) -> float:
+        return crt + recovery
 
 
 class TrackEdge(Edge):

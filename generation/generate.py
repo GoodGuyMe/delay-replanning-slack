@@ -3,7 +3,7 @@ import time
 import argparse
 import gzip
 
-from generation.buffer_time import buffer_time
+from generation.buffer_time import flexibility
 from generation.graph import BlockGraph
 from generation.safe_interval_graph import plot_safe_node_intervals, plot_blocking_staircase
 from generation.signal_sections import convertMovesToBlock
@@ -78,7 +78,7 @@ def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, out
     g_block = BlockGraph(g)
     _, _, block_intervals, _, moves_per_agent, unsafe_computation_time = read_scenario(scenario, g, g_block, agent_id)
     block_routes = convertMovesToBlock(moves_per_agent, g)
-    buffer_times = buffer_time(block_intervals, block_routes, g_block, max_buffer_time)
+    buffer_times, recovery_times = flexibility(block_intervals, block_routes, max_buffer_time)
     start_time = time.time()
     safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, buffer_times, float(agent_speed), print_intervals=False)
     safe_computation_time = time.time() - start_time
@@ -91,7 +91,7 @@ if __name__ == "__main__":
     g_block = BlockGraph(g)
     unsafe_node_intervals, unsafe_edge_intervals, block_intervals, agent_intervals, moves_per_agent, computation_time = read_scenario(args.scenario, g, g_block, args.agent_id)
     block_routes = convertMovesToBlock(moves_per_agent, g)
-    buffer_times = buffer_time(block_intervals, block_routes, g_block)
+    buffer_times, recovery_times = flexibility(block_intervals, block_routes)
     plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g.distance_markers, buffer_times)
     safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, buffer_times, float(args.agent_speed), print_intervals=args.printing == "True")
     write_intervals_to_file(args.output, safe_block_intervals, atfs, indices_to_states)

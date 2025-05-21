@@ -17,7 +17,7 @@ def create_safe_intervals(intervals, g, buffer_times, agent_speed=15, print_inte
         # Make sure they are ordered in chronological order
         intervals[node].sort()
         # Each tuple is (start, end, duration, train)
-        for start, end, dur, train in intervals[node]:
+        for start, end, dur, train, _ in intervals[node]:
             if current > start:
                 interval = (current, start, train_before, train, 0, 0)
                 train_before = train
@@ -54,7 +54,7 @@ def create_safe_intervals(intervals, g, buffer_times, agent_speed=15, print_inte
         # Make sure they are ordered in chronological order
         intervals[node].sort()
         # Each tuple is (start, end, duration)
-        for start, end, dur, train in intervals[node]:
+        for start, end, dur, train, _ in intervals[node]:
             if current > start:
                 interval = (current, start, train_before, train, dur_before, end - start)
                 train_before = train
