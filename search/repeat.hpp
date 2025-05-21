@@ -62,10 +62,13 @@ namespace rePEAT{
             return stream;
         }
 
-        gam_item_t reduce_gamma(long agent_id) {
-            return g.gamma[agent_id];
+        inline friend gam_item_t get_reduced_gamma(const Node& a, NeightbouringAgent agent) {
+            intervalTime_t gamma_reduction = std::max(a.g.gamma[agent.id].last_recovery - agent.compound_recovery_time, 0.0);
 
-            intervalTime_t reduce_amound =
+            std::cerr << "agent_before: " << std::get<2>(a.node->state.interval) << ", agent_after: " << std::get<3>(a.node->state.interval) << ", agent: " << agent << std::endl;
+            std::cerr << "recovery_time: " << gamma_reduction << std::endl;
+
+            return reduce(a.g.gamma[agent.id], gamma_reduction);
         }
     };
 

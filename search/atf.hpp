@@ -78,6 +78,8 @@ struct EdgeATF{
             gamma(_gamma)
     {
         gamma = gamma_t(_gamma);
+        agent_before = NeightbouringAgent(0, 0);
+        agent_after  = NeightbouringAgent(0, 0);
     }
 
     inline intervalTime_t earliest_arrival_time() const{
@@ -124,7 +126,7 @@ struct EdgeATF{
         stream << "<" << eatf.zeta << "," << eatf.alpha << "," << eatf.beta << "," << eatf.delta << ",[";
 
         for (gam_item_t gamma : eatf.gamma) {
-            stream << "<" << gamma.first << ": " << gamma.second << ">; ";
+            stream << gamma << "; ";
         }
         stream <<  "]>";
         return stream;

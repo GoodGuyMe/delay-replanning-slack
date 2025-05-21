@@ -8,9 +8,36 @@ using gIndex_t = uint16_t;
 using intervalTime_t = double;
 
 // Gamma is stored as <min_gamma, max_gamma>
-using gam_item_t = std::pair<intervalTime_t, intervalTime_t>;
-using gamma_t = std::vector<gam_item_t>;
+//using gam_item_t = std::pair<intervalTime_t, intervalTime_t>;
 
+struct gam_item_t;
+
+struct gam_item_t {
+    intervalTime_t first;
+    intervalTime_t second;
+    intervalTime_t last_recovery;
+
+    gam_item_t() = default;
+    gam_item_t(intervalTime_t min_gamma, intervalTime_t max_gamma, intervalTime_t _last_recovery): first(min_gamma), second(max_gamma), last_recovery(_last_recovery) {}
+
+    inline friend bool operator==(const gam_item_t &gam, const gam_item_t &other) {
+        return gam.first == other.first && gam.second == other.second;
+    }
+
+    inline friend std::ostream& operator<< (std::ostream& stream, const gam_item_t& n){
+        stream << "<" << n.first << ": " << n.second << ": " << n.last_recovery << ">";
+        return stream;
+    }
+
+    inline friend gam_item_t reduce(const gam_item_t &gam, intervalTime_t reduction) {
+        intervalTime_t min_gamma = std::max(gam.first - reduction, 0.0);
+        intervalTime_t max_gamma = std::max(gam.second - reduction, 0.0);
+
+        return gam_item_t(min_gamma, max_gamma, gam.last_recovery);
+    }
+};
+
+using gamma_t = std::vector<gam_item_t>;
 
 namespace std {
     template<>
