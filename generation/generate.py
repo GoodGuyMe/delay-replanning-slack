@@ -20,7 +20,9 @@ parser.add_argument('-s', "--scenario", help = "Path to scenario file", required
 parser.add_argument('-o', "--output", help = "output file", required = True)
 parser.add_argument('-a', "--agent_id", help = "(optional) id of agent if it is one of the trains in scenario", default=-1)
 parser.add_argument('-v', "--agent_speed", help="(optional) the speed of the agent for who we are getting safe intervals. (default=40)", default=40)
-parser.add_argument('-p', "--printing", help="(optional) whether to print edge intervals (default=True)", default=True)
+parser.add_argument('-p', "--printing", help="(optional) whether to print edge intervals (default=True)", default="True")
+parser.add_argument('-b', "--buffer", help="(optional) max buffer time (default=float(\"inf\")", default=float("inf"))
+parser.add_argument('-r', "--recovery", help="(optional) use recovery time (default=True", default="True")
 
 def read_scenario(file, g, g_block, agent=-1):
     """Read scenario files in json format."""
@@ -91,7 +93,7 @@ if __name__ == "__main__":
     g_block = BlockGraph(g)
     unsafe_node_intervals, unsafe_edge_intervals, block_intervals, agent_intervals, moves_per_agent, computation_time = read_scenario(args.scenario, g, g_block, args.agent_id)
     block_routes = convertMovesToBlock(moves_per_agent, g)
-    buffer_times, recovery_times = flexibility(block_intervals, block_routes)
+    buffer_times, recovery_times = flexibility(block_intervals, block_routes, args.buffer, args.recovery.strip().lower() == "true")
     plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g.distance_markers, buffer_times)
     safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, buffer_times, float(args.agent_speed), print_intervals=args.printing == "True")
     write_intervals_to_file(args.output, safe_block_intervals, atfs, indices_to_states)

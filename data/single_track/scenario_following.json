@@ -61,7 +61,9 @@
                     "startTime": 900,
                     "endTime": 0,
                     "endLocation": "t-14B",
-                    "stops": {}
+                    "stops": {
+                        "t-6B": 2000
+                    }
                 }
             ]
         },
