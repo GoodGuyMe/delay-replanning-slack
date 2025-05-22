@@ -39,9 +39,10 @@ namespace asipp{
 
         EdgeATF arrival_time_function(zeta, alpha, beta, delta, gamma);
 
-//        if (gamma[successor->edge.agent_after.id].first >= max_gamma) {
-//            return;
-//        }
+        if (!valid_gamma(gamma[successor->edge.agent_after.id])) {
+            std::cerr << "Gamma not valid " << gamma[successor->edge.agent_after.id] << std::endl;
+            return;
+        }
 
         if (beta <= alpha) {
 //            std::cerr << "Beta smaller than Alpha! " << alpha << ", " << beta << std::endl;

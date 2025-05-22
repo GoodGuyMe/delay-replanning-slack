@@ -4,6 +4,15 @@
 
 // BOOST_ENABLE_ASSERT_DEBUG_HANDLER is defined for the whole project
 
+
+constexpr double epsilon(){
+    return 0.0001;
+}
+
+constexpr double sqrt2(){
+    return boost::math::double_constants::root_two;
+}
+
 using gIndex_t = uint16_t;
 using intervalTime_t = double;
 
@@ -35,6 +44,16 @@ struct gam_item_t {
 
         return gam_item_t(min_gamma, max_gamma, gam.last_recovery);
     }
+
+    inline friend bool valid_gamma(const gam_item_t &gam) {
+        if(abs(gam.second) < epsilon()) {
+            std::cerr << "Still zero" << std::endl;
+            return true;
+        }
+        intervalTime_t diff = abs(gam.second - gam.first);
+        std::cerr << "Difference " << diff << " of " << gam << std::endl;
+        return diff > epsilon();
+    }
 };
 
 using gamma_t = std::vector<gam_item_t>;
@@ -51,12 +70,4 @@ namespace std {
             return seed;
         }
     };
-}
-
-constexpr double epsilon(){
-    return 0.0001;
-}
-
-constexpr double sqrt2(){
-    return boost::math::double_constants::root_two;
 }
