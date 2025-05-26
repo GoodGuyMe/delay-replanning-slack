@@ -27,10 +27,13 @@ def flexibility(block_intervals, block_routes, max_buffer=float("inf"), use_reco
                 # Calculate buffer time
                 block = edge.get_identifier()
                 blocks = block_intervals[block]
-                extra_buf_time, recovery = get_single_buffer_time(blocks, agent)
+                current_buff_time, recovery = get_single_buffer_time(blocks, agent)
 
                 # Buffer time can increase by recovery time if it would fit
-                last_buffer_time = min(last_buffer_time, extra_buf_time)
+                last_buffer_time = min(last_buffer_time, current_buff_time)
+
+                # Recovery time cannot be larger than buffer time
+                compound_recovery_time = min(compound_recovery_time, last_buffer_time)
 
                 # Store flexibility
                 for affected_block in edge.get_affected_blocks():
@@ -40,8 +43,6 @@ def flexibility(block_intervals, block_routes, max_buffer=float("inf"), use_reco
                 if use_recovery_time:
                     # Calculate recovery time
                     compound_recovery_time += recovery
-                    # Recovery time cannot be larger than buffer time
-                    compound_recovery_time = min(compound_recovery_time, last_buffer_time)
                     last_buffer_time = min(last_buffer_time + recovery, max_buffer)
 
 
