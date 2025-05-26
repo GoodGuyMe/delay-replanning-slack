@@ -153,6 +153,7 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, dista
 
     plot_train_path(moves_per_agent, color_map)
 
+
     for node, (y, edge) in node_map.items():
         for start, stop, duration, train, recovery in blocking_times[edge.get_identifier()]:
             blocking_time = patches.Rectangle((y, start), edge.length, stop - start, linewidth=1, edgecolor='red', facecolor='none')
@@ -163,7 +164,7 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, dista
                 # ax.errorbar((2 * y + edge.length) / 2, stop, yerr=errors, fmt="none", color=color_map[train])
 
                 error_block = patches.Rectangle((y, stop), edge.length, buffer_times[train][node], linewidth=1, facecolor=color_map[train], alpha=0.3)
-                recovery_block = patches.Rectangle((y, stop + buffer_times[train][node] - recovery_times[train][node]), edge.length, recovery_times[train][node], linewidth=1, facecolor=color_map[train], alpha=0.3)
+                recovery_block = patches.Rectangle((y, stop), edge.length, recovery_times[train][node], linewidth=1, facecolor=color_map[train], alpha=0.3)
                 ax.add_patch(error_block)
                 ax.add_patch(recovery_block)
 
