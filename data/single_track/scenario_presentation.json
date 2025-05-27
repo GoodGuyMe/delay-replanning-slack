@@ -3,11 +3,11 @@
         {
             "name": "SNG",
             "length": 60,
-            "speed": 40
+            "speed": 10
         },{
             "name": "VIRM",
             "length": 60,
-            "speed": 20
+            "speed": 10
         }
     ],
     "trains": [
@@ -22,8 +22,8 @@
             "movements": [
                 {
                     "startLocation": "t-n3_1B",
-                    "startTime": 50,
-                    "endTime": 750,
+                    "startTime": 150,
+                    "endTime": 1000,
                     "endLocation": "t-14B",
                     "stops": {}
                 }
@@ -32,28 +32,7 @@
         {
             "trainNumber": 2,
             "trainUnits": [
-                8656
-            ],
-            "trainUnitTypes": [
-                "SNG"
-            ],
-            "movements": [
-                {
-                    "startLocation": "t-n3_1B",
-                    "startTime": 500,
-                    "endTime": 0,
-                    "endLocation": "t-14B",
-                    "stops": {
-                        "t-4B": 1200,
-                        "t-10B": 1600
-                    }
-                }
-            ]
-        },
-        {
-            "trainNumber": 3,
-            "trainUnits": [
-                8656
+                8657
             ],
             "trainUnitTypes": [
                 "VIRM"
@@ -61,12 +40,10 @@
             "movements": [
                 {
                     "startLocation": "t-n3_1B",
-                    "startTime": 1200,
+                    "startTime": 50,
                     "endTime": 1000,
                     "endLocation": "t-14B",
-                    "stops": {
-                        "t-4B": 1800
-                    }
+                    "stops": {}
                 }
             ]
         }
@@ -77,5 +54,5 @@
     "releaseTime": 20,
     "setupTime": 20,
     "sightReactionTime": 10,
-    "minimumStopTime": 100
+    "minimumStopTime": 200
 }
