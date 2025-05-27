@@ -104,9 +104,9 @@ namespace asipp{
                 extendOpen(cur, open_list, m, successor, gamma_buffer, succ_alpha, succ_beta);
             }
 //            std::cerr << "Standard addition" << std::endl;
-            gamma_t gamma_3 = gamma_t(cur.g.gamma);
-            gamma_3[successor->edge.agent_after.id] = gam_item_t(minimum_gamma, gamma_after.second, successor->edge.agent_after.compound_recovery_time);
-            extendOpen(cur, open_list, m, successor, gamma_3, alpha, beta);
+            gamma_t gamma_normal = gamma_t(cur.g.gamma);
+            gamma_normal[successor->edge.agent_after.id] = gam_item_t(minimum_gamma, gamma_after.second, successor->edge.agent_after.compound_recovery_time);
+            extendOpen(cur, open_list, m, successor, gamma_normal, alpha, beta);
         }
     }
 
