@@ -24,7 +24,7 @@ struct NeightbouringAgent{
     NeightbouringAgent(long _id, intervalTime_t _max_buffer_time, intervalTime_t _compound_recovery_time): id(_id), max_buffer_time(_max_buffer_time), compound_recovery_time(_compound_recovery_time){}
 
     inline friend std::ostream& operator<< (std::ostream& stream, const NeightbouringAgent& train){
-        stream << train.id << " max: " << train.max_buffer_time << " compound_recovery_time: " << train.compound_recovery_time;
+        stream << train.id << " bt: " << train.max_buffer_time << " crt: " << train.compound_recovery_time;
         return stream;
     }
 };
@@ -87,7 +87,8 @@ struct EdgeATF{
     }
 
     inline intervalTime_t arrival_time(intervalTime_t t) const{
-        if(t < zeta || beta <= t){
+//        if(t < zeta || beta <= t){
+        if(t < zeta){
             return std::numeric_limits<intervalTime_t>::infinity();
         }
         if(t < std::min(alpha, beta)){
@@ -125,10 +126,14 @@ struct EdgeATF{
     inline friend std::ostream& operator<< (std::ostream& stream, const EdgeATF& eatf){
         stream << "<" << eatf.zeta << "," << eatf.alpha << "," << eatf.beta << "," << eatf.delta << ",[";
 
-        for (gam_item_t gamma : eatf.gamma) {
-            stream << gamma << "; ";
+        if (eatf.gamma.empty()) {
+            stream << eatf.agent_before << ", " << eatf.agent_after;
+        } else {
+            for (gam_item_t gamma: eatf.gamma) {
+                stream << gamma << "; ";
+            }
         }
-        stream <<  "]>";
+        stream << "]>";
         return stream;
     }
 
@@ -233,6 +238,12 @@ struct CompoundATF{
         auto segments = e.segments();
         for(auto segment: segments){
             segment.payload = edge_atfs.size()-1;
+            std::cerr << "Adding segment " << segment << std::endl;
+            std::cerr << "  segment gamma ";
+            for (gam_item_t gam: e.gamma) {
+                std::cerr << gam << ", ";
+            }
+            std::cerr << std::endl;
             add_segment(segment);
         }
         assert(bumper_to_bumper());

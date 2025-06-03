@@ -42,7 +42,7 @@ namespace rePEAT{
 //        @SIPP graph node, with a single safe interval
         GraphNode * node;
         Node() = default;
-        Node(EdgeATF e, double _h, GraphNode * _node):g(e),f(e.alpha + _h),node(_node){}
+        Node(EdgeATF e, double _h, GraphNode * _node):g(e),f(e.alpha + e.delta + _h),node(_node){}
 
         inline friend bool operator>(const Node& a, const Node& b){
             if(a.f == b.f){
@@ -65,10 +65,11 @@ namespace rePEAT{
         inline friend gam_item_t get_reduced_gamma(const Node& a, NeightbouringAgent agent) {
             intervalTime_t gamma_reduction = std::max(a.g.gamma[agent.id].last_recovery - agent.compound_recovery_time, 0.0);
 
-            std::cerr << "agent_before: " << std::get<2>(a.node->state.interval) << ", agent_after: " << std::get<3>(a.node->state.interval) << ", agent: " << agent << std::endl;
-            std::cerr << "recovery_time: " << gamma_reduction << std::endl;
-
-            return reduce(a.g.gamma[agent.id], gamma_reduction);
+//            std::cerr << "agent_before: " << std::get<2>(a.node->state.interval) << ", agent_after: " << std::get<3>(a.node->state.interval) << ", agent: " << agent << std::endl;
+//            std::cerr << "  Delta CRT: " << gamma_reduction << std::endl;
+            gam_item_t reduced = reduce(a.g.gamma[agent.id], gamma_reduction);
+//            std::cerr << "  Reduced: " << reduced << std::endl;
+            return reduced;
         }
     };
 

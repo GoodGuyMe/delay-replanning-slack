@@ -43,6 +43,8 @@ def flexibility(block_intervals, block_routes, max_buffer=float("inf"), use_reco
                 if use_recovery_time:
                     # Calculate recovery time
                     compound_recovery_time += recovery
+
+                if use_recovery_time:
                     last_buffer_time = min(last_buffer_time + recovery, max_buffer)
 
 
