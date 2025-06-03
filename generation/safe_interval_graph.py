@@ -164,7 +164,7 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, dista
                 # ax.errorbar((2 * y + edge.length) / 2, stop, yerr=errors, fmt="none", color=color_map[train])
 
                 error_block = patches.Rectangle((y, stop), edge.length, buffer_times[train][node], linewidth=1, facecolor=color_map[train], alpha=0.3)
-                recovery_block = patches.Rectangle((y, stop), edge.length, recovery_times[train][node], linewidth=1, facecolor=color_map[train], alpha=0.3)
+                recovery_block = patches.Rectangle((y, stop), edge.length, recovery_times[train][node], linewidth=1, facecolor=None, alpha=0.0, hatch=r"\\")
                 ax.add_patch(error_block)
                 ax.add_patch(recovery_block)
 
@@ -175,7 +175,7 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, dista
         Line2D([0], [0], color="green", label="Train Path"),
         patches.Patch(facecolor=None,   edgecolor="red", label="Blocking Time", fill=False),
         patches.Patch(facecolor="green", edgecolor=None,  label="Buffer time", alpha=0.3),
-        patches.Patch(facecolor="green", edgecolor=None,  label="Recovery time", alpha=0.6)
+        patches.Patch(hatch=r"\\\\", edgecolor=None,  label="Recovery time", alpha=0.0)
     ]
     plt.legend(handles=legend_items ,loc="upper left")
 

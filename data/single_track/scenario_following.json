@@ -23,9 +23,11 @@
                 {
                     "startLocation": "t-n3_1B",
                     "startTime": 50,
-                    "endTime": 750,
+                    "endTime": 1500,
                     "endLocation": "t-14B",
-                    "stops": {}
+                    "stops": {
+                        "t-10B": 900
+                    }
                 }
             ]
         },
@@ -44,7 +46,7 @@
                     "endTime": 0,
                     "endLocation": "t-14B",
                     "stops": {
-                        "t-4B": 1200,
+                        "t-4B": 1000,
                         "t-10B": 1600
                     }
                 }
@@ -62,7 +64,7 @@
                 {
                     "startLocation": "t-n3_1B",
                     "startTime": 1200,
-                    "endTime": 1000,
+                    "endTime": 0,
                     "endLocation": "t-14B",
                     "stops": {
                         "t-4B": 1800
