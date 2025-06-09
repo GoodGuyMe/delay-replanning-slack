@@ -39,9 +39,10 @@ namespace asipp{
 
         EdgeATF arrival_time_function(zeta, alpha, beta, delta, gamma);
 
-//        if (gamma[successor->edge.agent_after.id].first >= max_gamma) {
-//            return;
-//        }
+        if (!valid_gamma(gamma[successor->edge.agent_after.id])) {
+            std::cerr << "Gamma not valid " << gamma[successor->edge.agent_after.id] << std::endl;
+            return;
+        }
 
         if (beta <= alpha) {
 //            std::cerr << "Beta smaller than Alpha! " << alpha << ", " << beta << std::endl;
@@ -73,17 +74,20 @@ namespace asipp{
     inline void expand(const Node_t& cur, Open_t& open_list, const Location& goal_loc, MetaData & m){
         (void)goal_loc;
         m.expanded++;
-//        std::cerr << "---------------- new node ----------------"<< std::endl;
-//        std::cerr << "At node " << *cur.node << ", time " << cur.g.earliest_arrival_time();
-//        std::cerr << "\n  g: " << cur.g << std::endl;
+        std::cerr << "---------------- new node ----------------"<< std::endl;
+        std::cerr << "At node " << *cur.node << ", time " << cur.g.earliest_arrival_time();
+        std::cerr << "\n  g: " << cur.g << std::endl;
 
         for(GraphEdge * successor: cur.node->successors){
             if(open_list.expanded.contains(MapNode(successor->destination, successor->edge.gamma))){
                 std::cerr << "Skipped successor " << successor << std::endl;
                 continue; // Already visited location and added all outgoing edges to the queue, thus the new found path to that node is worse
             }
-            gam_item_t gamma_after  = cur.g.gamma[successor->edge.agent_after.id];
-            gam_item_t gamma_before = cur.g.gamma[successor->edge.agent_before.id];
+            gam_item_t gamma_after  = get_reduced_gamma(cur, successor->edge.agent_after);
+            gam_item_t gamma_before = get_reduced_gamma(cur, successor->edge.agent_before);
+
+//            gam_item_t gamma_after  = cur.g.gamma[successor->edge.agent_after.id];
+//            gam_item_t gamma_before = cur.g.gamma[successor->edge.agent_before.id];
 
             intervalTime_t alpha = successor->edge.alpha - cur.g.delta + gamma_before.second;
             intervalTime_t beta  = successor->edge.beta  - cur.g.delta + gamma_after.second;
@@ -96,13 +100,13 @@ namespace asipp{
                 intervalTime_t succ_alpha = beta;
                 intervalTime_t succ_beta  = beta + successor->edge.agent_after.max_buffer_time - gamma_after.second;
                 gamma_t gamma_buffer = gamma_t(cur.g.gamma);
-                gamma_buffer[successor->edge.agent_after.id] = gam_item_t(minimum_gamma, successor->edge.agent_after.max_buffer_time);
+                gamma_buffer[successor->edge.agent_after.id] = gam_item_t(minimum_gamma, successor->edge.agent_after.max_buffer_time, successor->edge.agent_after.compound_recovery_time);
                 extendOpen(cur, open_list, m, successor, gamma_buffer, succ_alpha, succ_beta);
             }
 //            std::cerr << "Standard addition" << std::endl;
-            gamma_t gamma_3 = gamma_t(cur.g.gamma);
-            gamma_3[successor->edge.agent_after.id] = gam_item_t(minimum_gamma, gamma_after.second);
-            extendOpen(cur, open_list, m, successor, gamma_3, alpha, beta);
+            gamma_t gamma_normal = gamma_t(cur.g.gamma);
+            gamma_normal[successor->edge.agent_after.id] = gam_item_t(minimum_gamma, gamma_after.second, successor->edge.agent_after.compound_recovery_time);
+            extendOpen(cur, open_list, m, successor, gamma_normal, alpha, beta);
         }
     }
 

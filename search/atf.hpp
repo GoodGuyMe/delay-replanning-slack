@@ -18,13 +18,13 @@
 struct NeightbouringAgent{
     long id;
     intervalTime_t max_buffer_time;
-    intervalTime_t length_unsafe;
+    intervalTime_t compound_recovery_time;
     NeightbouringAgent() = default;
-    NeightbouringAgent(long _id): id(_id), max_buffer_time(), length_unsafe(){}
-    NeightbouringAgent(long _id, intervalTime_t _max_buffer_time, intervalTime_t _length_unsafe): id(_id), max_buffer_time(_max_buffer_time), length_unsafe(_length_unsafe){}
+    NeightbouringAgent(long _id, intervalTime_t _compound_recovery_time): id(_id), max_buffer_time(), compound_recovery_time(_compound_recovery_time){}
+    NeightbouringAgent(long _id, intervalTime_t _max_buffer_time, intervalTime_t _compound_recovery_time): id(_id), max_buffer_time(_max_buffer_time), compound_recovery_time(_compound_recovery_time){}
 
     inline friend std::ostream& operator<< (std::ostream& stream, const NeightbouringAgent& train){
-        stream << train.id << " max: " << train.max_buffer_time << " unsafe_time: " << train.length_unsafe;
+        stream << train.id << " max: " << train.max_buffer_time << " compound_recovery_time: " << train.compound_recovery_time;
         return stream;
     }
 };
@@ -49,16 +49,17 @@ struct EdgeATF{
             intervalTime_t _beta,
             intervalTime_t _delta,
             int id_b,
+            intervalTime_t crt_b,
             int id_a,
             intervalTime_t max_buf_a,
-            intervalTime_t len_uns_a)
+            intervalTime_t crt_a)
         :
             zeta(_zeta),
             alpha(_alpha),
             beta(_beta),
             delta(_delta),
-            agent_before(NeightbouringAgent(id_b)),
-            agent_after(NeightbouringAgent(id_a, max_buf_a, len_uns_a)),
+            agent_before(NeightbouringAgent(id_b, crt_b)),
+            agent_after(NeightbouringAgent(id_a, max_buf_a, crt_a)),
             gamma(0)
         {};
 
@@ -77,6 +78,8 @@ struct EdgeATF{
             gamma(_gamma)
     {
         gamma = gamma_t(_gamma);
+        agent_before = NeightbouringAgent(0, 0);
+        agent_after  = NeightbouringAgent(0, 0);
     }
 
     inline intervalTime_t earliest_arrival_time() const{
@@ -123,7 +126,7 @@ struct EdgeATF{
         stream << "<" << eatf.zeta << "," << eatf.alpha << "," << eatf.beta << "," << eatf.delta << ",[";
 
         for (gam_item_t gamma : eatf.gamma) {
-            stream << "<" << gamma.first << ": " << gamma.second << ">; ";
+            stream << gamma << "; ";
         }
         stream <<  "]>";
         return stream;

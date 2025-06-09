@@ -3,7 +3,7 @@ import time
 import argparse
 import gzip
 
-from generation.buffer_time import buffer_time
+from generation.buffer_time import flexibility
 from generation.graph import BlockGraph
 from generation.safe_interval_graph import plot_safe_node_intervals, plot_blocking_staircase
 from generation.signal_sections import convertMovesToBlock
@@ -20,7 +20,9 @@ parser.add_argument('-s', "--scenario", help = "Path to scenario file", required
 parser.add_argument('-o', "--output", help = "output file", required = True)
 parser.add_argument('-a', "--agent_id", help = "(optional) id of agent if it is one of the trains in scenario", default=-1)
 parser.add_argument('-v', "--agent_speed", help="(optional) the speed of the agent for who we are getting safe intervals. (default=40)", default=40)
-parser.add_argument('-p', "--printing", help="(optional) whether to print edge intervals (default=True)", default=True)
+parser.add_argument('-p', "--printing", help="(optional) whether to print edge intervals (default=True)", default="True")
+parser.add_argument('-b', "--buffer", help="(optional) max buffer time (default=float(\"inf\")", default=float("inf"))
+parser.add_argument('-r', "--recovery", help="(optional) use recovery time (default=True", default="True")
 
 def read_scenario(file, g, g_block, agent=-1):
     """Read scenario files in json format."""
@@ -44,18 +46,6 @@ def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, indi
 
         num_trains = 0
 
-        alpha_store = {}
-        length_unsafe_list = {}
-        for from_id, to_id, _, alpha, beta, _, _, _, _ in safe_edge_intervals:
-            from_node = indices_to_states[from_id]
-            if from_node not in alpha_store:
-                alpha_store[from_node] = []
-            alpha_store[from_node].append((alpha, beta))
-        for from_node, list in alpha_store.items():
-            list.sort(key=lambda x: x[0])
-            for (_, beta), (alpha, _) in zip(list, list[1:]):
-                length_unsafe_list[(from_node, beta)] = alpha - beta
-
         """ Write safe node intervals, as 'node_name start end id_before id_after'"""
         for node in safe_node_intervals:
             for start, end, id_before, id_after, _, _ in safe_node_intervals[node]:
@@ -64,23 +54,21 @@ def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, indi
                 f.write(f"{node} {start} {end} {id_before} {id_after} {max_buffer}\n")
 
         """Write atfs, as 'from_id to_id zeta alpha beta delta id_before max_buf_before len_unsafe_before id_after max_buf_after len_unsafe_after'"""
-        for from_id, to_id, zeta, alpha, beta, delta, id_before, id_after, buffer_after in safe_edge_intervals:
+        for from_id, to_id, zeta, alpha, beta, delta, id_before, crt_b, id_after, buffer_after, crt_a in safe_edge_intervals:
             # In our domain there is not really a difference between alpha and zeta since we have no waiting time, so they are the same, but we keep both for extendability.
             num_trains = max(num_trains, id_before, id_after)
-            from_node = indices_to_states[from_id]
-            len_uns_a = length_unsafe_list[(from_node, beta)] if (from_node, beta) in length_unsafe_list else 0
-            f.write(f"{from_id} {to_id} {zeta} {alpha} {beta} {delta} {id_before} {id_after} {buffer_after} {len_uns_a}\n")
+            f.write(f"{from_id} {to_id} {zeta} {alpha} {beta} {delta} {id_before} {crt_b} {id_after} {buffer_after} {crt_a}\n")
         f.write(f"num_trains {num_trains}\n")
 
-def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output, max_buffer_time):
+def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output, max_buffer_time, use_recovery_time):
     """For testing the time to get the safe intervals. Also writes to file (without timing). Used for experiments."""
     g = read_graph(location)
     g_block = BlockGraph(g)
     _, _, block_intervals, _, moves_per_agent, unsafe_computation_time = read_scenario(scenario, g, g_block, agent_id)
     block_routes = convertMovesToBlock(moves_per_agent, g)
-    buffer_times = buffer_time(block_intervals, block_routes, g_block, max_buffer_time)
+    buffer_times, recovery_times = flexibility(block_intervals, block_routes, max_buffer_time, use_recovery_time)
     start_time = time.time()
-    safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, buffer_times, float(agent_speed), print_intervals=False)
+    safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, buffer_times, recovery_times, float(agent_speed), print_intervals=False)
     safe_computation_time = time.time() - start_time
     write_intervals_to_file(output, safe_block_intervals, atfs, indices_to_states)
     return unsafe_computation_time + safe_computation_time
@@ -91,8 +79,8 @@ if __name__ == "__main__":
     g_block = BlockGraph(g)
     unsafe_node_intervals, unsafe_edge_intervals, block_intervals, agent_intervals, moves_per_agent, computation_time = read_scenario(args.scenario, g, g_block, args.agent_id)
     block_routes = convertMovesToBlock(moves_per_agent, g)
-    buffer_times = buffer_time(block_intervals, block_routes, g_block)
-    plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g.distance_markers, buffer_times)
-    safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, buffer_times, float(args.agent_speed), print_intervals=args.printing == "True")
+    buffer_times, recovery_times = flexibility(block_intervals, block_routes, float(args.buffer), args.recovery.strip().lower() == "true")
+    plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g.distance_markers, buffer_times, recovery_times)
+    safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, buffer_times, recovery_times, float(args.agent_speed), args.recovery.strip().lower() == "true")
     write_intervals_to_file(args.output, safe_block_intervals, atfs, indices_to_states)
-    plot_safe_node_intervals(safe_block_intervals | safe_block_edges_intervals, block_routes)
+    # plot_safe_node_intervals(safe_block_intervals | safe_block_edges_intervals, block_routes)

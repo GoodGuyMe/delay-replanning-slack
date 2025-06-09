@@ -33,8 +33,13 @@ namespace rePEAT{
     struct Node;
 
     struct Node{
+//        Compound ATF of current search state
         EdgeATF g;
+
+//        Cost value for A*
         double f;
+
+//        @SIPP graph node, with a single safe interval
         GraphNode * node;
         Node() = default;
         Node(EdgeATF e, double _h, GraphNode * _node):g(e),f(e.alpha + _h),node(_node){}
@@ -55,6 +60,15 @@ namespace rePEAT{
         inline friend std::ostream& operator<< (std::ostream& stream, const Node& n){
             stream << *n.node << " g:" << n.g << ", f:" << n.f;
             return stream;
+        }
+
+        inline friend gam_item_t get_reduced_gamma(const Node& a, NeightbouringAgent agent) {
+            intervalTime_t gamma_reduction = std::max(a.g.gamma[agent.id].last_recovery - agent.compound_recovery_time, 0.0);
+
+            std::cerr << "agent_before: " << std::get<2>(a.node->state.interval) << ", agent_after: " << std::get<3>(a.node->state.interval) << ", agent: " << agent << std::endl;
+            std::cerr << "recovery_time: " << gamma_reduction << std::endl;
+
+            return reduce(a.g.gamma[agent.id], gamma_reduction);
         }
     };
 

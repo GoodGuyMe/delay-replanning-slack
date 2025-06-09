@@ -44,6 +44,7 @@ class TrackNode(Node):
         if self.direction != "A" and self.direction != "B":
             print("WTF")
 
+
 class Edge:
     __last_id = 1
     def __init__(self, f:Node, t:Node, l):
