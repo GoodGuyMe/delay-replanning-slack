@@ -41,8 +41,9 @@ struct gam_item_t {
     inline friend gam_item_t reduce(const gam_item_t &gam, intervalTime_t reduction) {
         intervalTime_t min_gamma = std::max(gam.first - reduction, 0.0);
         intervalTime_t max_gamma = std::max(gam.second - reduction, 0.0);
+        intervalTime_t new_recovery = std::max(gam.last_recovery - reduction, 0.0);
 
-        return gam_item_t(min_gamma, max_gamma, gam.last_recovery);
+        return gam_item_t(min_gamma, max_gamma, new_recovery);
     }
 
     inline friend bool valid_gamma(const gam_item_t &gam) {

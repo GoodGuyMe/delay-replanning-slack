@@ -26,97 +26,35 @@ namespace asipp{
     }
 
     template <typename Node_t, typename Open_t>
-    inline void extendOpen(const Node_t& cur, Open_t& open_list, MetaData & m, GraphEdge * successor, gamma_t gamma, intervalTime_t succ_alpha, intervalTime_t succ_beta) {
-        intervalTime_t zeta = cur.g.zeta;
-        intervalTime_t alpha = std::max(cur.g.alpha, succ_alpha);
-        intervalTime_t beta = std::min(cur.g.beta, succ_beta);
-        intervalTime_t delta = successor->edge.delta + cur.g.delta;
+    inline void extendOpen(const Node_t& cur, Open_t& open_list, MetaData & m, GraphNode * source, GraphNode * destination, EdgeATF edge, gamma_t gamma) {
+        intervalTime_t zeta  = cur.g.zeta;
+        intervalTime_t alpha = std::max(cur.g.alpha, edge.alpha - cur.g.delta);
+        intervalTime_t beta  = std::min(cur.g.beta,  edge.beta  - cur.g.delta);
+        intervalTime_t delta = cur.g.delta + edge.delta;
 
-        gam_item_t gam_after = gamma[successor->edge.agent_after.id];
+        gam_item_t gam_after = gamma[edge.agent_after.id];
 
-        intervalTime_t min_gamma = std::max(gam_after.first, alpha + delta - successor->edge.alpha);
+        intervalTime_t min_gamma = std::max(gam_after.first, alpha - (edge.beta - cur.g.delta - gam_after.second));
 
-        intervalTime_t duration_available = succ_beta-alpha;
+//        intervalTime_t duration_available = beta-(edge.alpha - delta);
+        intervalTime_t duration_available = std::max(0.0, beta - alpha);
         intervalTime_t max_gamma = std::min(duration_available + min_gamma, gam_after.second);
-        gamma[successor->edge.agent_after.id] = gam_item_t(min_gamma, max_gamma, gam_after.last_recovery);
+        gamma[edge.agent_after.id] = gam_item_t(min_gamma, max_gamma, gam_after.last_recovery);
 
         EdgeATF arrival_time_function(zeta, alpha, beta, delta, gamma);
 
         std::cerr << "Created catf " << arrival_time_function << std::endl;
 
-//        if (!valid_gamma(gamma[successor->edge.agent_after.id])) {
-//            std::cerr << "Gamma not valid " << gamma[successor->edge.agent_after.id] << std::endl;
-//            return;
-//        }
-
-        // Check if agent can take this edge
         intervalTime_t eat = cur.g.earliest_arrival_time();
-        if (eat >= successor->edge.beta + gam_after.second) {
-            std::cerr << "cur.alpha + cur.delta > edge.beta + gamma.max" << eat << " >= " << succ_beta << std::endl;
+        if (eat >= edge.beta) {
+            std::cerr << "cur.alpha + cur.delta > edge.beta" << eat << " >= " << edge.beta << std::endl;
             return;
         }
 
-//        if (beta <= alpha) {
-//            std::cerr << "Beta smaller than Alpha! " << alpha << ", " << beta << std::endl;
-//            return;
-//        }
-
-        if (open_list.handles.contains(MapNode(successor->destination, gamma))){
-            auto handle = open_list.handles[MapNode(successor->destination, gamma)];
-            if(arrival_time_function.earliest_arrival_time() < (*handle).g.earliest_arrival_time()){
-                m.decreased++;
-//                double h = arrival_time_function.sum_of_delays();
-                double h = 0;
-                Node_t new_node = open_list.decrease_key(handle, arrival_time_function, h, successor->destination, successor->source);
-//                std::cerr << "Decreased: " << new_node << std::endl;
-            } else {
-//                std::cerr << "This line fucked with it" << std::endl;
-            }
+        if (!valid_gamma(gamma[edge.agent_after.id])) {
+            std::cerr << "Gamma not valid " << gamma[edge.agent_after.id] << std::endl;
+            return;
         }
-        else{
-            m.generated++;
-//            double h = arrival_time_function.sum_of_delays();
-            double h = 0;
-            Node_t new_node = open_list.emplace(arrival_time_function, h, successor->destination, successor->source);
-            std::cerr << "Added: " << new_node << std::endl;
-        }
-    }
-
-    template <typename Node_t, typename Open_t>
-    inline void newExtendOpen(const Node_t& cur, Open_t& open_list, MetaData & m, GraphNode * source, GraphNode * destination, EdgeATF outgoing_edge) {
-        intervalTime_t zeta = cur.g.zeta;
-        intervalTime_t alpha = std::max(cur.g.alpha, outgoing_edge.alpha);
-        intervalTime_t beta = std::min(cur.g.beta, outgoing_edge.beta);
-        intervalTime_t delta = cur.g.delta + outgoing_edge.delta;
-
-        gam_item_t gam_after = outgoing_edge.gamma[outgoing_edge.agent_after.id];
-
-        intervalTime_t min_gamma = std::max(gam_after.first, alpha + delta - outgoing_edge.alpha);
-
-        intervalTime_t duration_available = succ_beta-alpha;
-        intervalTime_t max_gamma = std::min(duration_available + min_gamma, gam_after.second);
-        gamma[successor->edge.agent_after.id] = gam_item_t(min_gamma, max_gamma, gam_after.last_recovery);
-
-        EdgeATF arrival_time_function(zeta, alpha, beta, delta, gamma);
-
-        std::cerr << "Created catf " << arrival_time_function << std::endl;
-
-//        if (!valid_gamma(gamma[successor->edge.agent_after.id])) {
-//            std::cerr << "Gamma not valid " << gamma[successor->edge.agent_after.id] << std::endl;
-//            return;
-//        }
-
-        // Check if agent can take this edge
-//        intervalTime_t eat = cur.g.earliest_arrival_time();
-//        if (eat >= outgoing_edge.beta + gam_after.second) {
-//            std::cerr << "cur.alpha + cur.delta > edge.beta + gamma.max" << eat << " >= " << outgoing_edge.beta << std::endl;
-//            return;
-//        }
-
-//        if (beta <= alpha) {
-//            std::cerr << "Beta smaller than Alpha! " << alpha << ", " << beta << std::endl;
-//            return;
-//        }
 
         if (open_list.handles.contains(MapNode(destination, gamma))){
             auto handle = open_list.handles[MapNode(destination, gamma)];
@@ -125,9 +63,16 @@ namespace asipp{
 //                double h = arrival_time_function.sum_of_delays();
                 double h = 0;
                 Node_t new_node = open_list.decrease_key(handle, arrival_time_function, h, destination, source);
-//                std::cerr << "Decreased: " << new_node << std::endl;
+                std::cerr << "Decreased: " << new_node << std::endl;
+            } else if(arrival_time_function.beta > (*handle).g.beta) {
+                std::cerr << "This line fucked with it" << std::endl;
+                m.decreased++;
+//                double h = arrival_time_function.sum_of_delays();
+                double h = 0;
+                Node_t new_node = open_list.decrease_key(handle, arrival_time_function, h, destination, source);
+                std::cerr << "Decreased: " << new_node << std::endl;
             } else {
-//                std::cerr << "This line fucked with it" << std::endl;
+                std::cerr << "This line still fucked with it" << std::endl;
             }
         }
         else{
@@ -160,50 +105,57 @@ namespace asipp{
             edge.alpha = successor->edge.alpha + gamma_before.first;
             edge.beta = successor->edge.beta + gamma_after.second;
 
-            std::cerr << "Outgoing edge " << edge << std::endl;
+            std::cerr << "Outgoing edge " << edge << ", b: " << gamma_before << ", a: " << gamma_after << std::endl;
 
 //            If there is more buffer time available than is currently being used, use it.
-            intervalTime_t available_buffer_time = successor->edge.agent_after.max_buffer_time - gamma_after.second;
+            intervalTime_t available_buffer_time = edge.agent_after.max_buffer_time - gamma_after.second;
             if (available_buffer_time > epsilon()) {
+                std::cerr << "Addition using " << available_buffer_time << " more buffer time" << std::endl;
 //                For this extra atf, alpha is the beta of the old edge
 //                  Beta is alpha + extra aviailable buffer time
-//                  Gamma is atleast how much was used before, and max the new max buffer time.
+//                  Gamma for the agent after is atleast how much was used before, and max the new max buffer time.
 
                 EdgeATF extra_edge(edge);
                 extra_edge.alpha = edge.beta;
                 extra_edge.beta = extra_edge.alpha + available_buffer_time;
-                gam_item_t extra_gamma = gam_item_t(gamma_after.second, successor->edge.agent_after.max_buffer_time, successor->edge.agent_after.compound_recovery_time);
 
+                gamma_t new_gamma = gamma_t(cur.g.gamma);
+                new_gamma[successor->edge.agent_after.id] = gam_item_t(gamma_after.second, successor->edge.agent_after.max_buffer_time, successor->edge.agent_after.compound_recovery_time);
 
-                newExtendOpen(cur, open_list, m, successor->source, successor->destination, extra_edge);
+                std::cerr << "Additional edge " << extra_edge << ", " << new_gamma[successor->edge.agent_after.id] << std::endl;
+                extendOpen(cur, open_list, m, successor->source, successor->destination, extra_edge, new_gamma);
             }
+
+            gamma_t old_gamma = gamma_t(cur.g.gamma);
+            old_gamma[successor->edge.agent_after.id] = gam_item_t(gamma_after.first, gamma_after.second, successor->edge.agent_after.compound_recovery_time);
+            extendOpen(cur, open_list, m, successor->source, successor->destination, edge, old_gamma);
 
 //            gam_item_t gamma_after  = cur.g.gamma[successor->edge.agent_after.id];
 //            gam_item_t gamma_before = cur.g.gamma[successor->edge.agent_before.id];
 
-            intervalTime_t alpha = successor->edge.alpha - cur.g.delta + gamma_before.first;
-            intervalTime_t beta  = successor->edge.beta  - cur.g.delta + gamma_after.second;
-
-            intervalTime_t minimum_gamma = std::max(gamma_after.first, cur.g.earliest_arrival_time() - successor->edge.beta);
-
-//            If there is available buffer time to use, create an edge that uses it.
-            if (successor->edge.agent_after.max_buffer_time - gamma_after.second > epsilon()) {
-                std::cerr << "Addition using " << successor->edge.agent_after.max_buffer_time - gamma_after.second << " more buffer time" << std::endl;
-                intervalTime_t succ_alpha = beta;
-                intervalTime_t succ_beta  = beta + successor->edge.agent_after.max_buffer_time - gamma_after.second;
-                gamma_t gamma_buffer = gamma_t(cur.g.gamma);
-                gamma_buffer[successor->edge.agent_after.id] = gam_item_t(minimum_gamma, successor->edge.agent_after.max_buffer_time, successor->edge.agent_after.compound_recovery_time);
-                extendOpen(cur, open_list, m, successor, gamma_buffer, succ_alpha, succ_beta);
-            }
-//            std::cerr << "Standard addition" << std::endl;
-            intervalTime_t eat = cur.g.earliest_arrival_time();
-            if (eat >= edge.beta) {
-                std::cerr << "cur.alpha + cur.delta > edge.beta + gamma.max" << eat << " >= " << edge.beta << std::endl;
-                continue;
-            }
-            gamma_t gamma_normal = gamma_t(cur.g.gamma);
-            gamma_normal[successor->edge.agent_after.id] = gam_item_t(minimum_gamma, gamma_after.second, successor->edge.agent_after.compound_recovery_time);
-            extendOpen(cur, open_list, m, successor, gamma_normal, alpha, beta);
+//            intervalTime_t alpha = successor->edge.alpha - cur.g.delta + gamma_before.first;
+//            intervalTime_t beta  = successor->edge.beta  - cur.g.delta + gamma_after.second;
+//
+//            intervalTime_t minimum_gamma = std::max(gamma_after.first, cur.g.earliest_arrival_time() - successor->edge.beta);
+//
+////            If there is available buffer time to use, create an edge that uses it.
+//            if (successor->edge.agent_after.max_buffer_time - gamma_after.second > epsilon()) {
+//                std::cerr << "Addition using " << successor->edge.agent_after.max_buffer_time - gamma_after.second << " more buffer time" << std::endl;
+//                intervalTime_t succ_alpha = beta;
+//                intervalTime_t succ_beta  = beta + successor->edge.agent_after.max_buffer_time - gamma_after.second;
+//                gamma_t gamma_buffer = gamma_t(cur.g.gamma);
+//                gamma_buffer[successor->edge.agent_after.id] = gam_item_t(minimum_gamma, successor->edge.agent_after.max_buffer_time, successor->edge.agent_after.compound_recovery_time);
+//                extendOpen(cur, open_list, m, successor, gamma_buffer, succ_alpha, succ_beta);
+//            }
+////            std::cerr << "Standard addition" << std::endl;
+//            intervalTime_t eat = cur.g.earliest_arrival_time();
+//            if (eat >= edge.beta) {
+//                std::cerr << "cur.alpha + cur.delta > edge.beta + gamma.max" << eat << " >= " << edge.beta << std::endl;
+//                continue;
+//            }
+//            gamma_t gamma_normal = gamma_t(cur.g.gamma);
+//            gamma_normal[successor->edge.agent_after.id] = gam_item_t(minimum_gamma, gamma_after.second, successor->edge.agent_after.compound_recovery_time);
+//            extendOpen(cur, open_list, m, successor, gamma_normal, alpha, beta);
         }
     }
 

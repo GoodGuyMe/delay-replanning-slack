@@ -42,17 +42,17 @@ namespace rePEAT{
 //        @SIPP graph node, with a single safe interval
         GraphNode * node;
         Node() = default;
-        Node(EdgeATF e, double _h, GraphNode * _node):g(e),f(e.alpha + e.delta + _h),node(_node){}
+        Node(EdgeATF e, double _h, GraphNode * _node):g(e),f(e.alpha + _h),node(_node){}
 
         inline friend bool operator>(const Node& a, const Node& b){
             if(a.f == b.f){
-                if (a.g.sum_of_delays() == b.g.sum_of_delays()) {
-                    if (a.g.alpha == b.g.alpha) {
+                if (a.g.sum_of_minimum_delays() == b.g.sum_of_minimum_delays()) {
+//                    if (a.g.alpha == b.g.alpha) {
                         return a.g.beta < b.g.beta;
-                    }
-                    return a.g.alpha < b.g.alpha;
+//                    }
+//                    return a.g.alpha < b.g.alpha;
                 }
-                return a.g.sum_of_delays() > b.g.sum_of_delays();
+                return a.g.sum_of_minimum_delays() > b.g.sum_of_minimum_delays();
             }
             return a.f > b.f;
         }

@@ -111,10 +111,10 @@ struct EdgeATF{
         return std::numeric_limits<double>::infinity();
     }
 
-    inline intervalTime_t sum_of_delays() const{
+    inline intervalTime_t sum_of_minimum_delays() const{
         intervalTime_t total_delay = intervalTime_t();
         for (gam_item_t gam: gamma) {
-            total_delay += gam.second;
+            total_delay += gam.first;
         }
         return total_delay;
     }
@@ -142,7 +142,7 @@ struct EdgeATF{
         double periapsis = arrival_time(alpha);
         double apoapsis = inclusive_arrival_time(beta);
         if(alpha > zeta){
-            res.emplace_back(zeta, alpha, periapsis, periapsis, -1);
+            res.emplace_back(zeta, std::min(alpha, beta), periapsis, periapsis, -1);
         }
         if(beta > alpha){
             res.emplace_back(alpha, beta, periapsis, apoapsis, -1);
