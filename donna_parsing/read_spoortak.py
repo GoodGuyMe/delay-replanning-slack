@@ -1,6 +1,18 @@
 import json
 
+from data.check_location_scenario_files import check_json_files
 from parsedjson import JsonTrackPart, JsonOutput
+
+kilometrering_dict: dict[str, tuple] = dict()
+json_output = JsonOutput()
+
+def get_lint_compensated_kilometrering(kilometrering, lint_from, lint_to):
+    if lint_from == lint_to:
+        return kilometrering
+
+    offset, sign = kilometrering_dict[f"{lint_from}|{lint_to}"]
+    return (kilometrering + offset) * sign
+
 
 class Switch:
     def __init__(self, area, code):
@@ -28,9 +40,31 @@ class Signal:
     def __repr__(self):
         return f'{self.area}|{self.code}'
 
-def Connect_Track_Parts(left: JsonTrackPart, right: JsonTrackPart):
-    left.add_a_side(right.id)
-    right.add_b_side(left.id)
+def split_name(tp: JsonTrackPart):
+    name = tp.name[0:-1]
+    tps = name.split('|')
+    f = f"{tps[0]}{tps[1]}"
+    t = f"{tps[2]}{tps[3]}"
+    if f[-1] in ["R", "L", "V"]:
+        f = f[:-1]
+    if t[-1] in ["R", "L", "V"]:
+        t = t[:-1]
+    return f, t
+
+def find_from_to(left: list[JsonTrackPart], right: list[JsonTrackPart]) -> tuple[JsonTrackPart, JsonTrackPart]:
+    if split_name(left[0])[0] == split_name(right[0])[0]:
+        return left[0], right[0]
+    if split_name(left[-1])[1] == split_name(right[0])[0]:
+        return left[-1], right[0]
+    return left[0], right[0]
+
+def Connect_Track_Parts(left: list[JsonTrackPart], right: list[JsonTrackPart]):
+    f, t = find_from_to(left, right)
+
+    f.add_a_side(t.id)
+    t.add_b_side(f.id)
+    if (len(f.aSide) > 2) or (len(t.aSide) > 2):
+        raise ValueError("Too many connections")
 
 class Spoortak:
     def __init__(self, f:Switch, fside, t:Switch, tside):
@@ -46,23 +80,30 @@ class Spoortak:
     def get_track_sections(self) -> list[JsonTrackPart]:
         tps = []
         # TODO: Figure out at what kilometrering a switch is
-        start = self.f.kilometrering
-        startName = repr(self.f)
+        # start = self.f.kilometrering
+        start = self.signals[0].kilometrering - 500 if self.signals else -500
+        name = repr(self.f) + self.fside
+        lint = self.signals[0].lint if self.signals else None
         if self.signals:
             for signal in self.signals:
-                # TODO: Check lint
-                len = abs(start - signal.kilometrering)
-                tp = JsonTrackPart(len, f"{startName}|{repr(signal)}", False, False, False)
+                end = get_lint_compensated_kilometrering(signal.kilometrering, signal.lint, lint)
+                len = abs(start - end)
+                tp = JsonTrackPart(len, f"{name}|{repr(signal)}", False, False, False)
 
                 if tps:
-                    Connect_Track_Parts(tps[-1], tp)
+                    Connect_Track_Parts(tps, [tp])
                 tps.append(tp)
 
                 start = signal.kilometrering
-                startName = repr(signal)
+                name = repr(signal)
+                lint = signal.lint
 
-        len = abs(start - self.t.kilometrering)
-        tp = JsonTrackPart(len, f"{startName}|{repr(self.t)}", False, False, False)
+        # TODO get lint of switch
+        end = self.signals[-1].kilometrering + 500 if self.signals else 500
+        tolint = self.signals[-1].lint if self.signals else None
+        end = get_lint_compensated_kilometrering(end, lint, tolint)
+        len = abs(start - end)
+        tp = JsonTrackPart(len, f"{name}|{repr(self.t)}{self.tside}", False, False, False)
 
         if tps:
             tps[-1].add_a_side(tp.id)
@@ -82,7 +123,6 @@ switches: dict[str, Switch] = dict()
 spoortakken: dict[str, Spoortak] = dict()
 signals: list[Signal] = list()
 track_sections: dict[str, list[JsonTrackPart]] = dict()
-json_output = JsonOutput()
 
 def add_if_new(switch: Switch) -> Switch:
     if f"{switch.area}{switch.code}" in switches:
@@ -119,44 +159,52 @@ def get_track_sections():
         if tak.fside == "V":
             if f"{repr(tak.f)}R" in track_sections:
                 connecting_tps = track_sections[f"{repr(tak.f)}R"]
-                Connect_Track_Parts(connecting_tps[-1], tps[0])
+                Connect_Track_Parts(connecting_tps, tps)
             if f"{repr(tak.f)}L" in track_sections:
                 connecting_tps = track_sections[f"{repr(tak.f)}L"]
-                Connect_Track_Parts(connecting_tps[-1], tps[0])
+                Connect_Track_Parts(connecting_tps, tps)
 
         if tak.fside == "R" or tak.fside == "L":
             if f"{repr(tak.f)}V" in track_sections:
                 connecting_tps = track_sections[f"{repr(tak.f)}V"]
-                Connect_Track_Parts(connecting_tps[-1], tps[0])
+                Connect_Track_Parts(connecting_tps, tps)
 
         if tak.tside == "V":
             if f"{repr(tak.t)}R" in track_sections:
                 connecting_tps = track_sections[f"{repr(tak.t)}R"]
-                Connect_Track_Parts( tps[-1], connecting_tps[0])
+                Connect_Track_Parts(connecting_tps, tps)
             if f"{repr(tak.t)}L" in track_sections:
                 connecting_tps = track_sections[f"{repr(tak.t)}L"]
-                Connect_Track_Parts( tps[-1], connecting_tps[0])
+                Connect_Track_Parts(connecting_tps, tps)
 
         if tak.tside == "R" or tak.tside == "L":
             if f"{repr(tak.t)}V" in track_sections:
                 connecting_tps = track_sections[f"{repr(tak.t)}V"]
-                Connect_Track_Parts( tps[-1], connecting_tps[0])
+                Connect_Track_Parts(connecting_tps, tps)
 
         track_sections[f"{repr(tak.f)}{tak.fside}"] = tps
         track_sections[f"{repr(tak.t)}{tak.tside}"] = tps
         json_output.add_track_parts(tps)
 
 
+def load_kilometering(filename):
+    with open(filename) as f:
+        for line in f:
+            items = line.strip().split('|')
+            kilometrering_dict[f"{items[0]}|{items[1]}"] = (int(items[2]), int(items[3]))
+
 def save_track_sections(filename):
-    with open(f"data/prorail/parsed/{filename}.json", "w", encoding='utf-8') as f:
+    with open(filename, "w", encoding='utf-8') as f:
         json.dump(json_output, f, ensure_ascii=False, indent=4, default=lambda o: o.__dict__, sort_keys=True)
 
 
 if __name__ == '__main__':
     read_spoortak('data/prorail/donna/DONNA_93451_VER_1_IAUF_SPOORTAK.TXT')
+    load_kilometering("data/prorail/donna/DONNA_93451_VER_1_IAUF_NEVENKILOMETRERING.TXT")
     read_belegging('data/prorail/donna/DONNA_93451_VER_1_IAUF_SPOORTAK_BELEGGING.TXT')
     get_track_sections()
-    save_track_sections("test1")
+    save_track_sections("data/prorail/parsed/test1.json")
+    check_json_files("data/prorail/parsed/test1.json")
 
     for tp in json_output.trackParts:
         print(tp)

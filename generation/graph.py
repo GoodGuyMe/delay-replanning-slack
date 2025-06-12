@@ -40,7 +40,7 @@ class TrackNode(Node):
         self.canReverse = False
         self.stationPlatform = False
         self.type = type
-        self.direction = ''.join(set(re.findall("[AB]", f"{name}")))
+        self.direction = ''.join(set(re.findall("[AB]", f"{name[-2:]}")))
         if self.direction != "A" and self.direction != "B":
             print("WTF")
 

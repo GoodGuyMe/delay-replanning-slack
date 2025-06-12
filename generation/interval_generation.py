@@ -1,7 +1,7 @@
 import copy
 import sys
 import queue as Q
-from util import *
+from generation.util import *
 
 def process_scenario(data, g, g_block, agent):
     """Process the data from the scenario."""

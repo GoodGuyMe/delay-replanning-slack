@@ -7,8 +7,8 @@ from generation.buffer_time import flexibility
 from generation.graph import BlockGraph
 from generation.safe_interval_graph import plot_safe_node_intervals, plot_blocking_staircase
 from generation.signal_sections import convertMovesToBlock
-from interval_generation import *
-from convert_to_safe_intervals import *
+from generation.interval_generation import *
+from generation.convert_to_safe_intervals import *
 
 # Example:
 # $ python3 generate.py -l ../data/enkhuizen/location_enkhuizen.json -s ../data/enkhuizen/simple_freight+passenger_realistic.json -o output -a 1 -v 20 -p True

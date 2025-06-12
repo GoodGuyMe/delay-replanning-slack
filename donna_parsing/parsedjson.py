@@ -32,13 +32,13 @@ class JsonOutput(JSONEncoder):
 
 
 class JsonTrackPart(JSONEncoder):
-    __last_id = 1
+    __last_id = 0
 
     def __init__(self, length, name, sawMovementAllowed, parkingAllowed, stationPlatform):
         self.id = JsonTrackPart.__last_id
         JsonTrackPart.__last_id = JsonTrackPart.__last_id + 1
         self.length = length
-        self.name = name
+        self.name = name + "-"
         self.sawMovementAllowed = sawMovementAllowed
         self.parkingAllowed = parkingAllowed
         self.stationPlatform = stationPlatform
@@ -63,7 +63,7 @@ class JsonTrackPart(JSONEncoder):
         self.checktype()
 
     def __str__(self):
-        return f"{self.id} - {self.type} : {self.name}, A:{self.aSide}, B:{self.bSide}"
+        return f"{self.id} - {self.type} : {self.name}, l:{self.length}, A:{self.aSide}, B:{self.bSide}"
 
     def __repr__(self):
         return f"<TrackPart id:{self.id} length:{self.length} name:{self.name} sawMovementAllowed:{self.sawMovementAllowed} parkingAllowed:{self.parkingAllowed} stationPlatform:{self.stationPlatform} type:{self.type}, aSide:{self.aSide}, bSide:{self.bSide}>"
