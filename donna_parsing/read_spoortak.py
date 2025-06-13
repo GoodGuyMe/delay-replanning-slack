@@ -54,11 +54,20 @@ def get_connecting_track_part(tps: list[JsonTrackPart], connection: str, to: Jso
         return tps[-1], to
     raise ValueError("This should not happen! figure out whats wrong")
 
+num_con = 0
+
 def connect_track_parts(f: JsonTrackPart, t: JsonTrackPart):
     f.add_a_side(t.id)
     t.add_b_side(f.id)
     # if (len(f.aSide) > 2) or (len(t.aSide) > 2) or len(f.bSide) > 2 or len(t.bSide) > 2:
-    #     raise ValueError("Too many connections")
+    bools = [f.aSide, t.aSide, f.bSide, t.bSide]
+    if any([len(side) > 2 for side in bools]):
+        # raise ValueError("Too many connections")
+        global num_con
+        num_con += 1
+        for side in bools:
+            if len(side) > 2:
+                print(num_con, f, t, side)
 
 class Spoortak:
     def __init__(self, f:Switch, fside, t:Switch, tside):
