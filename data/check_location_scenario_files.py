@@ -2,8 +2,8 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.insert(1, '../generation')
-import generate
+from generation import generate
+
 
 def check_json_files(loc_file, scen_file=None, show_error=True, show_warning=False, show_intervals=True,):
     print(f"\n### Processing {loc_file}")

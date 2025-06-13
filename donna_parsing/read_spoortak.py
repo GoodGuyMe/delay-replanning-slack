@@ -43,28 +43,22 @@ class Signal:
 def split_name(tp: JsonTrackPart):
     name = tp.name[0:-1]
     tps = name.split('|')
-    f = f"{tps[0]}{tps[1]}"
-    t = f"{tps[2]}{tps[3]}"
-    if f[-1] in ["R", "L", "V"]:
-        f = f[:-1]
-    if t[-1] in ["R", "L", "V"]:
-        t = t[:-1]
+    f = f"{tps[0]}|{tps[1]}"
+    t = f"{tps[2]}|{tps[3]}"
     return f, t
 
-def find_from_to(left: list[JsonTrackPart], right: list[JsonTrackPart]) -> tuple[JsonTrackPart, JsonTrackPart]:
-    if split_name(left[0])[0] == split_name(right[0])[0]:
-        return left[0], right[0]
-    if split_name(left[-1])[1] == split_name(right[0])[0]:
-        return left[-1], right[0]
-    return left[0], right[0]
+def get_connecting_track_part(tps: list[JsonTrackPart], connection: str, to: JsonTrackPart) -> tuple[JsonTrackPart, JsonTrackPart]:
+    if split_name(tps[0])[0] == connection:
+        return to, tps[0]
+    if split_name(tps[-1])[1] == connection:
+        return tps[-1], to
+    raise ValueError("This should not happen! figure out whats wrong")
 
-def Connect_Track_Parts(left: list[JsonTrackPart], right: list[JsonTrackPart]):
-    f, t = find_from_to(left, right)
-
+def connect_track_parts(f: JsonTrackPart, t: JsonTrackPart):
     f.add_a_side(t.id)
     t.add_b_side(f.id)
-    if (len(f.aSide) > 2) or (len(t.aSide) > 2):
-        raise ValueError("Too many connections")
+    # if (len(f.aSide) > 2) or (len(t.aSide) > 2) or len(f.bSide) > 2 or len(t.bSide) > 2:
+    #     raise ValueError("Too many connections")
 
 class Spoortak:
     def __init__(self, f:Switch, fside, t:Switch, tside):
@@ -91,7 +85,7 @@ class Spoortak:
                 tp = JsonTrackPart(len, f"{name}|{repr(signal)}", False, False, False)
 
                 if tps:
-                    Connect_Track_Parts(tps, [tp])
+                    connect_track_parts(tps[-1], tp)
                 tps.append(tp)
 
                 start = signal.kilometrering
@@ -159,28 +153,28 @@ def get_track_sections():
         if tak.fside == "V":
             if f"{repr(tak.f)}R" in track_sections:
                 connecting_tps = track_sections[f"{repr(tak.f)}R"]
-                Connect_Track_Parts(connecting_tps, tps)
+                connect_track_parts(*get_connecting_track_part(connecting_tps, f"{repr(tak.f)}R", tps[0]))
             if f"{repr(tak.f)}L" in track_sections:
                 connecting_tps = track_sections[f"{repr(tak.f)}L"]
-                Connect_Track_Parts(connecting_tps, tps)
+                connect_track_parts(*get_connecting_track_part(connecting_tps, f"{repr(tak.f)}L", tps[0]))
 
         if tak.fside == "R" or tak.fside == "L":
             if f"{repr(tak.f)}V" in track_sections:
                 connecting_tps = track_sections[f"{repr(tak.f)}V"]
-                Connect_Track_Parts(connecting_tps, tps)
+                connect_track_parts(*get_connecting_track_part(connecting_tps, f"{repr(tak.f)}V", tps[0]))
 
         if tak.tside == "V":
             if f"{repr(tak.t)}R" in track_sections:
                 connecting_tps = track_sections[f"{repr(tak.t)}R"]
-                Connect_Track_Parts(connecting_tps, tps)
+                connect_track_parts(*get_connecting_track_part(connecting_tps, f"{repr(tak.t)}R", tps[-1]))
             if f"{repr(tak.t)}L" in track_sections:
                 connecting_tps = track_sections[f"{repr(tak.t)}L"]
-                Connect_Track_Parts(connecting_tps, tps)
+                connect_track_parts(*get_connecting_track_part(connecting_tps, f"{repr(tak.t)}L", tps[-1]))
 
         if tak.tside == "R" or tak.tside == "L":
             if f"{repr(tak.t)}V" in track_sections:
                 connecting_tps = track_sections[f"{repr(tak.t)}V"]
-                Connect_Track_Parts(connecting_tps, tps)
+                connect_track_parts(*get_connecting_track_part(connecting_tps, f"{repr(tak.t)}V", tps[-1]))
 
         track_sections[f"{repr(tak.f)}{tak.fside}"] = tps
         track_sections[f"{repr(tak.t)}{tak.tside}"] = tps
