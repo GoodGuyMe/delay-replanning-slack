@@ -123,7 +123,7 @@ def read_graph(file) -> TrackGraph:
                     if other_edge.to_node in e.from_node.opposites:
                         e.opposites.append(other_edge)
 
-    g.distance_markers = data["distanceMarkers"] if "distanceMarkers" in data else {"Start": 0}
+    g.distance_markers = data["distanceMarkers"] if "distanceMarkers" in data and data["distanceMarkers"] else {"Start": 0}
     min_distance = min(g.distance_markers.values())
     for key, val in g.distance_markers.items():
         g.distance_markers[key] = val - min_distance

@@ -44,6 +44,7 @@ class JsonTrackPart(JSONEncoder):
         self.stationPlatform = stationPlatform
         self.aSide = []
         self.bSide = []
+        self.type = None
         self.checktype()
 
     def checktype(self):
@@ -51,16 +52,20 @@ class JsonTrackPart(JSONEncoder):
             self.type = "EnglishSwitch"
         elif len(self.aSide) == 2 or len(self.bSide) == 2:
             self.type = "Switch"
+        elif len(self.aSide) == 0 or len(self.bSide) == 0:
+            self.type = "Bumper"
         else:
             self.type = "RailRoad"
 
     def add_a_side(self, trackId):
-        self.aSide.append(trackId)
-        self.checktype()
+        if trackId not in self.aSide:
+            self.aSide.append(trackId)
+            self.checktype()
 
     def add_b_side(self, trackId):
-        self.bSide.append(trackId)
-        self.checktype()
+        if trackId not in self.bSide:
+            self.bSide.append(trackId)
+            self.checktype()
 
     def __str__(self):
         return f"{self.id} - {self.type} : {self.name}, l:{self.length}, A:{self.aSide}, B:{self.bSide}"

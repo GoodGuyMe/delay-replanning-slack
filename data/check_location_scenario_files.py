@@ -3,15 +3,20 @@ import sys
 from pathlib import Path
 
 from generation import generate
+from generation.graph import BlockGraph
 
 
 def check_json_files(loc_file, scen_file=None, show_error=True, show_warning=False, show_intervals=True,):
     print(f"\n### Processing {loc_file}")
-    base_path = Path(__file__).parent
+    base_path = Path(__file__).parent.parent
     file_path = (base_path / loc_file).resolve()
-    g, g_block = generate.read_graph(loc_file)
+    g = generate.read_graph(loc_file)
+    print(f"\n### Starting Location Check")
     location = json.load(open(file_path))
     check_location(location, g, show_error, show_warning)
+    print(f"\n### Starting Blocking Graph Creation")
+    g_block = BlockGraph(g)
+    print(g_block)
     if scen_file is not None:
         print(f"### Processing {scen_file}")
         base_path = Path(__file__).parent
@@ -34,8 +39,8 @@ def check_location(location, g, show_error, show_warning):
             errors.append(f"ERROR name double {entry['name']}")
         names.add(entry["name"])
         if entry["type"] == "RailRoad":
-            if entry["name"][0] != "t":
-                errors.append(f"ERROR: railroad id {id} has name {entry['name']}")
+            # if entry["name"][0] != "t":
+            #     errors.append(f"ERROR: railroad id {id} has name {entry['name']}")
             if len(entry["aSide"]) != 1:
                 errors.append(f"ERROR Railroad id {id} does not have 1 aside: {entry['aSide']}")
             if len(entry["bSide"]) != 1:
@@ -45,8 +50,8 @@ def check_location(location, g, show_error, show_warning):
             if entry["length"] == 0:
                 warnings.append(f"--WARNING track length of {id} is 0")
         elif entry["type"] == "Switch":
-            if entry["name"][0] != "s":
-                errors.append(f"ERROR: switch id {id} has name {entry['name']}")
+            # if entry["name"][0] != "s":
+            #     errors.append(f"ERROR: switch id {id} has name {entry['name']}")
             if not ((len(entry["aSide"]) == 1 and len(entry["bSide"]) == 2) or (len(entry["aSide"]) == 2 and len(entry["bSide"]) == 1)):
                 errors.append(f"ERROR Switch id {id} does not have correct a/b side numbers")              
             if entry["name"][2:] != entry["id"]:
@@ -54,8 +59,8 @@ def check_location(location, g, show_error, show_warning):
             if entry["length"] != 100:
                 warnings.append(f"--WARNING length of switch {id} is not 100")
         elif entry["type"] == "EnglishSwitch":
-            if entry["name"][0] != "s":
-                errors.append(f"ERROR: english switch id {id} has name {entry['name']}")
+            # if entry["name"][0] != "s":
+            #     errors.append(f"ERROR: english switch id {id} has name {entry['name']}")
             if len(entry["aSide"]) != 2:
                 errors.append(f"ERROR Railroad id {id} does not have 1 aside: {entry['aSide']}")
             if len(entry["bSide"]) != 2:
@@ -65,14 +70,14 @@ def check_location(location, g, show_error, show_warning):
             if entry["length"] != 100:
                 warnings.append(f"--WARNING length of switch {id} is not 100")                
         elif entry["type"] == "Bumper":
-            if entry["name"][0] != "b":
-                errors.append(f"ERROR: bumper id {id} has name {entry['name']}")
+            # if entry["name"][0] != "b":
+            #     errors.append(f"ERROR: bumper id {id} has name {entry['name']}")
             if entry["name"][2:] != entry["id"]:
                 warnings.append(f"--INFO name is {entry['name']} but id is {id}")
             if not ((len(entry["aSide"]) == 1 and len(entry["bSide"]) == 0) or (len(entry["aSide"]) == 0 and len(entry["bSide"]) == 1)):
                 errors.append(f"ERROR Bumper id {id} does not have correct a/b side numbers")    
-            if entry["length"] != 0:
-                errors.append(f"ERROR length of bumper {id} is not 0")                
+            # if entry["length"] != 0:
+            #     errors.append(f"ERROR length of bumper {id} is not 0")
     for id in parts:         
         for a in parts[id]["aSide"]:
             if a not in parts:

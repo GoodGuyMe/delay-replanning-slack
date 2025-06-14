@@ -1,4 +1,7 @@
 import json
+from queue import PriorityQueue
+from dataclasses import dataclass, field
+from typing import Any
 
 from data.check_location_scenario_files import check_json_files
 from parsedjson import JsonTrackPart, JsonOutput
@@ -34,6 +37,14 @@ class Signal:
         self.lint = lint
         self.kilometrering = int(kilometrering)
 
+    def reverse(self):
+        if self.side == "M":
+            self.side = "T"
+        elif self.side == "T":
+            self.side = "M"
+        else:
+            raise ValueError("Invalid side")
+
     def __str__(self):
         return f'{self.code}{self.side} - {self.lint}:{self.kilometrering}'
 
@@ -57,17 +68,17 @@ def get_connecting_track_part(tps: list[JsonTrackPart], connection: str, to: Jso
 num_con = 0
 
 def connect_track_parts(f: JsonTrackPart, t: JsonTrackPart):
+    bools = [f.aSide, t.bSide]
+    if any([len(side) >= 2 for side in bools]):
+        global num_con
+        num_con += 1
+        print(num_con, f, t)
+        return
+
     f.add_a_side(t.id)
     t.add_b_side(f.id)
     # if (len(f.aSide) > 2) or (len(t.aSide) > 2) or len(f.bSide) > 2 or len(t.bSide) > 2:
-    bools = [f.aSide, t.aSide, f.bSide, t.bSide]
-    if any([len(side) > 2 for side in bools]):
         # raise ValueError("Too many connections")
-        global num_con
-        num_con += 1
-        for side in bools:
-            if len(side) > 2:
-                print(num_con, f, t, side)
 
 class Spoortak:
     def __init__(self, f:Switch, fside, t:Switch, tside):
@@ -80,7 +91,7 @@ class Spoortak:
     def add_signal(self, signal: Signal):
         self.signals.append(signal)
 
-    def get_track_sections(self) -> list[JsonTrackPart]:
+    def get_track_sections(self, reverse=False) -> list[JsonTrackPart]:
         tps = []
         # TODO: Figure out at what kilometrering a switch is
         # start = self.f.kilometrering
@@ -93,7 +104,9 @@ class Spoortak:
                 len = abs(start - end)
                 tp = JsonTrackPart(len, f"{name}|{repr(signal)}", False, False, False)
 
-                if tps:
+                if tps and reverse:
+                    connect_track_parts(tp, tps[-1])
+                elif tps:
                     connect_track_parts(tps[-1], tp)
                 tps.append(tp)
 
@@ -108,9 +121,10 @@ class Spoortak:
         len = abs(start - end)
         tp = JsonTrackPart(len, f"{name}|{repr(self.t)}{self.tside}", False, False, False)
 
-        if tps:
-            tps[-1].add_a_side(tp.id)
-            tp.add_b_side(tps[-1].id)
+        if tps and reverse:
+            connect_track_parts(tp, tps[-1])
+        elif tps:
+            connect_track_parts(tps[-1], tp)
         tps.append(tp)
 
         return tps
@@ -118,12 +132,39 @@ class Spoortak:
     def __str__(self):
         return f'{self.f}{self.fside}-{self.t}{self.tside}'
 
-    def __repr__(self):
+    def __len__(self):
+        start = self.signals[0].kilometrering - 500 if self.signals else -500
+        end = self.signals[-1].kilometrering + 500 if self.signals else 500
+        lint = self.signals[0].lint if self.signals else None
+        tolint = self.signals[-1].lint if self.signals else None
+        end = get_lint_compensated_kilometrering(end, lint, tolint)
+        return abs(start - end)
+
+    def repr_f(self):
         return f'{repr(self.f)}|{self.fside}'
+
+    def repr_t(self):
+        return f'{repr(self.t)}|{self.tside}'
+
+    def reverse(self):
+        self.signals = self.signals[::-1]
+        fside = self.fside
+        self.fside = self.tside
+        self.tside = fside
+
+        f = self.f
+        self.f = self.t
+        self.t = f
+
+@dataclass(order=True)
+class PrioritizedItem:
+    priority: int
+    item: Any=field(compare=False)
 
 
 switches: dict[str, Switch] = dict()
-spoortakken: dict[str, Spoortak] = dict()
+spoortak_start: dict[str, Spoortak] = dict()
+spoortak_end: dict[str, Spoortak] = dict()
 signals: list[Signal] = list()
 track_sections: dict[str, list[JsonTrackPart]] = dict()
 
@@ -142,7 +183,8 @@ def read_spoortak(file):
             totak   = add_if_new(Switch(items[5], items[7]))
 
             tak = Spoortak(fromtak, items[4], totak, items[9])
-            spoortakken[repr(tak)] = tak
+            spoortak_start[tak.repr_f()] = tak
+            spoortak_end[tak.repr_t()] = tak
             print(tak)
 
 def read_belegging(file):
@@ -150,44 +192,60 @@ def read_belegging(file):
         for line in f:
             items = line.strip().split('|')
             if "SEIN" in items[10]:
-                tak = spoortakken[f"{items[0]}|{items[2]}|{items[4]}"]
+                tak = spoortak_start[f"{items[0]}|{items[2]}|{items[4]}"]
                 signal = Signal(items[7], items[9], items[11], items[12], items[13])
                 signals.append(signal)
                 tak.add_signal(signal)
                 print(signal)
 
-def get_track_sections():
-    for tak in spoortakken.values():
-        tps = tak.get_track_sections()
-        if tak.fside == "V":
-            if f"{repr(tak.f)}R" in track_sections:
-                connecting_tps = track_sections[f"{repr(tak.f)}R"]
-                connect_track_parts(*get_connecting_track_part(connecting_tps, f"{repr(tak.f)}R", tps[0]))
-            if f"{repr(tak.f)}L" in track_sections:
-                connecting_tps = track_sections[f"{repr(tak.f)}L"]
-                connect_track_parts(*get_connecting_track_part(connecting_tps, f"{repr(tak.f)}L", tps[0]))
+def save_track_sections(filename):
+    with open(filename, "w", encoding='utf-8') as f:
+        json.dump(json_output, f, ensure_ascii=False, indent=4, default=lambda o: o.__dict__, sort_keys=True)
 
-        if tak.fside == "R" or tak.fside == "L":
-            if f"{repr(tak.f)}V" in track_sections:
-                connecting_tps = track_sections[f"{repr(tak.f)}V"]
-                connect_track_parts(*get_connecting_track_part(connecting_tps, f"{repr(tak.f)}V", tps[0]))
+def get_track_sections(start_track: str):
+    initial_tak = spoortak_start[start_track]
 
-        if tak.tside == "V":
-            if f"{repr(tak.t)}R" in track_sections:
-                connecting_tps = track_sections[f"{repr(tak.t)}R"]
-                connect_track_parts(*get_connecting_track_part(connecting_tps, f"{repr(tak.t)}R", tps[-1]))
-            if f"{repr(tak.t)}L" in track_sections:
-                connecting_tps = track_sections[f"{repr(tak.t)}L"]
-                connect_track_parts(*get_connecting_track_part(connecting_tps, f"{repr(tak.t)}L", tps[-1]))
+    pq = PriorityQueue()
+    pq.put(PrioritizedItem(len(initial_tak), initial_tak))
+    tps = initial_tak.get_track_sections()
+    json_output.add_track_parts(tps)
+    track_sections[start_track] = tps
 
-        if tak.tside == "R" or tak.tside == "L":
-            if f"{repr(tak.t)}V" in track_sections:
-                connecting_tps = track_sections[f"{repr(tak.t)}V"]
-                connect_track_parts(*get_connecting_track_part(connecting_tps, f"{repr(tak.t)}V", tps[-1]))
+    while not pq.empty():
+        item = pq.get()
+        priority, tak = item.priority, item.item
+        tps = track_sections[tak.repr_f()] if tak.repr_f() in track_sections else track_sections[tak.repr_t()]
 
-        track_sections[f"{repr(tak.f)}{tak.fside}"] = tps
-        track_sections[f"{repr(tak.t)}{tak.tside}"] = tps
-        json_output.add_track_parts(tps)
+        # Add a side
+        if tak.tside in ["R", "L"]:
+            method_name(pq, f"{repr(tak.t)}|V", tps, priority)
+        else:
+            method_name(pq, f"{repr(tak.t)}|R", tps, priority)
+            method_name(pq, f"{repr(tak.t)}|L", tps, priority)
+
+
+def method_name(pq: PriorityQueue, tak, tps, priority):
+    if tak in spoortak_end:
+        next_track = spoortak_end[tak]
+        next_track.reverse()
+        spoortak_end.pop(tak)
+        spoortak_start[next_track.repr_f()] = next_track
+
+    if tak in spoortak_start:
+        next_track = spoortak_start[tak]
+        if next_track.repr_f() not in track_sections:
+            next_tps = next_track.get_track_sections()
+            connect_track_parts(tps[-1], next_tps[0])
+            track_sections[next_track.repr_f()] = next_tps
+            json_output.add_track_parts(next_tps)
+            pq.put(PrioritizedItem(priority + len(next_track), next_track))
+        else:
+            next_tps = track_sections[next_track.repr_f()]
+            connect_track_parts(tps[-1], next_tps[0])
+    # else:
+    #     raise ValueError("It really should be in spoortak_start now")
+    if tak in spoortak_end:
+        raise ValueError("Don't know how this happend")
 
 
 def load_kilometering(filename):
@@ -196,18 +254,13 @@ def load_kilometering(filename):
             items = line.strip().split('|')
             kilometrering_dict[f"{items[0]}|{items[1]}"] = (int(items[2]), int(items[3]))
 
-def save_track_sections(filename):
-    with open(filename, "w", encoding='utf-8') as f:
-        json.dump(json_output, f, ensure_ascii=False, indent=4, default=lambda o: o.__dict__, sort_keys=True)
-
 
 if __name__ == '__main__':
     read_spoortak('data/prorail/donna/DONNA_93451_VER_1_IAUF_SPOORTAK.TXT')
     load_kilometering("data/prorail/donna/DONNA_93451_VER_1_IAUF_NEVENKILOMETRERING.TXT")
     read_belegging('data/prorail/donna/DONNA_93451_VER_1_IAUF_SPOORTAK_BELEGGING.TXT')
-    get_track_sections()
+    get_track_sections("Ac|3291|L")
     save_track_sections("data/prorail/parsed/test1.json")
-    check_json_files("data/prorail/parsed/test1.json")
-
     for tp in json_output.trackParts:
         print(tp)
+    check_json_files("data/prorail/parsed/test1.json")

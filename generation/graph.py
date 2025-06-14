@@ -96,7 +96,7 @@ class TrackEdge(Edge):
         self.associated: list[Edge] = []
         self.max_speed = 50
         self.stops_at_station = None
-        self.direction = ''.join(set(re.findall("[AB]", f"{f} {t}")))
+        self.direction = ''.join(set(re.findall("[AB]", f"{str(f)[-2:]} {str(t)[-2:]}")))
         if self.direction != "A" and self.direction != "B":
             print("WTF")
 
