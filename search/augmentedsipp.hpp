@@ -109,7 +109,7 @@ namespace asipp{
 
         for(GraphEdge * successor: cur.node->successors){
             if(open_list.expanded.contains(MapNode(successor->destination))){
-                std::cerr << "Skipped successor " << successor << std::endl;
+                std::cerr << "Already visited " << *successor << " at an earlier time " << std::endl;
                 continue; // Already visited location and added all outgoing edges to the queue, thus the new found path to that node is worse
             }
 //            gam_item_t gamma_before = get_reduced_gamma(cur, successor->edge.agent_before);

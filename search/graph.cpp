@@ -39,7 +39,6 @@ void read_ATF(std::istream& i, std::vector<inATF>& res){
     crt_a = stod(s);
     EdgeATF edge(zeta, alpha, beta, delta, id_b, crt_b, id_a, max_buf_a, crt_a);
     res.emplace_back(x, y, edge);
-    std::cerr << "F: " << x << ", T: " << y << " atf " << edge << std::endl;
 }
 
 Graph read_graph(std::string filename){
