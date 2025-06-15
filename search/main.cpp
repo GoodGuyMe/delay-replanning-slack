@@ -58,13 +58,13 @@ int main(int argc, char* argv[]) {
                 auto search_start_time = std::chrono::high_resolution_clock::now();
                 auto res = rePEAT::search(source, goal_loc, m, start_time, initial_gamma);
                 auto search_time = std::chrono::high_resolution_clock::now();
-                auto search_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                auto search_duration = std::chrono::duration_cast<std::chrono::milliseconds >(
                         search_time - search_start_time);
 
                 std::flush(std::cerr);
                 std::cout << m << "\n";
                 std::cout << res;
-                std::cout << "Search time: " << search_duration.count() << " nanoseconds\n";
+                std::cout << "Search time: " << search_duration.count() << " milliseconds\n";
                 std::flush(std::cout);
 
                 auto c = res.time_lookup(vm["lookups"].as<long>());

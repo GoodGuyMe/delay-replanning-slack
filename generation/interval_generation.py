@@ -112,7 +112,7 @@ def construct_path(g, move, print_path_error=True):
         start = g.nodes[all_movements[i]]
         end = g.nodes[all_movements[i + 1]]
         next_path = calculate_path(g, start, end, print_path_error)
-        if i != 0:
+        if next_path and i != 0:
             next_path[0].stops_at_station = stops[all_movements[i]]
         path.extend(next_path)
 
@@ -185,8 +185,8 @@ def generate_unsafe_intervals(g, g_block, path, move, measures, current_train):
         if ("A" in e.from_node.name and "B" in e.to_node.name) or ("B" in e.from_node.name and "A" in e.to_node.name):
             # When turning around, the headway is also included in the end time, so the train has to wait until it can depart after reversing
             end_time = cur_time + (e.length + measures["trainLength"]) / measures["trainSpeed"] + measures["trainLength"] / measures["walkingSpeed"] + measures["headwayFollowing"]
-            e.set_start_time(cur_time)
-            e.set_depart_time(cur_time)
+            # e.set_start_time(cur_time)
+            # e.set_depart_time(cur_time)
             cur_time = end_time
         # In all other cases use train speed
         else:
@@ -200,8 +200,8 @@ def generate_unsafe_intervals(g, g_block, path, move, measures, current_train):
 
             # Time train leaves the node
             end_time = cur_time + e.length / trainSpeed + extra_stop_time
-            e.set_start_time(cur_time)
-            e.set_depart_time(end_time)
+            # e.set_start_time(cur_time)
+            # e.set_depart_time(end_time)
             cur_time = end_time
     return block_intervals
 

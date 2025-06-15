@@ -1,10 +1,10 @@
 import re
 import os
 import pickle
-import sys
+
+import GraphPickler
 
 from tqdm import tqdm
-
 
 
 class Node:
@@ -12,8 +12,6 @@ class Node:
         self.name = name
         self.outgoing:list[Edge] = []
         self.incoming:list[Edge] = []
-        self.associated:list[Node] = []
-        self.opposites:list[Node] = []
 
     def get_identifier(self):
         return f"{self.name}"
@@ -38,11 +36,12 @@ class Node:
 class BlockNode(Node):
     def __init__(self, name):
         super().__init__(name)
-        self.trackNodes:list[TrackNode] = []
 
 class TrackNode(Node):
     def __init__(self, name, type):
         super().__init__(name)
+        self.associated:list[Node] = []
+        self.opposites:list[Node] = []
         self.blocks:list[BlockEdge] = []
         self.canReverse = False
         self.stationPlatform = False
@@ -135,6 +134,12 @@ class Graph:
     def __repr__(self) -> str:
         return f"Graph with {len(self.edges)} edges and {len(self.nodes)} nodes:\n{self.nodes.values()}"
 
+    def __eq__(self, other):
+        if isinstance(other, Graph):
+            return (self.edges == other.edges and
+                    self.nodes == other.nodes and
+                    self.global_end_time == other.global_end_time)
+        return NotImplemented
 
 class TrackGraph(Graph):
     def __init__(self, file_name):
@@ -179,6 +184,9 @@ class BlockGraph(Graph):
                     direction = "".join(set(signal.direction + to_signal[0].direction))
                     self.add_edge(BlockEdge(from_signal_node, to_signal_node, length, block, direction))
 
+    def __eq__(self, other):
+        return super().__eq__(other)
+
     def add_edge(self, e):
         super().add_edge(e)
 
@@ -210,16 +218,16 @@ class BlockGraph(Graph):
 
 
 def block_graph_constructor(g: TrackGraph):
-    return BlockGraph(g)
-    # TODO: Fix: RecursionError: maximum recursion depth exceeded while pickling an object
-    # if os.path.exists(g.file_name + "g_block.pkl"):
-    #     print("Using existing track graph")
-    #     with open(g.file_name + "g_block.pkl", "rb") as f:
-    #         return pickle.load(f)
-    # g_block = BlockGraph(g)
-    # with open(g.file_name + "g_block.pkl", "wb") as f:
-    #     pickle.dump(g_block, f, pickle.HIGHEST_PROTOCOL)
-    # return g_block
+    last_modified = os.path.getmtime(g.file_name)
+    filename = f"{g.file_name}-{last_modified}-g_block.pkl"
+    if os.path.exists(filename):
+        print("Using existing track graph")
+        return GraphPickler.unpickleGraph(filename, g)
+    g_block = BlockGraph(g)
+    with open(f"{g.file_name}-{last_modified}-g_block.pkl", "wb") as f:
+        pickler = GraphPickler.GraphPickler(f, pickle.HIGHEST_PROTOCOL)
+        pickler.dump(g_block)
+    return g_block
 
 
 class Signal:
