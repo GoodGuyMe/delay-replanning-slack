@@ -33,9 +33,9 @@ def read_scenario(file, g, g_block, agent=-1):
     except:
         data = json.load(open(file))
     start_time = time.time()
-    node_intervals, edge_intervals, block_intervals, agent_intervals, moves_per_agent = process_scenario(data, g, g_block, agent)
+    block_intervals, agent_intervals, moves_per_agent = process_scenario(data, g, g_block, agent)
     end_time = time.time()
-    return node_intervals, edge_intervals, block_intervals, agent_intervals, moves_per_agent, end_time - start_time
+    return block_intervals, agent_intervals, moves_per_agent, end_time - start_time
 
 def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, indices_to_states):
     """Write SIPP graph to gzip file for the search procedure"""
@@ -64,7 +64,7 @@ def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, out
     """For testing the time to get the safe intervals. Also writes to file (without timing). Used for experiments."""
     g = read_graph(location)
     g_block = block_graph_constructor(g)
-    _, _, block_intervals, _, moves_per_agent, unsafe_computation_time = read_scenario(scenario, g, g_block, agent_id)
+    block_intervals, _, moves_per_agent, unsafe_computation_time = read_scenario(scenario, g, g_block, agent_id)
     block_routes = convertMovesToBlock(moves_per_agent, g)
     buffer_times, recovery_times = flexibility(block_intervals, block_routes, max_buffer_time, use_recovery_time)
     start_time = time.time()
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     g = read_graph(args.location)
     g_block = block_graph_constructor(g)
-    _, _, block_intervals, _, moves_per_agent, computation_time = read_scenario(args.scenario, g, g_block, args.agent_id)
+    block_intervals, _, moves_per_agent, computation_time = read_scenario(args.scenario, g, g_block, args.agent_id)
     block_routes = convertMovesToBlock(moves_per_agent, g)
     buffer_times, recovery_times = flexibility(block_intervals, block_routes, float(args.buffer), args.recovery.strip().lower() == "true")
     plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g.distance_markers, buffer_times, recovery_times)
