@@ -1,4 +1,11 @@
 import re
+import os
+import pickle
+import sys
+
+from tqdm import tqdm
+
+
 
 class Node:
     def __init__(self, name):
@@ -42,7 +49,7 @@ class TrackNode(Node):
         self.type = type
         self.direction = ''.join(set(re.findall("[AB]", f"{name[-2:]}")))
         if self.direction != "A" and self.direction != "B":
-            print("WTF")
+            raise ValueError("Direction must be either A or B")
 
 
 class Edge:
@@ -77,6 +84,7 @@ class BlockEdge(Edge):
         super().__init__(f, t, l)
         self.trackNodes:list[TrackNode] = list(tracknodes_on_route)
         for n in tracknodes_on_route:
+            self.trackNodes.extend(n.associated)
             self.trackNodes.extend(n.opposites)
         self.direction = direction
 
@@ -98,7 +106,7 @@ class TrackEdge(Edge):
         self.stops_at_station = None
         self.direction = ''.join(set(re.findall("[AB]", f"{str(f)[-2:]} {str(t)[-2:]}")))
         if self.direction != "A" and self.direction != "B":
-            print("WTF")
+            raise ValueError("Direction must be either A or B")
 
     def set_depart_time(self, time):
         self.depart_time = time
@@ -129,23 +137,25 @@ class Graph:
 
 
 class TrackGraph(Graph):
-    def __init__(self):
+    def __init__(self, file_name):
         super().__init__()
         self.signals: list[Signal] = []
         self.distance_markers = {}
+        self.file_name = file_name
 
     def add_signal(self, s):
         if isinstance(s, Signal):
             self.signals.append(s)
 
+
 class BlockGraph(Graph):
     def __init__(self, g: TrackGraph):
         super().__init__()
+        print("Creating initial signals")
         for signal in g.signals:
             block = self.add_node(BlockNode(f"r-{signal.id}"))
             signal.track.blocks.append(block)
-
-        for signal in g.signals:
+        for signal in tqdm(g.signals):
             blocks = self.generate_signal_blocks(signal, g.signals)
             for idx, block in enumerate(blocks):
 
@@ -167,14 +177,13 @@ class BlockGraph(Graph):
                 if len(to_signal) == 1:
                     to_signal_node = self.nodes[f"r-{to_signal[0].id}"]
                     direction = "".join(set(signal.direction + to_signal[0].direction))
-                    route_edge = self.add_edge(BlockEdge(from_signal_node, to_signal_node, length, block, direction))
+                    self.add_edge(BlockEdge(from_signal_node, to_signal_node, length, block, direction))
 
-                    for node in block:
-                        node.blocks.append(route_edge)
-                        for opposite in node.opposites:
-                            opposite.blocks.append(route_edge)
-                        for associated in node.associated:
-                            associated.blocks.append(route_edge)
+    def add_edge(self, e):
+        super().add_edge(e)
+
+        for node in e.trackNodes:
+            node.blocks.append(e)
 
 
     def expand_block(self, track, end_tracks):
@@ -198,6 +207,19 @@ class BlockGraph(Graph):
         res = [out.length for out in from_node.outgoing if out.to_node == to_node]
         assert len(res) == 1
         return res[0]
+
+
+def block_graph_constructor(g: TrackGraph):
+    return BlockGraph(g)
+    # TODO: Fix: RecursionError: maximum recursion depth exceeded while pickling an object
+    # if os.path.exists(g.file_name + "g_block.pkl"):
+    #     print("Using existing track graph")
+    #     with open(g.file_name + "g_block.pkl", "rb") as f:
+    #         return pickle.load(f)
+    # g_block = BlockGraph(g)
+    # with open(g.file_name + "g_block.pkl", "wb") as f:
+    #     pickle.dump(g_block, f, pickle.HIGHEST_PROTOCOL)
+    # return g_block
 
 
 class Signal:

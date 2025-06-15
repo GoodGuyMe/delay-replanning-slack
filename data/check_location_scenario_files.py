@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 from generation import generate
-from generation.graph import BlockGraph
+from generation.graph import block_graph_constructor
 
 
 def check_json_files(loc_file, scen_file=None, show_error=True, show_warning=False, show_intervals=True,):
@@ -15,7 +15,7 @@ def check_json_files(loc_file, scen_file=None, show_error=True, show_warning=Fal
     location = json.load(open(file_path))
     check_location(location, g, show_error, show_warning)
     print(f"\n### Starting Blocking Graph Creation")
-    g_block = BlockGraph(g)
+    g_block = block_graph_constructor(g)
     print(g_block)
     if scen_file is not None:
         print(f"### Processing {scen_file}")

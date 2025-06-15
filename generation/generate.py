@@ -4,7 +4,7 @@ import argparse
 import gzip
 
 from generation.buffer_time import flexibility
-from generation.graph import BlockGraph
+from generation.graph import block_graph_constructor
 from generation.safe_interval_graph import plot_safe_node_intervals, plot_blocking_staircase
 from generation.signal_sections import convertMovesToBlock
 from generation.interval_generation import *
@@ -63,7 +63,7 @@ def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, indi
 def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output, max_buffer_time, use_recovery_time, plot=False):
     """For testing the time to get the safe intervals. Also writes to file (without timing). Used for experiments."""
     g = read_graph(location)
-    g_block = BlockGraph(g)
+    g_block = block_graph_constructor(g)
     _, _, block_intervals, _, moves_per_agent, unsafe_computation_time = read_scenario(scenario, g, g_block, agent_id)
     block_routes = convertMovesToBlock(moves_per_agent, g)
     buffer_times, recovery_times = flexibility(block_intervals, block_routes, max_buffer_time, use_recovery_time)
@@ -78,8 +78,8 @@ def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, out
 if __name__ == "__main__":
     args = parser.parse_args()
     g = read_graph(args.location)
-    g_block = BlockGraph(g)
-    unsafe_node_intervals, unsafe_edge_intervals, block_intervals, agent_intervals, moves_per_agent, computation_time = read_scenario(args.scenario, g, g_block, args.agent_id)
+    g_block = block_graph_constructor(g)
+    _, _, block_intervals, _, moves_per_agent, computation_time = read_scenario(args.scenario, g, g_block, args.agent_id)
     block_routes = convertMovesToBlock(moves_per_agent, g)
     buffer_times, recovery_times = flexibility(block_intervals, block_routes, float(args.buffer), args.recovery.strip().lower() == "true")
     plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g.distance_markers, buffer_times, recovery_times)

@@ -30,6 +30,9 @@ class JsonOutput(JSONEncoder):
     def add_track_parts(self, trackParts: list):
         self.trackParts.extend(trackParts)
 
+    def add_signals(self, signals: list):
+        self.signals.extend(signals)
+
 
 class JsonTrackPart(JSONEncoder):
     __last_id = 0
