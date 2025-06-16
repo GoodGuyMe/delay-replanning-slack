@@ -1,4 +1,7 @@
-def create_safe_intervals(intervals, g, buffer_times, recovery_times, agent_speed=15, print_intervals=False):
+from generation.interval_generation import calculate_distances
+
+
+def create_safe_intervals(intervals, g, buffer_times, recovery_times, destination, agent_speed=15, print_intervals=False):
     errors = []
     safe_node_intervals = {n: [] for n in g.nodes}
     safe_edge_intervals = {e.get_identifier(): [] for e in g.edges}
@@ -8,6 +11,8 @@ def create_safe_intervals(intervals, g, buffer_times, recovery_times, agent_spee
     edge_durations = {n: {} for n in g.nodes}
     indices_to_states = {}
     index = 0
+
+    heuristic = calculate_distances(g, g.nodes[destination])
     # Create safe intervals from the unsafe node intervals
     # Also store the state indices
     for node in g.nodes:
@@ -130,6 +135,8 @@ def create_safe_intervals(intervals, g, buffer_times, recovery_times, agent_spee
                                 print(f"ERROR - Recovery time not found while it should have one for train {train_before} "
                                       f"at {o.get_identifier()}")
 
+                            h = heuristic[o.to_node.name]
+
                             # If the interval is too short to make the move, don't include it.
                             if beta > alpha:
                                 arrival_time_functions.append((
@@ -143,7 +150,8 @@ def create_safe_intervals(intervals, g, buffer_times, recovery_times, agent_spee
                                     crt_b,
                                     train_after,
                                     buffer_after,
-                                    crt_a
+                                    crt_a,
+                                    h
                                 ))
                                 safe_edge_node_references[o.get_identifier()].append(((node, o.to_node.name), from_interval, to_interval, arrival_time_functions[-1]))
                             else:

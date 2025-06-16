@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
-#include <boost/iostreams/filtering_streambuf.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/stream_buffer.hpp>
 #include "constants.hpp"
 #include "graph.hpp"
 
@@ -17,7 +17,7 @@ void read_ATF(std::istream& i, std::vector<inATF>& res){
     std::string s;
     if(!(i >> x)){return;}
     i >> y;
-    intervalTime_t zeta, alpha, beta, delta, crt_b, max_buf_a, crt_a;
+    intervalTime_t zeta, alpha, beta, delta, crt_b, max_buf_a, crt_a, h;
     int id_b, id_a;
     i >> s;
     zeta = stod(s);
@@ -37,16 +37,24 @@ void read_ATF(std::istream& i, std::vector<inATF>& res){
     max_buf_a = stod(s);
     i >> s;
     crt_a = stod(s);
-    EdgeATF edge(zeta, alpha, beta, delta, id_b, crt_b, id_a, max_buf_a, crt_a);
+    i >> s;
+    h = stod(s);
+    EdgeATF edge(zeta, alpha, beta, delta, id_b, crt_b, id_a, max_buf_a, crt_a, h);
     res.emplace_back(x, y, edge);
 }
 
 Graph read_graph(std::string filename){
-    std::ifstream file(filename, std::ios_base::in | std::ios_base::binary);
-    boost::iostreams::filtering_streambuf<boost::iostreams::input> inbuf;
-    inbuf.push(boost::iostreams::gzip_decompressor());
-    inbuf.push(file);
-    std::istream instream(&inbuf); 
+    boost::iostreams::file_source fileSource(filename);
+
+    if (!fileSource.is_open()) {
+        std::cerr << "Failed to open file: " << filename << std::endl;
+    }
+    // Create a stream buffer from the file source
+    boost::iostreams::stream_buffer<boost::iostreams::file_source> buf(fileSource);
+
+    // Attach the buffer to an istream
+    std::istream instream(&buf);
+
     std::vector<inATF> res;
     Graph g;
     long n_nodes;
@@ -85,7 +93,6 @@ Graph read_graph(std::string filename){
         read_ATF(instream, res);
     }
     instream >> s >> n_agents;
-    file.close();
     g.n_agents = n_agents;
     g.edges.reserve(2*res.size());
     for (const auto & entry: res){

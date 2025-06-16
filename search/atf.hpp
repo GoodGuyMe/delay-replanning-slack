@@ -40,6 +40,7 @@ struct EdgeATF{
     NeightbouringAgent agent_before;
     NeightbouringAgent agent_after;
     gamma_t gamma;
+    intervalTime_t heuristic;
     EdgeATF() = default;
 
 // Constructor for initial edge ATF
@@ -52,7 +53,8 @@ struct EdgeATF{
             intervalTime_t crt_b,
             int id_a,
             intervalTime_t max_buf_a,
-            intervalTime_t crt_a)
+            intervalTime_t crt_a,
+            intervalTime_t _heuristic)
         :
             zeta(_zeta),
             alpha(_alpha),
@@ -60,7 +62,8 @@ struct EdgeATF{
             delta(_delta),
             agent_before(NeightbouringAgent(id_b, crt_b)),
             agent_after(NeightbouringAgent(id_a, max_buf_a, crt_a)),
-            gamma(0)
+            gamma(0),
+            heuristic(_heuristic)
         {};
 
 // Constructor for CATF

@@ -2,7 +2,7 @@ import copy
 import sys
 import queue as Q
 
-from generation.graph import BlockEdge
+from generation.graph import BlockEdge, Graph, Node
 from generation.signal_sections import convertMovesToBlock
 from generation.util import *
 
@@ -71,6 +71,25 @@ def process_moves(entry, g, g_block, measures, moves_per_agent, block_intervals)
             for tup in current_block_intervals[node]:
                 block_intervals[current_train][node].append(tup)
     return block_intervals
+
+def calculate_distances(g: Graph, start: Node):
+    distances = {n: sys.maxsize for n in g.nodes}
+    pq = Q.PriorityQueue()
+    distances[start.name] = 0
+    pq_counter = 0
+    # Use a counter so it doesn't have to compare nodes
+    pq.put((distances[start.name], pq_counter, start))
+    pq_counter += 1
+    # This does not include the other node intervals: this will have to be updated with propagating SIPP searches
+    while not pq.empty():
+        v = pq.get()[2]
+        for e in v.incoming:
+            tmp = distances[v.name] + e.length
+            if tmp < distances[e.from_node.name]:
+                distances[e.from_node.name] = tmp
+                pq.put((distances[e.from_node.name], pq_counter, e.from_node))
+                pq_counter += 1
+    return distances
 
 def calculate_path(g, start, end, print_path_error=True):
     distances = {n: sys.maxsize for n in g.nodes}
