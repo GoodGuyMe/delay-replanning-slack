@@ -4,9 +4,8 @@ import random
 import argparse
 import sys
 from pathlib import Path
-sys.path.insert(1, '../generation')
-import generate
 from check_location_scenario_files import check_scenario
+from generation import generate
 
 parser = argparse.ArgumentParser(
                     prog='generate_scenario',
@@ -23,7 +22,7 @@ def generate_scenario(layout, graph_file, num_trains, num_types, seed, time_wind
     filename = layout + "/" + "scenario_n" + str(num_trains) + "_t" + str(num_types) + "_w" + str(time_window) + "_s" + str(seed) + ".json"
     random.seed(seed)
     file = layout + "/" + graph_file
-    g, g_block = generate.read_graph(file)
+    g = generate.read_graph(file)
     try:
         base_path = Path(__file__).parent
         file_path = (base_path / file).resolve()

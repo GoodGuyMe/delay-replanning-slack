@@ -10,7 +10,7 @@ def read_graph(file) -> TrackGraph:
         data = json.load(open(file_path))
     except:
         data = json.load(open(file))
-    g = TrackGraph()
+    g = TrackGraph(file)
     nodes_per_id_A = {}
     nodes_per_id_B = {}
     track_lengths = {}
@@ -76,12 +76,12 @@ def read_graph(file) -> TrackGraph:
                     # Connect the aSide node(s) to the respective edges
                     for aSideToTrack in nodes_per_id_A[aSideId]:
                         length = track_lengths[aSideId]
-                        e = g.add_edge(TrackEdge(g.nodes[aSideToTrack], g.nodes[fromNode], length))
+                        e = g.add_edge(TrackEdge(g.nodes[fromNode], g.nodes[aSideToTrack], length))
                         aEdges.append(e)
                 # This side is a bumper, so the other side attaches to itself
                 elif g.nodes[fromNode].type == "RailRoad" and track["sawMovementAllowed"]:
                     toNode = nodes_per_id_B[track["id"]][i]
-                    g.add_edge(TrackEdge(g.nodes[toNode], g.nodes[fromNode], 0))
+                    g.add_edge(TrackEdge(g.nodes[fromNode], g.nodes[toNode], 0))
             for i, bSideId in enumerate(track["bSide"]):
                 fromNode = nodes_per_id_B[track["id"]][i]
                 if bSideId in nodes_per_id_B:
@@ -89,12 +89,12 @@ def read_graph(file) -> TrackGraph:
                     # Connect the bSide node(s) to the respective neighbors
                     for bSideToTrack in nodes_per_id_B[bSideId]:
                         length = track_lengths[bSideId]
-                        e = g.add_edge(TrackEdge(g.nodes[bSideToTrack], g.nodes[fromNode], length))
+                        e = g.add_edge(TrackEdge(g.nodes[fromNode], g.nodes[bSideToTrack], length))
                         bEdges.append(e) 
                 # This side is a bumper, so the other side attaches
                 elif g.nodes[nodes_per_id_B[track["id"]][i]].type == "RailRoad" and track["sawMovementAllowed"]:
                     toNode = nodes_per_id_A[track["id"]][i]
-                    g.add_edge(TrackEdge(g.nodes[toNode], g.nodes[fromNode], 0))
+                    g.add_edge(TrackEdge(g.nodes[fromNode], g.nodes[toNode], 0))
             # If it is a double-ended (not dead-end) track where parking is allowed, then we can go from A->B and B->A
             if track["type"] == "RailRoad" and track["sawMovementAllowed"] and not bumperAside and not bumperBside:
                 g.add_edge(TrackEdge(g.nodes[nodes_per_id_A[track["id"]][i]], g.nodes[nodes_per_id_B[track["id"]][i]], 0))
@@ -123,7 +123,7 @@ def read_graph(file) -> TrackGraph:
                     if other_edge.to_node in e.from_node.opposites:
                         e.opposites.append(other_edge)
 
-    g.distance_markers = data["distanceMarkers"] if "distanceMarkers" in data else {"Start": 0}
+    g.distance_markers = data["distanceMarkers"] if "distanceMarkers" in data and data["distanceMarkers"] else {"Start": 0}
     min_distance = min(g.distance_markers.values())
     for key, val in g.distance_markers.items():
         g.distance_markers[key] = val - min_distance
