@@ -1,7 +1,7 @@
-from generation.graph import Edge
+from generation.graph import Edge, TrackGraph, BlockEdge
 
 
-def convertMovesToBlock(moves_per_agent, g):
+def convertMovesToBlock(moves_per_agent, g: TrackGraph) -> dict[int, list[BlockEdge]]:
     block_routes = {}
     for agent in moves_per_agent:
         block_route = []

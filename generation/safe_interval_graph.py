@@ -26,7 +26,7 @@ def plot_train_path(moves_per_agent, color_map=None):
         for agent_id, movements in moves_per_agent.items():
             color=None
             for movement in movements:
-                for edge in movement[1:]:
+                for edge in movement:
                     node = edge.from_node.name
                     if node not in node_map2:
                         node_map2[node] = (y2, edge)
@@ -34,7 +34,7 @@ def plot_train_path(moves_per_agent, color_map=None):
                     if node in node_map2:
                         y_cur, old_len = node_map2[node]
                         linestyle = "-"
-                        train, = plt.plot([y_cur, y_cur + edge.length], [edge.start_time, edge.depart_time], color=color,
+                        train, = plt.plot([y_cur, y_cur + edge.length], [edge.start_time[agent_id], edge.depart_time[agent_id]], color=color,
                                           linestyle=linestyle)
                         color=train.get_color()
             if color_map is not None:
@@ -178,20 +178,23 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, dista
         patches.Patch(hatch=r"\\\\", edgecolor=None,  label="Recovery time", alpha=0.0)
     ]
     plt.legend(handles=legend_items ,loc="upper left")
+    last_dist = float("-inf")
 
     for (dist, edge) in node_map.values():
         if "r" in edge.from_node.name:
+            if last_dist < dist:
+                last_dist = dist + 5000
+                xtics.append(edge.from_node.name[2:])
+            else:
+                xtics.append("")
             x_axis.append(dist)
-            xtics.append(edge.from_node.name.replace("r", "s"))
-
-    max_distance = 40000
 
     for key, value in distance_markers.items():
-        if value < max_distance:
-            x_axis.append(value)
-            xtics.append(key)
+        x_axis.append(value)
+        xtics.append(key)
 
     plt.xticks(x_axis, xtics, rotation=90)
+    plt.tight_layout()
 
 
     # plt.gca().invert_yaxis()

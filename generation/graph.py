@@ -2,7 +2,7 @@ import re
 import os
 import pickle
 
-import GraphPickler
+import generation.GraphPickler
 
 from tqdm import tqdm
 
@@ -97,8 +97,8 @@ class BlockEdge(Edge):
 class TrackEdge(Edge):
     def __init__(self, f, t, l):
         super().__init__(f, t, l)
-        self.depart_time = None
-        self.start_time = None
+        self.depart_time = {}
+        self.start_time = {}
         self.opposites:  list[Edge] = []
         self.associated: list[Edge] = []
         self.max_speed = 50
@@ -107,11 +107,11 @@ class TrackEdge(Edge):
         if self.direction != "A" and self.direction != "B":
             raise ValueError("Direction must be either A or B")
 
-    def set_depart_time(self, time):
-        self.depart_time = time
+    def set_depart_time(self, agent, time):
+        self.depart_time[agent] = time
 
-    def set_start_time(self, time):
-        self.start_time = time
+    def set_start_time(self, agent, time):
+        self.start_time[agent] = time
 
 class Graph:
     def __init__(self):
@@ -222,10 +222,10 @@ def block_graph_constructor(g: TrackGraph):
     filename = f"{g.file_name}-{last_modified}-g_block.pkl"
     if os.path.exists(filename):
         print("Using existing track graph")
-        return GraphPickler.unpickleGraph(filename, g)
+        return generation.GraphPickler.unpickleGraph(filename, g)
     g_block = BlockGraph(g)
     with open(f"{g.file_name}-{last_modified}-g_block.pkl", "wb") as f:
-        pickler = GraphPickler.GraphPickler(f, pickle.HIGHEST_PROTOCOL)
+        pickler = generation.GraphPickler.GraphPickler(f, pickle.HIGHEST_PROTOCOL)
         pickler.dump(g_block)
     return g_block
 
