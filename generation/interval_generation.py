@@ -155,7 +155,7 @@ def calculate_blocking_time(e: TrackEdge, cur_time, blocking_intervals, measures
     start_approach_time = cur_time + station_time - measures["setupTime"] - measures["sightReactionTime"]
     end_approach_time =   cur_time + station_time + (e.length / train_speed)
 
-    N_BLOCKS = 1
+    N_BLOCKS = 2
 
     # Find current spot in block graph
     bools = [e.from_node in block.trackNodes for block in path]
@@ -232,7 +232,7 @@ def sort_and_merge(combined):
                 duration = combined[n][i+1][2] + combined[n][i][2]
                 recovery = combined[n][i+1][4] + combined[n][i][4]
                 # Replace the two intervals with one combined interval
-                new_interval = (combined[n][i][0], combined[n][i+1][1], duration, combined[n][i][3], recovery)
+                new_interval = (combined[n][i][0], combined[n][i+1][1], duration, combined[n][i+1][3], recovery)
                 combined[n].remove(combined[n][i+1])
                 combined[n].remove(combined[n][i])
                 combined[n].insert(i, new_interval)

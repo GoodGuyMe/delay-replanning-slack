@@ -132,7 +132,7 @@ def plot_unsafe_node_intervals(unsafe_node_intervals, moves_per_agent, distance_
     plt.show()
 
 
-def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, distance_markers, buffer_times, recovery_times):
+def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, distance_markers, buffer_times, recovery_times, xtics_dist = 5000):
     node_map = dict()
     y = 0
     ax = plt.gca()
@@ -183,7 +183,7 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, dista
     for (dist, edge) in node_map.values():
         if "r" in edge.from_node.name:
             if last_dist < dist:
-                last_dist = dist + 5000
+                last_dist = dist + xtics_dist
                 xtics.append(edge.from_node.name[2:])
             else:
                 xtics.append("")
