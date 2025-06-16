@@ -22,12 +22,18 @@ class Switch:
         self.area = area
         self.code = code
         self.kilometrering = 0
+        self.lint = None
+        self.kilometrering = None
 
     def __str__(self):
         return f'{self.area}-{self.code}'
 
     def __repr__(self):
         return f'{self.area}|{self.code}'
+
+    def set_kilometrering(self, lint, kilometrering):
+        self.lint = lint
+        self.kilometrering = int(kilometrering)
 
 class Signal:
     def __init__(self, area, code, side, lint, kilometrering):
@@ -97,9 +103,9 @@ class Spoortak:
         signals = []
         # TODO: Figure out at what kilometrering a switch is
         # start = self.f.kilometrering
-        start = self.signals[0].kilometrering - 500 if self.signals else -500
+        lint = self.f.lint
+        start = self.f.kilometrering
         name = repr(self.f) + self.fside
-        lint = self.signals[0].lint if self.signals else None
         if self.signals:
             b_side_signal = None
             for signal in self.signals:
@@ -130,9 +136,8 @@ class Spoortak:
                 lint = signal.lint
 
         # TODO get lint of switch
-        end = self.signals[-1].kilometrering + 500 if self.signals else 500
-        tolint = self.signals[-1].lint if self.signals else None
-        end = get_lint_compensated_kilometrering(end, lint, tolint)
+        tolint = self.t.lint
+        end = get_lint_compensated_kilometrering(self.t.kilometrering, lint, tolint)
         len = abs(start - end)
         tp = JsonTrackPart(len, f"{name}|{repr(self.t)}{self.tside}", False, False, False)
 
@@ -203,6 +208,17 @@ def read_spoortak(file):
             spoortak_start[tak.repr_f()] = tak
             spoortak_end[tak.repr_t()] = tak
             print(tak)
+
+
+def read_nonbelegging(filename):
+    with open(filename) as f:
+        for line in f:
+            items = line.strip().split('|')
+            if items[3] in ["WISSEL", "STOOTJUK", "TERRA_INCOGNITA"]:
+                try:
+                    switches[f"{items[0]}{items[2]}"].set_kilometrering(items[4], items[5])
+                except KeyError as e:
+                    print(f"Did not find {e.args[0]}")
 
 def read_belegging(file):
     with open(file) as f:
@@ -278,9 +294,11 @@ def load_kilometering(filename):
             kilometrering_dict[f"{items[0]}|{items[1]}"] = (int(items[2]), int(items[3]))
 
 
+
 if __name__ == '__main__':
-    read_spoortak('data/prorail/donna/DONNA_93451_VER_1_IAUF_SPOORTAK.TXT')
+    read_spoortak('data/prorail/donna/DONNA_93451_VER_1_IAUF_SPOORTAK_GEEN_ETCSL2.TXT')
     load_kilometering("data/prorail/donna/DONNA_93451_VER_1_IAUF_NEVENKILOMETRERING.TXT")
+    read_nonbelegging("data/prorail/donna/DONNA_93451_VER_1_IAUF_INFRAOBJ_NIETBELEGD.TXT")
     read_belegging('data/prorail/donna/DONNA_93451_VER_1_IAUF_SPOORTAK_BELEGGING.TXT')
     get_track_sections("Shl|1063B|V")
     save_track_sections("data/prorail/parsed/netherlands-schiphol.json")
