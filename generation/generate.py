@@ -60,7 +60,7 @@ def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, indi
             f.write(f"{from_id} {to_id} {zeta} {alpha} {beta} {delta} {id_before} {crt_b} {id_after} {buffer_after} {crt_a}\n")
         f.write(f"num_trains {num_trains}\n")
 
-def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output, max_buffer_time, use_recovery_time):
+def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output, max_buffer_time, use_recovery_time, plot=False):
     """For testing the time to get the safe intervals. Also writes to file (without timing). Used for experiments."""
     g = read_graph(location)
     g_block = BlockGraph(g)
@@ -71,6 +71,8 @@ def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, out
     safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, buffer_times, recovery_times, float(agent_speed), print_intervals=False)
     safe_computation_time = time.time() - start_time
     write_intervals_to_file(output, safe_block_intervals, atfs, indices_to_states)
+    if plot:
+        plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g.distance_markers, buffer_times, recovery_times)
     return unsafe_computation_time + safe_computation_time
 
 if __name__ == "__main__":

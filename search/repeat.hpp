@@ -9,13 +9,12 @@ struct MapNode;
 
 struct MapNode {
     GraphNode *graphNode;
-    gamma_t gamma;
 
     MapNode() = default;
-    MapNode(GraphNode *_graphNode, gamma_t _gamma): graphNode(_graphNode), gamma(_gamma) {}
+    MapNode(GraphNode *_graphNode): graphNode(_graphNode) {}
 
     bool operator==(const MapNode &rhs) const {
-        return (graphNode == rhs.graphNode && gamma == rhs.gamma);
+        return (graphNode == rhs.graphNode);
     }
 };
 
@@ -23,7 +22,7 @@ namespace std {
     template<>
     struct hash<MapNode> {
         inline size_t operator()(const MapNode& mn) const {
-            return ((hash<GraphNode *>()(mn.graphNode) ^ (hash<gamma_t >()(mn.gamma) << 1)) >> 1);
+            return hash<GraphNode *>()(mn.graphNode);
         }
     };
 }
@@ -46,13 +45,13 @@ namespace rePEAT{
 
         inline friend bool operator>(const Node& a, const Node& b){
             if(a.f == b.f){
-                if (a.g.sum_of_delays() == b.g.sum_of_delays()) {
-                    if (a.g.alpha == b.g.alpha) {
+                if (a.g.sum_of_minimum_delays() == b.g.sum_of_minimum_delays()) {
+//                    if (a.g.alpha == b.g.alpha) {
                         return a.g.beta < b.g.beta;
-                    }
-                    return a.g.alpha < b.g.alpha;
+//                    }
+//                    return a.g.alpha < b.g.alpha;
                 }
-                return a.g.sum_of_delays() > b.g.sum_of_delays();
+                return a.g.sum_of_minimum_delays() > b.g.sum_of_minimum_delays();
             }
             return a.f > b.f;
         }
@@ -60,15 +59,6 @@ namespace rePEAT{
         inline friend std::ostream& operator<< (std::ostream& stream, const Node& n){
             stream << *n.node << " g:" << n.g << ", f:" << n.f;
             return stream;
-        }
-
-        inline friend gam_item_t get_reduced_gamma(const Node& a, NeightbouringAgent agent) {
-            intervalTime_t gamma_reduction = std::max(a.g.gamma[agent.id].last_recovery - agent.compound_recovery_time, 0.0);
-
-            std::cerr << "agent_before: " << std::get<2>(a.node->state.interval) << ", agent_after: " << std::get<3>(a.node->state.interval) << ", agent: " << agent << std::endl;
-            std::cerr << "recovery_time: " << gamma_reduction << std::endl;
-
-            return reduce(a.g.gamma[agent.id], gamma_reduction);
         }
     };
 
@@ -89,7 +79,7 @@ namespace rePEAT{
         inline Node emplace(EdgeATF e, double h, GraphNode * n, GraphNode * p){
             parent[n] = p;
             Node new_node = Node(e, h, n);
-            handles[MapNode(n, e.gamma)] = queue.push(new_node);
+            handles[MapNode(n)] = queue.push(new_node);
             return new_node;
         }
 
@@ -103,7 +93,7 @@ namespace rePEAT{
 
         inline void pop(){
             Node n = top();
-            expanded[MapNode(n.node, n.g.gamma)] = n.g.earliest_arrival_time();
+            expanded[MapNode(n.node)] = n.g.earliest_arrival_time();
             queue.pop();
         }
 

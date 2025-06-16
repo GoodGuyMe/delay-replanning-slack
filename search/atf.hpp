@@ -24,7 +24,7 @@ struct NeightbouringAgent{
     NeightbouringAgent(long _id, intervalTime_t _max_buffer_time, intervalTime_t _compound_recovery_time): id(_id), max_buffer_time(_max_buffer_time), compound_recovery_time(_compound_recovery_time){}
 
     inline friend std::ostream& operator<< (std::ostream& stream, const NeightbouringAgent& train){
-        stream << train.id << " max: " << train.max_buffer_time << " compound_recovery_time: " << train.compound_recovery_time;
+        stream << train.id << " bt: " << train.max_buffer_time << " crt: " << train.compound_recovery_time;
         return stream;
     }
 };
@@ -87,7 +87,8 @@ struct EdgeATF{
     }
 
     inline intervalTime_t arrival_time(intervalTime_t t) const{
-        if(t < zeta || beta <= t){
+//        if(t < zeta || beta <= t){
+        if(t < zeta){
             return std::numeric_limits<intervalTime_t>::infinity();
         }
         if(t < std::min(alpha, beta)){
@@ -110,10 +111,10 @@ struct EdgeATF{
         return std::numeric_limits<double>::infinity();
     }
 
-    inline intervalTime_t sum_of_delays() const{
+    inline intervalTime_t sum_of_minimum_delays() const{
         intervalTime_t total_delay = intervalTime_t();
         for (gam_item_t gam: gamma) {
-            total_delay += gam.second;
+            total_delay += gam.first;
         }
         return total_delay;
     }
@@ -125,10 +126,14 @@ struct EdgeATF{
     inline friend std::ostream& operator<< (std::ostream& stream, const EdgeATF& eatf){
         stream << "<" << eatf.zeta << "," << eatf.alpha << "," << eatf.beta << "," << eatf.delta << ",[";
 
-        for (gam_item_t gamma : eatf.gamma) {
-            stream << gamma << "; ";
+        if (eatf.gamma.empty()) {
+            stream << eatf.agent_before << ", " << eatf.agent_after;
+        } else {
+            for (gam_item_t gamma: eatf.gamma) {
+                stream << gamma << "; ";
+            }
         }
-        stream <<  "]>";
+        stream << "]>";
         return stream;
     }
 
@@ -137,7 +142,7 @@ struct EdgeATF{
         double periapsis = arrival_time(alpha);
         double apoapsis = inclusive_arrival_time(beta);
         if(alpha > zeta){
-            res.emplace_back(zeta, alpha, periapsis, periapsis, -1);
+            res.emplace_back(zeta, std::min(alpha, beta), periapsis, periapsis, -1);
         }
         if(beta > alpha){
             res.emplace_back(alpha, beta, periapsis, apoapsis, -1);
@@ -233,6 +238,12 @@ struct CompoundATF{
         auto segments = e.segments();
         for(auto segment: segments){
             segment.payload = edge_atfs.size()-1;
+            std::cerr << "Adding segment " << segment << std::endl;
+            std::cerr << "  segment gamma ";
+            for (gam_item_t gam: e.gamma) {
+                std::cerr << gam << ", ";
+            }
+            std::cerr << std::endl;
             add_segment(segment);
         }
         assert(bumper_to_bumper());
