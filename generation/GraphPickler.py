@@ -40,7 +40,7 @@ class GraphUnpickler(pickle.Unpickler):
             edge.trackNodes = track_nodes
 
             for node in track_nodes:
-                if edge.id not in [e.id for e in node.blocks]:
+                if edge.id not in {e.id for e in node.blocks}:
                     node.blocks.append(edge)
 
             return edge
