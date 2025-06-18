@@ -289,6 +289,15 @@ def extend_queue_to(pq: PriorityQueue, tak, tps, priority):
             spoortak_end[next_track.repr_t()] = next_track
         else:
             print(f"Loop between: {tps[-1].name} and {repr(next_track)}")
+            next_tps = track_sections[repr(next_track)]
+
+            conflict_switch = next_track.repr_t()
+            sideswitch = JsonTrackPart(0, "Switch|" + conflict_switch, False, False, False)
+            sideswitch.type = "SideSwitch"
+            next_tps[-1].add_a_side(sideswitch.id)
+            tps[-1].add_a_side(sideswitch.id)
+            sideswitch.add_b_side(next_tps[-1].id)
+            sideswitch.add_b_side(tps[-1].id)
 
     if tak in spoortak_start:
         next_track = spoortak_start[tak]
@@ -318,6 +327,17 @@ def extend_queue_from(pq: PriorityQueue, tak, tps, priority):
             spoortak_end[next_track.repr_t()] = next_track
         else:
             print(f"Loop between: {tps[0].name} and {repr(next_track)}")
+            next_tps = track_sections[repr(next_track)]
+
+            conflict_switch = next_track.repr_f()
+            sideswitch = JsonTrackPart(0, "Switch|" + conflict_switch, False, False, False)
+            sideswitch.type = "SideSwitch"
+            next_tps[0].add_b_side(sideswitch.id)
+            tps[0].add_b_side(sideswitch.id)
+            sideswitch.add_a_side(next_tps[0].id)
+            sideswitch.add_a_side(tps[0].id)
+
+
 
     if tak in spoortak_end:
         next_track = spoortak_end[tak]
