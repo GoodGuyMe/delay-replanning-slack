@@ -115,8 +115,8 @@ class TrackEdge(Edge):
         self.max_speed = 50
         self.stops_at_station = None
         self.direction = ''.join(set(re.findall("[AB]", f"{str(f)[-2:]} {str(t)[-2:]}")))
-        if self.direction != "A" and self.direction != "B":
-            raise ValueError("Direction must be either A or B")
+        # if self.direction != "A" and self.direction != "B":
+        #     raise ValueError("Direction must be either A or B")
 
     def set_depart_time(self, agent, time):
         self.depart_time[agent] = time

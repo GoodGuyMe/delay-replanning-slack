@@ -291,13 +291,22 @@ def extend_queue_to(pq: PriorityQueue, tak, tps, priority):
             print(f"Loop between: {tps[-1].name} and {repr(next_track)}")
             next_tps = track_sections[repr(next_track)]
 
-            conflict_switch = next_track.repr_t()
-            sideswitch = JsonTrackPart(0, "Switch|" + conflict_switch, False, False, False)
-            sideswitch.type = "SideSwitch"
-            next_tps[-1].add_a_side(sideswitch.id)
-            tps[-1].add_a_side(sideswitch.id)
-            sideswitch.add_b_side(next_tps[-1].id)
-            sideswitch.add_b_side(tps[-1].id)
+            conflict_switch = "Switch|" + repr(next_track.t)
+            if conflict_switch not in track_sections:
+                f = tps[-1]
+                t = next_tps[-1]
+                sideswitch_f_t = JsonTrackPart(0, conflict_switch + "|FT", False, False, False)
+                sideswitch_t_f = JsonTrackPart(0, conflict_switch + "|TF", False, False, False)
+                sideswitch_f_t.type = "SideSwitch"
+                sideswitch_t_f.type = "SideSwitch"
+                f.add_a_side(sideswitch_f_t.id)
+                t.add_a_side(sideswitch_t_f.id)
+                sideswitch_f_t.add_b_side(f.id)
+                sideswitch_t_f.add_b_side(t.id)
+                json_output.add_track_parts([sideswitch_f_t, sideswitch_t_f])
+                track_sections[conflict_switch] = [sideswitch_f_t, sideswitch_t_f]
+            else:
+                print("Dunno what to do now :(")
 
     if tak in spoortak_start:
         next_track = spoortak_start[tak]
@@ -329,14 +338,22 @@ def extend_queue_from(pq: PriorityQueue, tak, tps, priority):
             print(f"Loop between: {tps[0].name} and {repr(next_track)}")
             next_tps = track_sections[repr(next_track)]
 
-            conflict_switch = next_track.repr_f()
-            sideswitch = JsonTrackPart(0, "Switch|" + conflict_switch, False, False, False)
-            sideswitch.type = "SideSwitch"
-            next_tps[0].add_b_side(sideswitch.id)
-            tps[0].add_b_side(sideswitch.id)
-            sideswitch.add_a_side(next_tps[0].id)
-            sideswitch.add_a_side(tps[0].id)
-
+            conflict_switch = "Switch|" + repr(next_track.f)
+            if conflict_switch not in track_sections:
+                f = tps[0]
+                t = next_tps[0]
+                sideswitch_f_t = JsonTrackPart(0, conflict_switch + "|FT", False, False, False)
+                sideswitch_t_f = JsonTrackPart(0, conflict_switch + "|TF", False, False, False)
+                sideswitch_f_t.type = "SideSwitch"
+                sideswitch_t_f.type = "SideSwitch"
+                f.add_b_side(sideswitch_f_t.id)
+                t.add_b_side(sideswitch_t_f.id)
+                sideswitch_f_t.add_a_side(f.id)
+                sideswitch_t_f.add_a_side(t.id)
+                json_output.add_track_parts([sideswitch_f_t, sideswitch_t_f])
+                track_sections[conflict_switch] = [sideswitch_f_t, sideswitch_t_f]
+            else:
+                print("Dunno what to do now :(")
 
 
     if tak in spoortak_end:
