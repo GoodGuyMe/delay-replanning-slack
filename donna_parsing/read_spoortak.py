@@ -79,8 +79,11 @@ def connect_track_parts(f: JsonTrackPart, t: JsonTrackPart):
         if not (t.id in f.aSide and f.id in t.bSide):
             global num_con
             num_con += 1
-            print(num_con, f, t)
+            print(num_con, ": ", f, t)
             return
+
+    if (f.id in t.aSide) or (t.id in f.bSide):
+        print(f"Woops, loop found between {f} and {t}")
 
     f.add_a_side(t.id)
     t.add_b_side(f.id)
@@ -151,6 +154,9 @@ class Spoortak:
 
     def __str__(self):
         return f'{self.f}{self.fside}-{self.t}{self.tside}'
+
+    def __repr__(self):
+        return f'{self.repr_f()}|{self.repr_t()}'
 
     def __len__(self):
         start = self.signals[0].kilometrering - 500 if self.signals else -500
@@ -247,44 +253,84 @@ def get_track_sections(start_track: str):
     tps, signals = initial_tak.get_track_sections()
     json_output.add_track_parts(tps)
     json_output.add_signals(signals)
-    track_sections[start_track] = tps
+    track_sections[repr(initial_tak)] = tps
 
     while not pq.empty():
         item = pq.get()
         priority, tak = item.priority, item.item
-        tps = track_sections[tak.repr_f()] if tak.repr_f() in track_sections else track_sections[tak.repr_t()]
+        tps = track_sections[repr(tak)]
 
         # Add a side
         if tak.tside in ["R", "L"]:
-            method_name(pq, f"{repr(tak.t)}|V", tps, priority)
+            extend_queue_to(pq, f"{repr(tak.t)}|V", tps, priority)
         else:
-            method_name(pq, f"{repr(tak.t)}|R", tps, priority)
-            method_name(pq, f"{repr(tak.t)}|L", tps, priority)
+            extend_queue_to(pq, f"{repr(tak.t)}|R", tps, priority)
+            extend_queue_to(pq, f"{repr(tak.t)}|L", tps, priority)
 
+        # # Maybe add b side
+        if tak.fside in ["R", "L"]:
+            extend_queue_from(pq, f"{repr(tak.f)}|V", tps, priority)
+        else:
+            extend_queue_from(pq, f"{repr(tak.f)}|R", tps, priority)
+            extend_queue_from(pq, f"{repr(tak.f)}|L", tps, priority)
 
-def method_name(pq: PriorityQueue, tak, tps, priority):
+def extend_queue_to(pq: PriorityQueue, tak, tps, priority):
     if tak in spoortak_end:
         next_track = spoortak_end[tak]
-        next_track.reverse()
-        spoortak_end.pop(tak)
-        spoortak_start[next_track.repr_f()] = next_track
+
+        # If the node was already added, don't flip it, but we found a loop
+        if repr(next_track) not in track_sections:
+            spoortak_start.pop(next_track.repr_f())
+            spoortak_end.pop(next_track.repr_t())
+
+            next_track.reverse()
+
+            spoortak_start[next_track.repr_f()] = next_track
+            spoortak_end[next_track.repr_t()] = next_track
+        else:
+            print(f"Loop between: {tps[-1].name} and {repr(next_track)}")
 
     if tak in spoortak_start:
         next_track = spoortak_start[tak]
-        if next_track.repr_f() not in track_sections:
+        if repr(next_track) not in track_sections:
             next_tps, signals = next_track.get_track_sections()
             connect_track_parts(tps[-1], next_tps[0])
-            track_sections[next_track.repr_f()] = next_tps
+            track_sections[repr(next_track)] = next_tps
             json_output.add_track_parts(next_tps)
             json_output.add_signals(signals)
             pq.put(PrioritizedItem(priority + len(next_track), next_track))
         else:
-            next_tps = track_sections[next_track.repr_f()]
+            next_tps = track_sections[repr(next_track)]
             connect_track_parts(tps[-1], next_tps[0])
-    # else:
-    #     raise ValueError("It really should be in spoortak_start now")
+
+def extend_queue_from(pq: PriorityQueue, tak, tps, priority):
+    if tak in spoortak_start:
+        next_track = spoortak_start[tak]
+
+        # If the node was already added, don't flip it, but we found a loop
+        if repr(next_track) not in track_sections:
+            spoortak_start.pop(next_track.repr_f())
+            spoortak_end.pop(next_track.repr_t())
+
+            next_track.reverse()
+
+            spoortak_start[next_track.repr_f()] = next_track
+            spoortak_end[next_track.repr_t()] = next_track
+        else:
+            print(f"Loop between: {tps[0].name} and {repr(next_track)}")
+
     if tak in spoortak_end:
-        raise ValueError("Don't know how this happend")
+        next_track = spoortak_end[tak]
+        if repr(next_track) not in track_sections:
+            next_tps, signals = next_track.get_track_sections()
+            connect_track_parts(next_tps[-1], tps[0])
+            track_sections[repr(next_track)] = next_tps
+            json_output.add_track_parts(next_tps)
+            json_output.add_signals(signals)
+            pq.put(PrioritizedItem(priority + len(next_track), next_track))
+        else:
+            next_tps = track_sections[repr(next_track)]
+            connect_track_parts(next_tps[-1], tps[0])
 
 
 def load_kilometering(filename):

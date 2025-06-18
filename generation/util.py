@@ -16,7 +16,7 @@ def read_graph(file) -> TrackGraph:
     track_lengths = {}
     for track in data["trackParts"]:
         track_lengths[track["id"]] = track["length"]
-        if track["type"] == "RailRoad":
+        if track["type"] == "RailRoad" or track["type"] == "Bumper":
             a = g.add_node(TrackNode(track["name"] + "A", track["type"]))
             b = g.add_node(TrackNode(track["name"] + "B", track["type"]))
             if track["stationPlatform"]:
