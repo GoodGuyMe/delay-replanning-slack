@@ -168,6 +168,7 @@ class BlockGraph(Graph):
     def __init__(self, g: TrackGraph):
         super().__init__()
         print("Creating initial signals")
+        track_to_signal = {signal.track: signal for signal in g.signals}
         for signal in g.signals:
             block = self.add_node(BlockNode(f"r-{signal.id}"))
             signal.track.blocks.append(block)
@@ -179,13 +180,10 @@ class BlockGraph(Graph):
                 from_signal_node = self.nodes[f"r-{signal.id}"]
 
                 # Only add edge if a signal is found at the end of the route
-                to_signal = [signal for signal in g.signals if signal.track == block[-1]]
-                if len(to_signal) == 1:
-                    to_signal_node = self.nodes[f"r-{to_signal[0].id}"]
-                    direction = "".join(set(signal.direction + to_signal[0].direction))
-                    self.add_edge(BlockEdge(from_signal_node, to_signal_node, length, block, direction))
-                else:
-                    raise ValueError(f"{len(to_signal)} Signals found at end of block {block}")
+                to_signal = track_to_signal[block[-1]]
+                to_signal_node = self.nodes[f"r-{to_signal.id}"]
+                direction = "".join(set(signal.direction + to_signal.direction))
+                self.add_edge(BlockEdge(from_signal_node, to_signal_node, length, block, direction))
 
     def __eq__(self, other):
         return super().__eq__(other)
@@ -219,7 +217,7 @@ class BlockGraph(Graph):
                 if next_track in end_tracks:
                     route = copy(route)
                     route.append(next_track)
-                    result.append((route, length + e.length))
+                    result.append((route[1:], length + e.length))
 
                 elif next_track not in visited:
                     route = copy(route)
@@ -235,7 +233,7 @@ class BlockGraph(Graph):
 def block_graph_constructor(g: TrackGraph):
     last_modified = os.path.getmtime(g.file_name)
     filename = f"{g.file_name}-{last_modified}-g_block.pkl"
-    if os.path.exists(filename):
+    if os.path.exists(filename) and False:
         print("Using existing track graph")
         return generation.GraphPickler.unpickleGraph(filename, g)
     g_block = BlockGraph(g)

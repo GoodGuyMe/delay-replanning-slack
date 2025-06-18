@@ -21,9 +21,9 @@ class Switch:
     def __init__(self, area, code):
         self.area = area
         self.code = code
-        self.kilometrering = 0
         self.lint = None
         self.kilometrering = None
+        self.emplacement = False
 
     def __str__(self):
         return f'{self.area}-{self.code}'
@@ -104,13 +104,11 @@ class Spoortak:
     def get_track_sections(self, reverse=False) -> (list[JsonTrackPart], list[JsonSignal]):
         tps = []
         signals = []
-        # TODO: Figure out at what kilometrering a switch is
-        # start = self.f.kilometrering
         lint = self.f.lint
         start = self.f.kilometrering
         name = repr(self.f) + self.fside
+        b_side_signal = None
         if self.signals:
-            b_side_signal = None
             for signal in self.signals:
                 end = get_lint_compensated_kilometrering(signal.kilometrering, signal.lint, lint)
                 len = abs(start - end)
@@ -149,6 +147,10 @@ class Spoortak:
         elif tps:
             connect_track_parts(tps[-1], tp)
         tps.append(tp)
+
+        if b_side_signal:
+            sig = JsonSignal(b_side_signal, "B", tp.id)
+            signals.append(sig)
 
         return tps, signals
 
@@ -223,6 +225,7 @@ def read_nonbelegging(filename):
             if items[3] in ["WISSEL", "STOOTJUK", "TERRA_INCOGNITA"]:
                 try:
                     switches[f"{items[0]}{items[2]}"].set_kilometrering(items[4], items[5])
+                    switches[f"{items[0]}{items[2]}"].emplacement = items[22] == "GOEDEMPL"
                 except KeyError as e:
                     print(f"Did not find {e.args[0]}")
 
@@ -259,6 +262,9 @@ def get_track_sections(start_track: str):
         item = pq.get()
         priority, tak = item.priority, item.item
         tps = track_sections[repr(tak)]
+
+        if tak.f.emplacement:
+            continue
 
         # Add a side
         if tak.tside in ["R", "L"]:
