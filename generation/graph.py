@@ -5,7 +5,8 @@ import pickle
 import generation.GraphPickler
 
 from tqdm import tqdm
-
+from queue import Queue
+from copy import copy
 
 class Node:
     def __init__(self, name):
@@ -49,6 +50,16 @@ class TrackNode(Node):
         self.direction = ''.join(set(re.findall("[AB]", f"{name[-2:]}")))
         if self.direction != "A" and self.direction != "B":
             raise ValueError("Direction must be either A or B")
+
+
+class Signal:
+    def __init__(self, id, track: TrackNode):
+        self.id = id
+        self.track = track
+        self.direction = track.direction
+
+    def __repr__(self) -> str:
+        return f"Signal {self.id} on track {self.track}"
 
 
 class Edge:
@@ -162,17 +173,7 @@ class BlockGraph(Graph):
             signal.track.blocks.append(block)
         for signal in tqdm(g.signals):
             blocks = self.generate_signal_blocks(signal, g.signals)
-            for idx, block in enumerate(blocks):
-
-                length = 0
-                # Add count total length of route
-                for idx2, node in enumerate(block):
-                    if node.outgoing:
-                        if idx2 < len(block) - 1:
-                            length += self.get_length_of_edge(node, block[idx2 + 1])
-                        else:
-                            # Signal is at the end of this track, add the track length
-                            length += node.outgoing[0].length
+            for idx, (block, length) in enumerate(blocks):
 
                 # Create edges in g_block
                 from_signal_node = self.nodes[f"r-{signal.id}"]
@@ -183,6 +184,8 @@ class BlockGraph(Graph):
                     to_signal_node = self.nodes[f"r-{to_signal[0].id}"]
                     direction = "".join(set(signal.direction + to_signal[0].direction))
                     self.add_edge(BlockEdge(from_signal_node, to_signal_node, length, block, direction))
+                else:
+                    raise ValueError(f"{len(to_signal)} Signals found at end of block {block}")
 
     def __eq__(self, other):
         return super().__eq__(other)
@@ -193,28 +196,40 @@ class BlockGraph(Graph):
         for node in e.trackNodes:
             node.blocks.append(e)
 
+    def generate_signal_blocks(self, from_signal: Signal, signals: list[Signal]):
+        end_tracks = {s.track for s in signals}
+        start_track = from_signal.track
 
-    def expand_block(self, track, end_tracks):
-        if track in end_tracks or len(track.outgoing) == 0:
-            return [[track]]
-        routes = []
-        expanded_blocks = [self.expand_block(e.to_node, end_tracks) for e in track.outgoing]
-        for bl in expanded_blocks:
-            routes.extend([[track] + block for block in bl])
-        return routes
+        result = []
 
-    def flatten(self, xss):
-        return [x for xs in xss for x in xs]
+        queue = Queue()
+        queue.put(([start_track], {start_track}, 0))
 
-    def generate_signal_blocks(self, from_signal, signals):
-        end_tracks = [s.track for s in signals]
-        routes = self.flatten([self.expand_block(e.to_node, end_tracks) for e in from_signal.track.outgoing])
-        return routes
+        while not queue.empty():
+            route, visited, length = queue.get()
 
-    def get_length_of_edge(self, from_node, to_node):
-        res = [out.length for out in from_node.outgoing if out.to_node == to_node]
-        assert len(res) == 1
-        return res[0]
+            if len(route[-1].outgoing) == 0:
+                #No outgoing edges, what to do?
+                # Should only happen when at the end of a track, and it's not allowed to turn around
+                continue
+
+            for e in route[-1].outgoing:
+                next_track = e.to_node
+
+                if next_track in end_tracks:
+                    route = copy(route)
+                    route.append(next_track)
+                    result.append((route, length + e.length))
+
+                elif next_track not in visited:
+                    route = copy(route)
+                    visited = copy(visited)
+
+                    visited.add(next_track)
+                    route.append(next_track)
+                    queue.put((route, visited, length + e.length))
+
+        return result
 
 
 def block_graph_constructor(g: TrackGraph):
@@ -228,13 +243,3 @@ def block_graph_constructor(g: TrackGraph):
         pickler = generation.GraphPickler.GraphPickler(f, pickle.HIGHEST_PROTOCOL)
         pickler.dump(g_block)
     return g_block
-
-
-class Signal:
-    def __init__(self, id, track: TrackNode):
-        self.id = id
-        self.track = track
-        self.direction = track.direction
-
-    def __repr__(self) -> str:
-        return f"Signal {self.id} on track {self.track}"

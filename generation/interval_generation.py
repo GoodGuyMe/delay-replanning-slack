@@ -1,4 +1,3 @@
-import copy
 import sys
 import queue as Q
 
@@ -51,6 +50,7 @@ def process_moves(entry, g, g_block, measures, moves_per_agent, block_intervals)
         path = construct_path(g, move)
         moves_per_agent[entry["trainNumber"]].append(path)
         block_routes = convertMovesToBlock(moves_per_agent, g)[current_train][0]
+        print(block_routes)
         current_block_intervals = generate_unsafe_intervals(g_block, path, block_routes, move, measures, current_train)
 
         
@@ -174,7 +174,7 @@ def calculate_blocking_time(e: TrackEdge, cur_time, blocking_intervals, measures
     start_approach_time = cur_time + station_time - measures["setupTime"] - measures["sightReactionTime"]
     end_approach_time =   cur_time + station_time + (e.length / train_speed)
 
-    N_BLOCKS = 2
+    N_BLOCKS = 1
 
     # Find current spot in block graph
     bools = [e.from_node in block.trackNodes for block in path]
