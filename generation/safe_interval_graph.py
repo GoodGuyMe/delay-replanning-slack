@@ -19,120 +19,28 @@ def replaceAB(node, intervals):
         return node + "L"
     return node
 
-def plot_train_path(moves_per_agent, color_map=None):
+def plot_train_path(moves_per_agent, color_map=None, plot_route_track=None):
     node_map2 = dict()
     y2 = 0
-    if moves_per_agent:
-        for agent_id, movements in moves_per_agent.items():
-            color=None
-            for movement in movements:
-                for edge in movement:
-                    node = edge.from_node.name
-                    if node not in node_map2:
-                        node_map2[node] = (y2, edge)
-                        y2 += edge.length
-                    if node in node_map2:
-                        y_cur, old_len = node_map2[node]
-                        linestyle = "-"
-                        train, = plt.plot([y_cur, y_cur + edge.length], [edge.start_time[agent_id], edge.depart_time[agent_id]], color=color,
-                                          linestyle=linestyle)
-                        color=train.get_color()
-            if color_map is not None:
-                color_map[agent_id] = color
-
-def plot_safe_node_intervals(safe_node_intervals, moves_per_agent=None):
-    if moves_per_agent is None:
-        node_map = dict()
-        for idx, node in enumerate(safe_node_intervals):
-            node_map[node] = idx
-            for start, stop in safe_node_intervals[node]:
-                plt.plot([start, stop], [idx, idx], label=node, color='red')
-        y_axis = list(node_map.values())
-        ytics = list(node_map.keys())
-        plt.yticks(y_axis, ytics)
-        plt.show()
-        return
+    plot_nodes = {edge.from_node.name for edge in plot_route_track}
     for agent_id, movements in moves_per_agent.items():
-        node_map = dict()
-        y = 0
-        for movement in movements:
-            for edge in movement:
-                node = edge.from_node
-                if node not in node_map:
-                    node_map[node] = y
-                    y += 1
-                node = edge
-                if node not in node_map:
-                    node_map[node] = y
-                    y += 1
-                node = edge.to_node
-                if node not in node_map:
-                    node_map[node] = y
-                    y += 1
-        for node, y in node_map.items():
-            for start, stop, train_before, train_after, _, _ in safe_node_intervals[node.get_identifier()]:
-                plt.plot([start, stop], [y, y], color='green')
-
-        y_axis = list(node_map.values())
-        ytics = list(node_map.keys())
-
-        plt.xlim([0, 3000])
-
-        plt.yticks(y_axis, ytics)
-        plt.title(f"Agent {agent_id}")
-        plt.show()
-
-def plot_unsafe_node_intervals(unsafe_node_intervals, moves_per_agent, distance_markers, fixed_block=False, moves_per_agent_2=None):
-    node_map = dict()
-    y = 0
-    ax = plt.gca()
-    hw = None
-
-    x_axis = []
-    xtics = []
-
-    for agent_id, movements in moves_per_agent.items():
+        color=None
         for movement in movements:
             for edge in movement:
                 node = edge.from_node.name
-                if "_" not in node and fixed_block:
-                    x_axis.append(y)
-                    xtics.append(node)
-                if node not in node_map:
-                    node_map[node] = (y, edge)
-                    y += edge.length
-        for node, (y, edge) in node_map.items():
-            if fixed_block:
-                pass
-                for start, stop, duration, train in unsafe_node_intervals[node]:
-                    blocking_time = patches.Rectangle((y, start), edge.length, duration, linewidth=1, edgecolor='red', facecolor='none')
-                    ax.add_patch(blocking_time)
-            else:
-                for start, stop, duration, train in unsafe_node_intervals[node]:
-                    hw, = plt.plot([y, y+edge.length], [start + 180, start + duration + 180], color='red', linestyle='-')
+                if node not in node_map2:
+                    node_map2[node] = (y2, edge)
+                    y2 += edge.length
+                if node in node_map2 and node in plot_nodes:
+                    y_cur, old_len = node_map2[node]
+                    linestyle = "-"
+                    train, = plt.plot([y_cur, y_cur + edge.length], [edge.start_time[agent_id], edge.depart_time[agent_id]], color=color,
+                                      linestyle=linestyle)
+                    color=train.get_color()
+        if color_map is not None:
+            color_map[agent_id] = color
 
-
-    plt.ylabel(f"Time (s)")
-    plt.xlabel(f"Distance")
-
-    plot_train_path(moves_per_agent)
-    hw.set_label("Headway") if hw else None
-    plt.legend()
-
-
-    max_distance = 40000
-
-    for key, value in distance_markers.items():
-        if value < max_distance:
-            x_axis.append(value)
-            xtics.append(key)
-
-    plt.xticks(x_axis, xtics, rotation=90)
-    plt.title(f"Agents")
-    plt.show()
-
-
-def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, distance_markers, buffer_times, recovery_times, xtics_dist = 5000):
+def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, distance_markers, buffer_times, recovery_times, xtics_dist = 5000, plot_routes=None):
     node_map = dict()
     y = 0
     ax = plt.gca()
@@ -141,17 +49,26 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, dista
     x_axis = []
     xtics = []
 
-    for agent_id, movements in block_routes.items():
-        for movement in movements:
-            for edge in movement:
-                node = edge.get_identifier()
-                if node not in node_map:
-                    node_map[str(node)] = (y, edge)
-                    y += edge.length
+    plot_route_track, plot_route_block = plot_routes
+
+    if plot_route_block is None:
+        for agent_id, movements in block_routes.items():
+            for movement in movements:
+                for edge in movement:
+                    node = edge.get_identifier()
+                    if node not in node_map:
+                        node_map[str(node)] = (y, edge)
+                        y += edge.length
+    else:
+        for edge in plot_route_block:
+            node = edge.get_identifier()
+            if node not in node_map:
+                node_map[str(node)] = (y, edge)
+                y += edge.length
 
     color_map = {}
 
-    plot_train_path(moves_per_agent, color_map)
+    plot_train_path(moves_per_agent, color_map, plot_route_track)
 
 
     for node, (y, edge) in node_map.items():

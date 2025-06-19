@@ -174,7 +174,7 @@ def calculate_blocking_time(e: TrackEdge, cur_time, blocking_intervals, measures
     start_approach_time = cur_time - measures["setupTime"] - measures["sightReactionTime"]
     end_approach_time =   cur_time + station_time + (e.length / train_speed)
 
-    N_BLOCKS = 1
+    N_BLOCKS = 2
 
     # Find current spot in block graph
     bools = [e.from_node in block.trackNodes for block in path]
