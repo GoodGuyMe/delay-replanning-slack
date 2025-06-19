@@ -76,14 +76,14 @@ namespace asipp{
             if(arrival_time_function.earliest_arrival_time() < (*handle).g.earliest_arrival_time()){
                 m.decreased++;
 //                double h = arrival_time_function.sum_of_delays();
-                double h = 0;
+                double h = edge.heuristic;
                 Node_t new_node = open_list.decrease_key(handle, arrival_time_function, h, destination, source);
                 std::cerr << "Decreased: " << new_node << std::endl;
             } else if(arrival_time_function.beta > (*handle).g.beta) {
                 std::cerr << "This line fucked with it" << std::endl;
                 m.decreased++;
 //                double h = arrival_time_function.sum_of_delays();
-                double h = 0;
+                double h = edge.heuristic;
                 Node_t new_node = open_list.decrease_key(handle, arrival_time_function, h, destination, source);
                 std::cerr << "Decreased: " << new_node << std::endl;
             } else {
@@ -93,7 +93,7 @@ namespace asipp{
         else{
             m.generated++;
 //            double h = arrival_time_function.sum_of_delays();
-            double h = 0;
+            double h = edge.heuristic;
             Node_t new_node = open_list.emplace(arrival_time_function, h, destination, source);
             std::cerr << "Added: " << new_node << std::endl;
         }

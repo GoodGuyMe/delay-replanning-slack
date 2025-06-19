@@ -1,8 +1,7 @@
-import copy
 import sys
 import queue as Q
 
-from generation.graph import BlockEdge
+from generation.graph import BlockEdge, Graph, Node
 from generation.signal_sections import convertMovesToBlock
 from generation.util import *
 
@@ -51,6 +50,7 @@ def process_moves(entry, g, g_block, measures, moves_per_agent, block_intervals)
         path = construct_path(g, move)
         moves_per_agent[entry["trainNumber"]].append(path)
         block_routes = convertMovesToBlock(moves_per_agent, g)[current_train][0]
+        print(block_routes)
         current_block_intervals = generate_unsafe_intervals(g_block, path, block_routes, move, measures, current_train)
 
         
@@ -71,6 +71,25 @@ def process_moves(entry, g, g_block, measures, moves_per_agent, block_intervals)
             for tup in current_block_intervals[node]:
                 block_intervals[current_train][node].append(tup)
     return block_intervals
+
+def calculate_distances(g: Graph, start: Node):
+    distances = {n: sys.maxsize for n in g.nodes}
+    pq = Q.PriorityQueue()
+    distances[start.name] = 0
+    pq_counter = 0
+    # Use a counter so it doesn't have to compare nodes
+    pq.put((distances[start.name], pq_counter, start))
+    pq_counter += 1
+    # This does not include the other node intervals: this will have to be updated with propagating SIPP searches
+    while not pq.empty():
+        v = pq.get()[2]
+        for e in v.incoming:
+            tmp = distances[v.name] + e.length
+            if tmp < distances[e.from_node.name]:
+                distances[e.from_node.name] = tmp
+                pq.put((distances[e.from_node.name], pq_counter, e.from_node))
+                pq_counter += 1
+    return distances
 
 def calculate_path(g, start, end, print_path_error=True):
     distances = {n: sys.maxsize for n in g.nodes}
@@ -155,7 +174,7 @@ def calculate_blocking_time(e: TrackEdge, cur_time, blocking_intervals, measures
     start_approach_time = cur_time + station_time - measures["setupTime"] - measures["sightReactionTime"]
     end_approach_time =   cur_time + station_time + (e.length / train_speed)
 
-    N_BLOCKS = 2
+    N_BLOCKS = 1
 
     # Find current spot in block graph
     bools = [e.from_node in block.trackNodes for block in path]
