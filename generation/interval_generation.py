@@ -171,7 +171,7 @@ def calculate_blocking_time(e: TrackEdge, cur_time, blocking_intervals, measures
         blocking_intervals[block.get_identifier()].append(occupation_time)
 
     # Calculate the approach time for the next piece of track,
-    start_approach_time = cur_time + station_time - measures["setupTime"] - measures["sightReactionTime"]
+    start_approach_time = cur_time - measures["setupTime"] - measures["sightReactionTime"]
     end_approach_time =   cur_time + station_time + (e.length / train_speed)
 
     N_BLOCKS = 1

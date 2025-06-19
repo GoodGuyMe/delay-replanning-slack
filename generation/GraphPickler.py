@@ -40,7 +40,7 @@ class GraphUnpickler(pickle.Unpickler):
             edge.trackNodes = track_nodes
 
             for node in track_nodes:
-                if edge.id not in [e.id for e in node.blocks]:
+                if edge.id not in {e.id for e in node.blocks}:
                     node.blocks.append(edge)
 
             return edge
@@ -64,9 +64,11 @@ def unpickleGraph(filename, g):
     for edge in g_block.edges:
         fix_edge(g_block, edge)
 
+    signal_id_to_signal = {signal.id: signal for signal in g.signals}
+
     for node_name, node in g_block.nodes.items():
         signal_name = node_name[2:]
-        signal = [signal for signal in g.signals if signal.id == signal_name][0]
+        signal = signal_id_to_signal[signal_name]
         signal.track.blocks.append(node)
 
     return g_block

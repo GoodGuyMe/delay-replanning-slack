@@ -51,12 +51,16 @@ class JsonTrackPart(JSONEncoder):
         self.checktype()
 
     def checktype(self):
+        self.sawMovementAllowed = False
+        if self.type == "SideSwitch":
+            return
         if len(self.aSide) == 2 and len(self.bSide) == 2:
             self.type = "EnglishSwitch"
         elif len(self.aSide) == 2 or len(self.bSide) == 2:
             self.type = "Switch"
         elif len(self.aSide) == 0 or len(self.bSide) == 0:
             self.type = "Bumper"
+            self.sawMovementAllowed = True
         else:
             self.type = "RailRoad"
 

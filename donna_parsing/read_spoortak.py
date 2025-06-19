@@ -21,9 +21,9 @@ class Switch:
     def __init__(self, area, code):
         self.area = area
         self.code = code
-        self.kilometrering = 0
         self.lint = None
         self.kilometrering = None
+        self.emplacement = False
 
     def __str__(self):
         return f'{self.area}-{self.code}'
@@ -104,13 +104,11 @@ class Spoortak:
     def get_track_sections(self, reverse=False) -> (list[JsonTrackPart], list[JsonSignal]):
         tps = []
         signals = []
-        # TODO: Figure out at what kilometrering a switch is
-        # start = self.f.kilometrering
         lint = self.f.lint
         start = self.f.kilometrering
         name = repr(self.f) + self.fside
+        b_side_signal = None
         if self.signals:
-            b_side_signal = None
             for signal in self.signals:
                 end = get_lint_compensated_kilometrering(signal.kilometrering, signal.lint, lint)
                 len = abs(start - end)
@@ -149,6 +147,10 @@ class Spoortak:
         elif tps:
             connect_track_parts(tps[-1], tp)
         tps.append(tp)
+
+        if b_side_signal:
+            sig = JsonSignal(b_side_signal, "B", tp.id)
+            signals.append(sig)
 
         return tps, signals
 
@@ -223,6 +225,7 @@ def read_nonbelegging(filename):
             if items[3] in ["WISSEL", "STOOTJUK", "TERRA_INCOGNITA"]:
                 try:
                     switches[f"{items[0]}{items[2]}"].set_kilometrering(items[4], items[5])
+                    switches[f"{items[0]}{items[2]}"].emplacement = items[22] == "GOEDEMPL"
                 except KeyError as e:
                     print(f"Did not find {e.args[0]}")
 
@@ -260,6 +263,9 @@ def get_track_sections(start_track: str):
         priority, tak = item.priority, item.item
         tps = track_sections[repr(tak)]
 
+        if tak.f.emplacement:
+            continue
+
         # Add a side
         if tak.tside in ["R", "L"]:
             extend_queue_to(pq, f"{repr(tak.t)}|V", tps, priority)
@@ -289,6 +295,24 @@ def extend_queue_to(pq: PriorityQueue, tak, tps, priority):
             spoortak_end[next_track.repr_t()] = next_track
         else:
             print(f"Loop between: {tps[-1].name} and {repr(next_track)}")
+            next_tps = track_sections[repr(next_track)]
+
+            conflict_switch = "Switch|" + repr(next_track.t)
+            if conflict_switch not in track_sections:
+                f = tps[-1]
+                t = next_tps[-1]
+                sideswitch_f_t = JsonTrackPart(0, conflict_switch + "|FT", False, False, False)
+                sideswitch_t_f = JsonTrackPart(0, conflict_switch + "|TF", False, False, False)
+                sideswitch_f_t.type = "SideSwitch"
+                sideswitch_t_f.type = "SideSwitch"
+                f.add_a_side(sideswitch_f_t.id)
+                t.add_a_side(sideswitch_t_f.id)
+                sideswitch_f_t.add_b_side(f.id)
+                sideswitch_t_f.add_b_side(t.id)
+                json_output.add_track_parts([sideswitch_f_t, sideswitch_t_f])
+                track_sections[conflict_switch] = [sideswitch_f_t, sideswitch_t_f]
+            else:
+                print("Dunno what to do now :(")
 
     if tak in spoortak_start:
         next_track = spoortak_start[tak]
@@ -318,6 +342,25 @@ def extend_queue_from(pq: PriorityQueue, tak, tps, priority):
             spoortak_end[next_track.repr_t()] = next_track
         else:
             print(f"Loop between: {tps[0].name} and {repr(next_track)}")
+            next_tps = track_sections[repr(next_track)]
+
+            conflict_switch = "Switch|" + repr(next_track.f)
+            if conflict_switch not in track_sections:
+                f = tps[0]
+                t = next_tps[0]
+                sideswitch_f_t = JsonTrackPart(0, conflict_switch + "|FT", False, False, False)
+                sideswitch_t_f = JsonTrackPart(0, conflict_switch + "|TF", False, False, False)
+                sideswitch_f_t.type = "SideSwitch"
+                sideswitch_t_f.type = "SideSwitch"
+                f.add_b_side(sideswitch_f_t.id)
+                t.add_b_side(sideswitch_t_f.id)
+                sideswitch_f_t.add_a_side(f.id)
+                sideswitch_t_f.add_a_side(t.id)
+                json_output.add_track_parts([sideswitch_f_t, sideswitch_t_f])
+                track_sections[conflict_switch] = [sideswitch_f_t, sideswitch_t_f]
+            else:
+                print("Dunno what to do now :(")
+
 
     if tak in spoortak_end:
         next_track = spoortak_end[tak]
