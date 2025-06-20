@@ -50,7 +50,6 @@ def process_moves(entry, g, g_block, measures, moves_per_agent, block_intervals)
         path = construct_path(g, move)
         moves_per_agent[entry["trainNumber"]].append(path)
         block_routes = convertMovesToBlock(moves_per_agent, g)[current_train][0]
-        print(block_routes)
         current_block_intervals = generate_unsafe_intervals(g_block, path, block_routes, move, measures, current_train)
 
         

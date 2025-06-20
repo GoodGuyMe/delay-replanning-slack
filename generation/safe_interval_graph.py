@@ -22,7 +22,7 @@ def replaceAB(node, intervals):
 def plot_train_path(moves_per_agent, color_map=None, plot_route_track=None):
     node_map2 = dict()
     y2 = 0
-    plot_nodes = {edge.from_node.name for edge in plot_route_track}
+    plot_nodes = {edge.from_node.name for edge in plot_route_track} if plot_route_track else set()
     for agent_id, movements in moves_per_agent.items():
         color=None
         for movement in movements:
@@ -31,7 +31,7 @@ def plot_train_path(moves_per_agent, color_map=None, plot_route_track=None):
                 if node not in node_map2:
                     node_map2[node] = (y2, edge)
                     y2 += edge.length
-                if node in node_map2 and node in plot_nodes:
+                if node in node_map2 and (node in plot_nodes or plot_route_track is None):
                     y_cur, old_len = node_map2[node]
                     linestyle = "-"
                     train, = plt.plot([y_cur, y_cur + edge.length], [edge.start_time[agent_id], edge.depart_time[agent_id]], color=color,
@@ -49,7 +49,9 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, dista
     x_axis = []
     xtics = []
 
-    plot_route_track, plot_route_block = plot_routes
+    plot_route_track, plot_route_block = None, None
+    if plot_routes:
+        plot_route_track, plot_route_block = plot_routes
 
     if plot_route_block is None:
         for agent_id, movements in block_routes.items():

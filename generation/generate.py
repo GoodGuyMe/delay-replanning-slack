@@ -72,7 +72,8 @@ def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, out
     safe_computation_time = time.time() - start_time
     write_intervals_to_file(output, safe_block_intervals, atfs, indices_to_states)
     if plot:
-        plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g.distance_markers, buffer_times, recovery_times)
+        plot_route = (moves_per_agent[plot][0], block_routes[plot][0]) if plot in block_routes else None
+        plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g.distance_markers, buffer_times, recovery_times, plot_routes=plot_route)
     return unsafe_computation_time + safe_computation_time
 
 if __name__ == "__main__":
