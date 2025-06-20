@@ -1,0 +1,81 @@
+{
+    "types": [
+        {
+            "name": "VIRM",
+            "length": 60,
+            "speed": 35
+        }
+    ],
+    "trains": [
+        {
+            "trainNumber": 1,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "VIRM"
+            ],
+            "movements": [
+                {
+                    "startLocation": "Shl|1058|Shl|1078-A",
+                    "startLocationSignal": "r-Shl|1080",
+                    "startTime": 50,
+                    "endTime": 2000,
+                    "endLocation": "Rtd|288|Rtd|340-A",
+                    "endLocationSignal": "r-Rtd|340",
+                    "stops": {
+                    }
+                }
+            ]
+        },
+        {
+            "trainNumber": 2,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "VIRM"
+            ],
+            "movements": [
+                {
+                    "startLocation": "Shl|1058|Shl|1078-A",
+                    "startLocationSignal": "r-Shl|1080",
+                    "startTime": 500,
+                    "endTime": 0,
+                    "endLocation": "Rtd|288|Rtd|340-A",
+                    "endLocationSignal": "r-Rtd|340",
+                    "stops": {
+                    }
+                }
+            ]
+        },
+        {
+            "trainNumber": 3,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "VIRM"
+            ],
+            "movements": [
+                {
+                    "startLocation": "Shl|1058|Shl|1078-A",
+                    "startLocationSignal": "r-Shl|1080",
+                    "startTime": 1200,
+                    "endTime": 0,
+                    "endLocation": "Rtd|288|Rtd|340-A",
+                    "endLocationSignal": "r-Rtd|340",
+                    "stops": {
+                    }
+                }
+            ]
+        }
+    ],
+    "headwayFollowing": 180,
+    "headwayCrossing": 120,
+    "walkingSpeed": 1.4,
+    "releaseTime": 20,
+    "setupTime": 20,
+    "sightReactionTime": 10,
+    "minimumStopTime": 100
+}

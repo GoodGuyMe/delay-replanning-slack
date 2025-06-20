@@ -1,0 +1,93 @@
+{
+    "types": [
+        {
+            "name": "VIRM",
+            "length": 60,
+            "speed": 35
+        }
+    ],
+    "trains": [
+        {
+            "trainNumber": 1,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "VIRM"
+            ],
+            "movements": [
+                {
+                    "startLocation": "Shl|1058|Shl|1078-A",
+                    "startLocationSignal": "r-Shl|1080",
+                    "startTime": 50,
+                    "endTime": 2000,
+                    "endLocation": "Rtd|288|Rtd|340-A",
+                    "endLocationSignal": "r-Rtd|340",
+                    "stops": {
+                        "Hfd|1112|Hfd|1130-A": 0,
+                        "Hfd_Ledn|1969|Hfd_Ledn|1968-A": 0,
+                        "Hfd_Ledn|1981|Hfd_Ledn|1983-A": 0,
+                        "Ledn|1024|Ledn|1050-A": 0
+                    }
+                }
+            ]
+        },
+        {
+            "trainNumber": 2,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "VIRM"
+            ],
+            "movements": [
+                {
+                    "startLocation": "Shl|1058|Shl|1078-A",
+                    "startLocationSignal": "r-Shl|1080",
+                    "startTime": 500,
+                    "endTime": 0,
+                    "endLocation": "Rtd|288|Rtd|340-A",
+                    "endLocationSignal": "r-Rtd|340",
+                    "stops": {
+                        "Hfd|1112|Hfd|1130-A": 0,
+                        "Hfd_Ledn|1969|Hfd_Ledn|1968-A": 0,
+                        "Hfd_Ledn|1981|Hfd_Ledn|1983-A": 0,
+                        "Ledn|1024|Ledn|1050-A": 0
+                    }
+                }
+            ]
+        },
+        {
+            "trainNumber": 3,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "VIRM"
+            ],
+            "movements": [
+                {
+                    "startLocation": "Shl|1058|Shl|1078-A",
+                    "startLocationSignal": "r-Shl|1080",
+                    "startTime": 1200,
+                    "endTime": 0,
+                    "endLocation": "Rtd|288|Rtd|340-A",
+                    "endLocationSignal": "r-Rtd|340",
+                    "stops": {
+                        "Hfd|1112|Hfd|1130-A": 0,
+                        "Hfd_Ledn|1969|Hfd_Ledn|1968-A": 0,
+                        "Hfd_Ledn|1981|Hfd_Ledn|1983-A": 0,
+                        "Ledn|1024|Ledn|1050-A": 0
+                    }
+                }
+            ]
+        }
+    ],
+    "headwayFollowing": 180,
+    "headwayCrossing": 120,
+    "walkingSpeed": 1.4,
+    "releaseTime": 20,
+    "setupTime": 20,
+    "sightReactionTime": 10,
+    "minimumStopTime": 100
+}
