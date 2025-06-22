@@ -1,8 +1,11 @@
+from logging import getLogger
+
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 from matplotlib.lines import Line2D
 
+logger = getLogger('__main__.' + __name__)
 
 def replaceAB(node, intervals):
     if "A" in node:

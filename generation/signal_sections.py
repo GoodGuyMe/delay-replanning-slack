@@ -1,5 +1,8 @@
+from logging import getLogger
+
 from generation.graph import Edge, TrackGraph, BlockEdge
 
+logger = getLogger('__main__.' + __name__)
 
 def convertMovesToBlock(moves_per_agent, g: TrackGraph) -> dict[int, list[BlockEdge]]:
     block_routes = {}

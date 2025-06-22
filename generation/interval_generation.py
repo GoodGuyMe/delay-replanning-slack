@@ -1,9 +1,12 @@
 import sys
 import queue as Q
+from logging import getLogger
 
 from generation.graph import BlockEdge, Graph, Node
 from generation.signal_sections import convertMovesToBlock
 from generation.util import *
+
+logger = getLogger('__main__.' + __name__)
 
 def process_scenario(data, g, g_block, agent):
     """Process the data from the scenario."""
@@ -17,7 +20,7 @@ def process_scenario(data, g, g_block, agent):
         measures = {}
         measures["trainLength"] = sum([types[x]["length"] for x in entry["trainUnitTypes"]])
         if len({types[i]["speed"] for i in entry["trainUnitTypes"]}) != 1:
-            print("[ERROR] Not all train units have the same type")
+            logger.error("[ERROR] Not all train units have the same type")
         measures["trainSpeed"] = types[entry["trainUnitTypes"][0]]["speed"]
         measures["walkingSpeed"] = data["walkingSpeed"]
         measures["headwayFollowing"] = data["headwayFollowing"]
@@ -36,9 +39,9 @@ def process_scenario(data, g, g_block, agent):
         for i in range(len(block_intervals[node])):
             interval = block_intervals[node][i]
             if int(interval[0]) > int(interval[1]):
-                print(f"ERROR  node {node}: unsafe node interval {interval} has later end than start")
+                logger.error(f"ERROR  node {node}: unsafe node interval {interval} has later end than start")
             if i > 0 and int(interval[0]) < int(block_intervals[node][i-1][1]):
-                print(f"ERROR  node {node}: unsafe node interval {interval} has a start which comes before the end of previous interval {block_intervals[node][i-1]}")
+                logger.error(f"ERROR  node {node}: unsafe node interval {interval} has a start which comes before the end of previous interval {block_intervals[node][i-1]}")
     return block_intervals, agent_intervals, moves_per_agent
 
 
@@ -120,8 +123,7 @@ def calculate_path(g, start, end, print_path_error=True):
                     path.insert(0, x)
             current = previous[current.name]
     except Exception as e:
-        if print_path_error:
-            print(f"##### ERROR ### {e} No path was found between {start.name} and {end.name}")
+        logger.error(f"##### ERROR ### {e} No path was found between {start.name} and {end.name}")
     return path
 
 def construct_path(g, move, print_path_error=True):

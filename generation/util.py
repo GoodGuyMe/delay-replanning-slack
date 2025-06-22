@@ -1,8 +1,11 @@
 import json 
+from logging import getLogger
 from pathlib import Path
 
 from generation.graph import TrackGraph, Signal, TrackNode, TrackEdge
-    
+
+logger = getLogger('__main__.' + __name__)
+
 def read_graph(file) -> TrackGraph:
     try:
         base_path = Path(__file__).parent
@@ -159,19 +162,19 @@ def read_graph(file) -> TrackGraph:
 
 
 def print_node_intervals_per_train(node_intervals, edge_intervals, g, move=None):
-    ### Print the intervals
+    ### log the intervals
     if move:
-        print(f"\nMove from {move['startLocation']} to {move['endLocation']}\nUNSAFE INTERVALS\n")
+        logger.info(f"\nMove from {move['startLocation']} to {move['endLocation']}\nUNSAFE INTERVALS\n")
     for train in node_intervals:
-        print(f"=====Train {train}======")
+        logger.info(f"=====Train {train}======")
         for n in node_intervals[train]:
             if len(node_intervals[train][n]) > 0:
-                print(f"Node {n} has {len(node_intervals[train][n])} intervals:")
+                logger.info(f"Node {n} has {len(node_intervals[train][n])} intervals:")
                 for x in node_intervals[train][n]:
-                    print(f"    <{x[0]},{x[1]}>")
+                    logger.info(f"    <{x[0]},{x[1]}>")
                 for e in g.nodes[n].outgoing:
                     if len(edge_intervals[train][e.get_identifier()]) > 0:
-                        print(f"    Edge {e.get_identifier()} has {len(edge_intervals[train][e.get_identifier()])} intervals:")
+                        logger.info(f"    Edge {e.get_identifier()} has {len(edge_intervals[train][e.get_identifier()])} intervals:")
                         for x in edge_intervals[train][e.get_identifier()]:
-                            print(x)
-    print("END\n\n")
+                            logger.info(x)
+    logger.info("END\n\n")

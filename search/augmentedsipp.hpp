@@ -71,18 +71,18 @@ namespace asipp{
 //            return;
 //        }
 
+        // TODO: Make sure agent can arrive at the edge aswell (alpha + zeta compensated for gamma_before)
+
         if (open_list.handles.contains(MapNode(destination))){
             auto handle = open_list.handles[MapNode(destination)];
             if(arrival_time_function.earliest_arrival_time() < (*handle).g.earliest_arrival_time()){
                 m.decreased++;
-//                double h = arrival_time_function.sum_of_delays();
                 double h = edge.heuristic;
                 Node_t new_node = open_list.decrease_key(handle, arrival_time_function, h, destination, source);
                 std::cerr << "Decreased: " << new_node << std::endl;
             } else if(arrival_time_function.beta > (*handle).g.beta) {
                 std::cerr << "This line fucked with it" << std::endl;
                 m.decreased++;
-//                double h = arrival_time_function.sum_of_delays();
                 double h = edge.heuristic;
                 Node_t new_node = open_list.decrease_key(handle, arrival_time_function, h, destination, source);
                 std::cerr << "Decreased: " << new_node << std::endl;
@@ -147,33 +147,6 @@ namespace asipp{
             gamma_t old_gamma = gamma_t(cur.g.gamma);
             old_gamma[successor->edge.agent_after.id] = gam_item_t(gamma_after.first, gamma_after.second,  gamma_after.last_recovery);
             extendOpen(cur, open_list, m, successor->source, successor->destination, edge, old_gamma);
-
-//            gam_item_t gamma_after  = cur.g.gamma[successor->edge.agent_after.id];
-//            gam_item_t gamma_before = cur.g.gamma[successor->edge.agent_before.id];
-
-//            intervalTime_t alpha = successor->edge.alpha - cur.g.delta + gamma_before.first;
-//            intervalTime_t beta  = successor->edge.beta  - cur.g.delta + gamma_after.second;
-//
-//            intervalTime_t minimum_gamma = std::max(gamma_after.first, cur.g.earliest_arrival_time() - successor->edge.beta);
-//
-////            If there is available buffer time to use, create an edge that uses it.
-//            if (successor->edge.agent_after.max_buffer_time - gamma_after.second > epsilon()) {
-//                std::cerr << "Addition using " << successor->edge.agent_after.max_buffer_time - gamma_after.second << " more buffer time" << std::endl;
-//                intervalTime_t succ_alpha = beta;
-//                intervalTime_t succ_beta  = beta + successor->edge.agent_after.max_buffer_time - gamma_after.second;
-//                gamma_t gamma_buffer = gamma_t(cur.g.gamma);
-//                gamma_buffer[successor->edge.agent_after.id] = gam_item_t(minimum_gamma, successor->edge.agent_after.max_buffer_time, successor->edge.agent_after.compound_recovery_time);
-//                extendOpen(cur, open_list, m, successor, gamma_buffer, succ_alpha, succ_beta);
-//            }
-////            std::cerr << "Standard addition" << std::endl;
-//            intervalTime_t eat = cur.g.earliest_arrival_time();
-//            if (eat >= edge.beta) {
-//                std::cerr << "cur.alpha + cur.delta > edge.beta + gamma.max" << eat << " >= " << edge.beta << std::endl;
-//                continue;
-//            }
-//            gamma_t gamma_normal = gamma_t(cur.g.gamma);
-//            gamma_normal[successor->edge.agent_after.id] = gam_item_t(minimum_gamma, gamma_after.second, successor->edge.agent_after.compound_recovery_time);
-//            extendOpen(cur, open_list, m, successor, gamma_normal, alpha, beta);
         }
     }
 

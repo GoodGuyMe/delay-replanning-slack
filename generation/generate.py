@@ -2,6 +2,8 @@
 import time
 import argparse
 import gzip
+import os
+import logging
 
 from generation.buffer_time import flexibility
 from generation.graph import block_graph_constructor
@@ -77,6 +79,8 @@ def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, out
     return unsafe_computation_time + safe_computation_time
 
 if __name__ == "__main__":
+    logger = logging.getLogger()
+    logger.setLevel(os.environ.get("LOGLEVEL", "DEBUG"))
     args = parser.parse_args()
     g = read_graph(args.location)
     g_block = block_graph_constructor(g)

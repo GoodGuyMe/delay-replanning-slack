@@ -1,12 +1,31 @@
+from __future__ import annotations
+
+import contextlib
 import re
 import os
 import pickle
+import logging
+import tqdm
+from typing import Iterator
 
 import generation.GraphPickler
 
-from tqdm import tqdm
 from queue import Queue
 from copy import copy
+from logging import getLogger
+
+logger = getLogger('__main__.' + __name__)
+
+class TqdmLogger:
+    """File-like class redirecting tqdm progress bar to given logging logger."""
+    def __init__(self, logger: logging.Logger):
+        self.logger = logger
+
+    def write(self, msg: str) -> None:
+        self.logger.info(msg.lstrip("\r"))
+
+    def flush(self) -> None:
+        pass
 
 class Node:
     def __init__(self, name):
@@ -167,12 +186,12 @@ class TrackGraph(Graph):
 class BlockGraph(Graph):
     def __init__(self, g: TrackGraph):
         super().__init__()
-        print("Creating initial signals")
+        logger.info("Creating initial signals")
         track_to_signal = {signal.track: signal for signal in g.signals}
         for signal in g.signals:
             block = self.add_node(BlockNode(f"r-{signal.id}"))
             signal.track.blocks.append(block)
-        for signal in tqdm(g.signals):
+        for signal in tqdm.tqdm(g.signals, file=TqdmLogger(logger), mininterval=5, ascii=False):
             blocks = self.generate_signal_blocks(signal, g.signals)
             for idx, (block, length) in enumerate(blocks):
 
@@ -234,7 +253,7 @@ def block_graph_constructor(g: TrackGraph):
     last_modified = os.path.getmtime(g.file_name)
     filename = f"{g.file_name}-{last_modified}-g_block.pkl"
     if os.path.exists(filename) and False:
-        print("Using existing track graph")
+        logger.info("Using existing track graph")
         return generation.GraphPickler.unpickleGraph(filename, g)
     g_block = BlockGraph(g)
     with open(f"{g.file_name}-{last_modified}-g_block.pkl", "wb") as f:
