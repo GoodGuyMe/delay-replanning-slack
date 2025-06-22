@@ -4,7 +4,7 @@ from json import JSONEncoder
 
 class JsonOutput(JSONEncoder):
     def __init__(self, trackParts=None, facilities=None, taskTypes=None, movementConstant=0, movementTrackCoefficient=0,
-                 movementSwitchCoefficient=0, distanceEntries=None, signals=None, distanceMarkers=None):
+                 movementSwitchCoefficient=0, distanceEntries=None, signals=None, distanceMarkers=None, stations=None):
         if facilities is None:
             facilities = []
         if taskTypes is None:
@@ -17,6 +17,8 @@ class JsonOutput(JSONEncoder):
             signals = []
         if trackParts is None:
             trackParts = []
+        if stations is None:
+            stations = []
         self.trackParts = trackParts
         self.facilities = facilities
         self.taskTypes = taskTypes
@@ -26,6 +28,7 @@ class JsonOutput(JSONEncoder):
         self.distanceEntries = distanceEntries
         self.distanceMarkers = distanceMarkers
         self.signals = signals
+        self.stations = stations
 
     def add_track_parts(self, trackParts: list):
         self.trackParts.extend(trackParts)
@@ -33,6 +36,14 @@ class JsonOutput(JSONEncoder):
     def add_signals(self, signals: list):
         self.signals.extend(signals)
 
+    def add_stations(self, stations: list):
+        self.stations.extend(stations)
+
+class JsonStation(JSONEncoder):
+    def __init__(self, station_name, platform, track_id):
+        self.stationName = station_name
+        self.platform = platform
+        self.trackId = track_id
 
 class JsonTrackPart(JSONEncoder):
     __last_id = 0
