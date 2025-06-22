@@ -17,7 +17,7 @@
             ],
             "movements": [
                 {
-                    "startLocation": "Shl|5|A",
+                    "startLocation": "Shl|6|A",
                     "startTime": 50,
                     "endTime": 2000,
                     "endLocation": "Gvc|10|A",

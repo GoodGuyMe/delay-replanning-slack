@@ -236,7 +236,7 @@ class BlockGraph(Graph):
             if len(route[-1].outgoing) == 0:
                 #No outgoing edges, what to do?
                 # Should only happen when at the end of a track, and it's not allowed to turn around
-                logger.error(f"No outgoing edges at {route[-1]}")
+                logger.debug(f"No outgoing edges at {route[-1]}")
                 continue
 
             for e in route[-1].outgoing:

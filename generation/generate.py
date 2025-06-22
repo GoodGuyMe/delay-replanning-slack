@@ -3,8 +3,12 @@ import os
 import logging
 if __name__ == "__main__":
     # Set logging levels before importing (and loading) all other loggers to propagate settings
-    logger = logging.getLogger()
-    logger.setLevel(os.environ.get("LOGLEVEL", "DEBUG"))
+    logging.basicConfig()
+    logging.root.setLevel(logging.INFO)
+    logging.basicConfig(level=logging.INFO)
+
+    logger = logging.getLogger('__main__')
+    logger.setLevel(os.environ.get("LOGLEVEL", logging.INFO))
 
 import json
 import time
