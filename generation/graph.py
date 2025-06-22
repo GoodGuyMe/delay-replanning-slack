@@ -148,6 +148,7 @@ class Graph:
         self.edges: list[Edge] = []
         self.nodes: dict[str, Node] = {}
         self.global_end_time = -1
+        self.stations: dict[str, dict[str, Node]] = {}
 
     def add_node(self, n):
         if isinstance(n, Node):

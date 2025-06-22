@@ -262,7 +262,6 @@ def read_nonbelegging(filename):
                     print(f"Did not find {e.args[0]}")
 
 def read_belegging(file):
-    # Gv|IAWISSELGEB|349A|WISSEL|L|11600||Dt|IAWISSELGEB|2|DRGLPT_SPOOR||Asd-Rtd|69418|885633|OBEBLAD|135000|-20000||||||||||||||||||SPOOR|||Dt|STATION
     with open(file) as f:
         for line in f:
             items = line.strip().split('|')

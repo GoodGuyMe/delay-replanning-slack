@@ -158,6 +158,13 @@ def read_graph(file) -> TrackGraph:
         else:
             track = g.nodes[nodes_per_id_B[signal["track"]][0]]
         g.add_signal(Signal(signal["name"], track))
+
+
+    stations = data["stations"] if "stations" in data else []
+    for station in stations:
+        if len(nodes_per_id_A[station["trackId"]]) != 1 or len(nodes_per_id_B[station["trackId"]]) != 1:
+            logger.error(f'Found platform on a switch: A: {nodes_per_id_A[station["trackId"]]} or B: {nodes_per_id_B[station["trackId"]]}')
+        g.stations[f"{station['stationName']}|{station['platform']}"] = {"A": nodes_per_id_A[station["trackId"]][0], "B": nodes_per_id_B[station["trackId"]][0]}
     return g
 
 
