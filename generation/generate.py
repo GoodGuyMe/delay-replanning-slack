@@ -1,15 +1,22 @@
 #! /usr/bin/env python
-import time
-import argparse
-import gzip
 import os
 import logging
+if __name__ == "__main__":
+    # Set logging levels before importing (and loading) all other loggers to propagate settings
+    logger = logging.getLogger()
+    logger.setLevel(os.environ.get("LOGLEVEL", "DEBUG"))
+
+import json
+import time
+import argparse
+from pathlib import Path
 
 from generation.buffer_time import flexibility
 from generation.graph import block_graph_constructor
 from generation.safe_interval_graph import plot_blocking_staircase
 from generation.interval_generation import *
 from generation.convert_to_safe_intervals import *
+from generation.util import read_graph
 
 # Example:
 # $ python3 generate.py -l ../data/enkhuizen/location_enkhuizen.json -s ../data/enkhuizen/simple_freight+passenger_realistic.json -o output -a 1 -v 20 -p True
@@ -62,6 +69,12 @@ def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, indi
             f.write(f"{from_id} {to_id} {zeta} {alpha} {beta} {delta} {id_before} {crt_b} {id_after} {buffer_after} {crt_a} {heuristic}\n")
         f.write(f"num_trains {num_trains}\n")
 
+def create_station_map(location):
+    g = read_graph(location)
+    g_block = block_graph_constructor(g)
+    return g_block.stations
+
+
 def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output, max_buffer_time, use_recovery_time, destination, plot=False):
     """For testing the time to get the safe intervals. Also writes to file (without timing). Used for experiments."""
     g = read_graph(location)
@@ -79,8 +92,6 @@ def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, out
     return unsafe_computation_time + safe_computation_time
 
 if __name__ == "__main__":
-    logger = logging.getLogger()
-    logger.setLevel(os.environ.get("LOGLEVEL", "DEBUG"))
     args = parser.parse_args()
     g = read_graph(args.location)
     g_block = block_graph_constructor(g)

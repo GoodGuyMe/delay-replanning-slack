@@ -148,7 +148,7 @@ class Graph:
         self.edges: list[Edge] = []
         self.nodes: dict[str, Node] = {}
         self.global_end_time = -1
-        self.stations: dict[str, dict[str, Node]] = {}
+        self.stations: dict[str, str] = {}
 
     def add_node(self, n):
         if isinstance(n, Node):
@@ -204,6 +204,13 @@ class BlockGraph(Graph):
                 to_signal_node = self.nodes[f"r-{to_signal.id}"]
                 direction = "".join(set(signal.direction + to_signal.direction))
                 self.add_edge(BlockEdge(from_signal_node, to_signal_node, length, block, direction))
+        for station, track_node in g.stations.items():
+            station_track = g.nodes[track_node]
+            station_block = {edge.to_node.name for edge in station_track.blocks if isinstance(edge, BlockEdge) and station_track.direction in edge.direction}
+            if len(station_block) == 0:
+                logger.error(f"Found no blocks corresponding to track {station_track}")
+                continue
+            self.stations[station] = station_block.pop()
 
     def __eq__(self, other):
         return super().__eq__(other)
@@ -229,6 +236,7 @@ class BlockGraph(Graph):
             if len(route[-1].outgoing) == 0:
                 #No outgoing edges, what to do?
                 # Should only happen when at the end of a track, and it's not allowed to turn around
+                logger.error(f"No outgoing edges at {route[-1]}")
                 continue
 
             for e in route[-1].outgoing:

@@ -2,13 +2,12 @@ import sys
 import queue as Q
 from logging import getLogger
 
-from generation.graph import BlockEdge, Graph, Node
+from generation.graph import BlockEdge, Graph, Node, TrackEdge, TrackGraph, BlockGraph
 from generation.signal_sections import convertMovesToBlock
-from generation.util import *
 
 logger = getLogger('__main__.' + __name__)
 
-def process_scenario(data, g, g_block, agent):
+def process_scenario(data, g: TrackGraph, g_block: BlockGraph, agent):
     """Process the data from the scenario."""
     # Create a global end time (end of the planning horizon)
     g.global_end_time = max([2 * move["endTime"] for entry in data["trains"] for move in entry["movements"]])
@@ -126,11 +125,19 @@ def calculate_path(g, start, end, print_path_error=True):
         logger.error(f"##### ERROR ### {e} No path was found between {start.name} and {end.name}")
     return path
 
-def construct_path(g, move, print_path_error=True):
+def construct_path(g: Graph, move, print_path_error=True):
     """Construct a shortest path from the start to the end location to determine the locations and generate their unsafe intervals."""
     start = move["startLocation"]
-    stops = move["stops"] if "stops" in move else {}
+    start = g.stations[start] if start in g.stations else start
+    old_stops = move["stops"] if "stops" in move else {}
+    stops = {}
+    for stop, time in old_stops.items():
+        if stop in g.stations:
+            stops[g.stations[stop]] = time
+        else:
+            stops[stop] = time
     end = move["endLocation"]
+    end = g.stations[end] if end in g.stations else end
     all_movements = [start] + list(stops.keys()) + [end]
     path = []
     for i in range(len(all_movements) - 1):
