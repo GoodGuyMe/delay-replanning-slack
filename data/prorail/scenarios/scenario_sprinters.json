@@ -19,7 +19,7 @@
                 {
                     "startLocation": "Shl|1058|Shl|1078-A",
                     "startLocationSignal": "r-Shl|1080",
-                    "startTime": 50,
+                    "startTime": 100,
                     "endTime": 2000,
                     "endLocation": "Rtd|288|Rtd|340-A",
                     "endLocationSignal": "r-Rtd|340",
@@ -44,15 +44,16 @@
                 {
                     "startLocation": "Shl|1058|Shl|1078-A",
                     "startLocationSignal": "r-Shl|1080",
-                    "startTime": 500,
-                    "endTime": 0,
-                    "endLocation": "Rtd|288|Rtd|340-A",
-                    "endLocationSignal": "r-Rtd|340",
+                    "startTime": 600,
+                    "endTime": 5,
+                    "endLocation": "Gvc|5080|Gvc|SJ_5079LV-B",
+                    "endLocationSignal": "r-Gvc|5080",
                     "stops": {
                         "Hfd|1112|Hfd|1130-A": 0,
                         "Hfd_Ledn|1969|Hfd_Ledn|1968-A": 0,
                         "Hfd_Ledn|1981|Hfd_Ledn|1983-A": 0,
-                        "Ledn|1024|Ledn|1050-A": 0
+                        "Ledn|1024|Ledn|1050-A": 0,
+                        "Gvm_Ledn|833|Gvm_Ledn|843-A": 0
                     }
                 }
             ]
@@ -69,15 +70,78 @@
                 {
                     "startLocation": "Shl|1058|Shl|1078-A",
                     "startLocationSignal": "r-Shl|1080",
-                    "startTime": 1200,
-                    "endTime": 0,
-                    "endLocation": "Rtd|288|Rtd|340-A",
-                    "endLocationSignal": "r-Rtd|340",
+                    "startTime": 1100,
+                    "endTime": 5,
+                    "endLocation": "Gvc|5080|Gvc|SJ_5079LV-B",
+                    "endLocationSignal": "r-Gvc|5080",
                     "stops": {
                         "Hfd|1112|Hfd|1130-A": 0,
                         "Hfd_Ledn|1969|Hfd_Ledn|1968-A": 0,
                         "Hfd_Ledn|1981|Hfd_Ledn|1983-A": 0,
                         "Ledn|1024|Ledn|1050-A": 0
+                    }
+                }
+            ]
+        },
+        {
+            "trainNumber": 4,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "VIRM"
+            ],
+            "movements": [
+                {
+                    "startLocation": "Gvc|SJ_51AVV|Gvc|52-A",
+                    "startLocationSignal": "r-Gvc|52",
+                    "startTime": 100,
+                    "endTime": 5,
+                    "endLocation": "Rtd|288|Rtd|340-A",
+                    "endLocationSignal": "r-Rtd|340",
+                    "stops": {
+                    }
+                }
+            ]
+        },
+        {
+            "trainNumber": 5,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "VIRM"
+            ],
+            "movements": [
+                {
+                    "startLocation": "Gvc|SJ_51AVV|Gvc|52-A",
+                    "startLocationSignal": "r-Gvc|52",
+                    "startTime": 600,
+                    "endTime": 5,
+                    "endLocation": "Rtd|288|Rtd|340-A",
+                    "endLocationSignal": "r-Rtd|340",
+                    "stops": {
+                    }
+                }
+            ]
+        },
+        {
+            "trainNumber": 6,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "VIRM"
+            ],
+            "movements": [
+                {
+                    "startLocation": "Gvc|SJ_51AVV|Gvc|52-A",
+                    "startLocationSignal": "r-Gvc|52",
+                    "startTime": 1100,
+                    "endTime": 5,
+                    "endLocation": "Rtd|288|Rtd|340-A",
+                    "endLocationSignal": "r-Rtd|340",
+                    "stops": {
                     }
                 }
             ]
