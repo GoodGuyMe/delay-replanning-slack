@@ -160,7 +160,7 @@ class Spoortak:
                 lint = signal.lint
 
         tolint = self.t.lint
-        end = get_lint_compensated_kilometrering(self.t.kilometrering, lint, tolint)
+        end = get_lint_compensated_kilometrering(self.t.kilometrering, tolint, lint)
         len = abs(start - end)
 
         tp = JsonTrackPart(len, f"{name}|{repr(self.t)}{self.tside}", False, False, False)
