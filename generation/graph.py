@@ -5,6 +5,9 @@ import re
 import os
 import pickle
 import logging
+import time
+from enum import Enum
+
 import tqdm
 from typing import Iterator
 
@@ -15,6 +18,11 @@ from copy import copy
 from logging import getLogger
 
 logger = getLogger('__main__.' + __name__)
+
+class Direction(Enum):
+    SAME = 1
+    OPPOSE = 2
+    BOTH = 3
 
 class TqdmLogger:
     """File-like class redirecting tqdm progress bar to given logging logger."""
@@ -62,7 +70,8 @@ class TrackNode(Node):
         super().__init__(name)
         self.associated:list[Node] = []
         self.opposites:list[Node] = []
-        self.blocks:list[BlockEdge] = []
+        self.blk:list[BlockEdge] = []
+        self.blocksOpp:list[BlockEdge] = []
         self.canReverse = False
         self.stationPlatform = False
         self.type = type
@@ -70,6 +79,12 @@ class TrackNode(Node):
         if self.direction != "A" and self.direction != "B":
             raise ValueError("Direction must be either A or B")
 
+    def blocks(self, dir: Direction = Direction.SAME):
+        if dir == Direction.SAME:
+            return self.blk
+        if dir == Direction.OPPOSE:
+            return self.blocksOpp
+        return self.blk + self.blocksOpp
 
 class Signal:
     def __init__(self, id, track: TrackNode):
@@ -111,16 +126,28 @@ class Edge:
 class BlockEdge(Edge):
     def __init__(self, f, t, l, tracknodes_on_route:list[TrackNode], direction):
         super().__init__(f, t, l)
-        self.trackNodes:list[TrackNode] = list(tracknodes_on_route)
+        self.tn:list[TrackNode] = list(tracknodes_on_route)
+        self.tnAssociated:list[TrackNode] = list()
+        self.tnOpposites:list[TrackNode] = list()
         for n in tracknodes_on_route:
-            self.trackNodes.extend(n.associated)
-            self.trackNodes.extend(n.opposites)
+            self.tnAssociated.extend(n.associated)
+            self.tnOpposites.extend(n.opposites)
         self.direction = direction
+        if self.direction == "BA":
+            self.direction = "AB"
+
+    def tracknodes(self, direction:Direction) -> list[TrackNode]:
+        if direction == Direction.BOTH:
+            return self.tn + self.tnAssociated + self.tnOpposites
+        if direction == Direction.SAME:
+            return self.tn + self.tnAssociated
+        return self.tnOpposites
+
 
     def get_affected_blocks(self) -> list:
         affected_blocks = set()
-        for node in self.trackNodes:
-            affected_blocks = affected_blocks.union(set(node.blocks))
+        for node in self.tracknodes("AB"):
+            affected_blocks = affected_blocks.union(set(node.blocks(Direction.BOTH)))
         return list(affected_blocks)
 
 
@@ -131,7 +158,7 @@ class TrackEdge(Edge):
         self.start_time = {}
         self.opposites:  list[Edge] = []
         self.associated: list[Edge] = []
-        self.max_speed = 50
+        self.max_speed = 200 / 3.6
         self.stops_at_station = None
         self.direction = ''.join(set(re.findall("[AB]", f"{str(f)[-2:]} {str(t)[-2:]}")))
         # if self.direction != "A" and self.direction != "B":
@@ -148,7 +175,7 @@ class Graph:
         self.edges: list[Edge] = []
         self.nodes: dict[str, Node] = {}
         self.global_end_time = -1
-        self.stations: dict[str, str] = {}
+        self.stations: dict[str, (str, str)] = {}
 
     def add_node(self, n):
         if isinstance(n, Node):
@@ -172,6 +199,16 @@ class Graph:
                     self.global_end_time == other.global_end_time)
         return NotImplemented
 
+    def get_station(self, station):
+        if station in self.stations:
+            return self.stations[station]
+        if f"{station}a" in self.stations:
+            return self.stations[f"{station}a"]
+        if f"{station}b" in self.stations:
+            return self.stations[f"{station}b"]
+        if station[0:-1] in self.stations:
+            return self.stations[station[0:-1]]
+
 class TrackGraph(Graph):
     def __init__(self, file_name):
         super().__init__()
@@ -191,8 +228,8 @@ class BlockGraph(Graph):
         track_to_signal = {signal.track: signal for signal in g.signals}
         for signal in g.signals:
             block = self.add_node(BlockNode(f"r-{signal.id}"))
-            signal.track.blocks.append(block)
-        for signal in tqdm.tqdm(g.signals, file=TqdmLogger(logger), mininterval=5, ascii=False):
+            signal.track.blk.append(block)
+        for signal in tqdm.tqdm(g.signals, file=TqdmLogger(logger), mininterval=1, ascii=False):
             blocks = self.generate_signal_blocks(signal, g.signals)
             for idx, (block, length) in enumerate(blocks):
 
@@ -204,13 +241,24 @@ class BlockGraph(Graph):
                 to_signal_node = self.nodes[f"r-{to_signal.id}"]
                 direction = "".join(set(signal.direction + to_signal.direction))
                 self.add_edge(BlockEdge(from_signal_node, to_signal_node, length, block, direction))
-        for station, track_node in g.stations.items():
-            station_track = g.nodes[track_node]
-            station_block = {edge.to_node.name for edge in station_track.blocks if isinstance(edge, BlockEdge) and station_track.direction in edge.direction}
-            if len(station_block) == 0:
-                logger.error(f"Found no blocks corresponding to track {station_track}")
+        for station, track_nodes in g.stations.items():
+            node_a, node_b = track_nodes
+
+            station_track_a = g.nodes[node_a]
+            station_block_a = {edge.to_node.name for edge in station_track_a.blocks(Direction.SAME) if
+                               isinstance(edge, BlockEdge) and station_track_a.direction in edge.direction}
+            if len(station_block_a) == 0:
+                logger.error(f"Found no blocks corresponding to track {station_track_a}")
                 continue
-            self.stations[station] = station_block.pop()
+
+            station_track_b = g.nodes[node_b]
+            station_block_b = {edge.to_node.name for edge in station_track_b.blocks(Direction.SAME) if
+                               isinstance(edge, BlockEdge) and station_track_b.direction in edge.direction}
+            if len(station_block_b) == 0:
+                logger.error(f"Found no blocks corresponding to track {station_block_b}")
+                continue
+
+            self.stations[station] = (station_block_a.pop(), station_block_b.pop())
 
     def __eq__(self, other):
         return super().__eq__(other)
@@ -218,8 +266,10 @@ class BlockGraph(Graph):
     def add_edge(self, e):
         super().add_edge(e)
 
-        for node in e.trackNodes:
-            node.blocks.append(e)
+        for node in e.tracknodes(Direction.SAME):
+            node.blk.append(e)
+        for node in e.tracknodes(Direction.OPPOSE):
+            node.blocksOpp.append(e)
 
     def generate_signal_blocks(self, from_signal: Signal, signals: list[Signal]):
         end_tracks = {s.track for s in signals}
@@ -258,12 +308,19 @@ class BlockGraph(Graph):
         return result
 
 
-def block_graph_constructor(g: TrackGraph):
+def block_graph_constructor(g: TrackGraph, use_pickle=False):
+    if not use_pickle:
+        return BlockGraph(g)
+
     last_modified = os.path.getmtime(g.file_name)
     filename = f"{g.file_name}-{last_modified}-g_block.pkl"
-    if os.path.exists(filename) and False:
+    if os.path.exists(filename):
         logger.info("Using existing track graph")
-        return generation.GraphPickler.unpickleGraph(filename, g)
+        start = time.time()
+        g_block = generation.GraphPickler.unpickleGraph(filename, g)
+        duration = time.time() - start
+        logger.info(f"Unpickling graph took {duration} seconds")
+        return g_block
     g_block = BlockGraph(g)
     with open(f"{g.file_name}-{last_modified}-g_block.pkl", "wb") as f:
         pickler = generation.GraphPickler.GraphPickler(f, pickle.HIGHEST_PROTOCOL)

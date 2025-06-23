@@ -85,6 +85,9 @@ class JsonTrackPart(JSONEncoder):
             self.bSide.append(trackId)
             self.checktype()
 
+    def contains_id(self, trackId):
+        return (trackId in self.aSide) or (trackId in self.bSide)
+
     def __str__(self):
         return f"{self.id} - {self.type} : {self.name}, l:{self.length}, A:{self.aSide}, B:{self.bSide}"
 

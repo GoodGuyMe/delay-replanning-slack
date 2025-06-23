@@ -2,7 +2,7 @@ from logging import getLogger
 
 logger = getLogger('__main__.' + __name__)
 
-from generation.interval_generation import calculate_distances
+from generation.interval_generation import calculate_heuristic
 
 
 def create_safe_intervals(intervals, g, buffer_times, recovery_times, destination, agent_speed=15, print_intervals=False):
@@ -16,7 +16,7 @@ def create_safe_intervals(intervals, g, buffer_times, recovery_times, destinatio
     indices_to_states = {}
     index = 0
 
-    heuristic = calculate_distances(g, g.nodes[destination])
+    heuristic = calculate_heuristic(g, g.nodes[destination])
     # Create safe intervals from the unsafe node intervals
     # Also store the state indices
     for node in g.nodes:
@@ -158,7 +158,7 @@ def create_safe_intervals(intervals, g, buffer_times, recovery_times, destinatio
                                 ))
                                 safe_edge_node_references[o.get_identifier()].append(((node, o.to_node.name), from_interval, to_interval, arrival_time_functions[-1]))
                             else:
-                                logger.warn(f"--------------------\nFound interval too short\nFrom: {node} to {o.to_node.name}\nf:{from_interval}, t:{to_interval}, e:{edge_interval}\nAlpha: {alpha}, Beta: {beta}")
+                                logger.debug(f"--------------------\nFound interval too short\nFrom: {node} to {o.to_node.name}\nf:{from_interval}, t:{to_interval}, e:{edge_interval}\nAlpha: {alpha}, Beta: {beta}")
                     if to_index < 0:
                         # If this is an opposite edge which cannot be connected due to node occupied it is okay that is not found
                         # This is true if this edge interval does not happen on the path of any agent

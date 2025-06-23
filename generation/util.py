@@ -19,7 +19,9 @@ def read_graph(file) -> TrackGraph:
     track_lengths = {}
     for track in data["trackParts"]:
         track_lengths[track["id"]] = track["length"]
-        if track["type"] in {"RailRoad", "Bumper", "SideSwitch"}:
+        side_switch_track_side  = track["type"] == "SideSwitch" and (len(track["aSide"]) == 1 or len(track["bSide"]) == 1)
+        side_switch_switch_side = track["type"] == "SideSwitch" and (len(track["aSide"]) == 2 or len(track["bSide"]) == 2)
+        if track["type"] in {"RailRoad", "Bumper"} or side_switch_track_side:
             a = g.add_node(TrackNode(track["name"] + "A", track["type"]))
             b = g.add_node(TrackNode(track["name"] + "B", track["type"]))
             if track["stationPlatform"]:
@@ -37,7 +39,7 @@ def read_graph(file) -> TrackGraph:
             nodes_per_id_A[track["id"]] = [track["name"] + "A"]
             nodes_per_id_B[track["id"]] = [track["name"] + "B"]
         # Nodes on the same side of a switch are not associated -> they do not have same intervals, but the edges do
-        elif track["type"] == "Switch":
+        elif track["type"] == "Switch" or side_switch_switch_side:
             if len(track["aSide"]) > len(track["bSide"]):
                 a = g.add_node(TrackNode(track["name"] + "AR", track["type"]))
                 b = g.add_node(TrackNode(track["name"] + "AL", track["type"]))
@@ -84,7 +86,8 @@ def read_graph(file) -> TrackGraph:
             # This side is a bumper, it attaches to the other side
             if g.nodes[fromNode].type == "Bumper" and track["sawMovementAllowed"]:
                 toNode = nodes_per_id_B[track["id"]][i]
-                g.add_edge(TrackEdge(g.nodes[toNode], g.nodes[fromNode], 0))
+                length = track_lengths[track["id"]]
+                g.add_edge(TrackEdge(g.nodes[toNode], g.nodes[fromNode], length))
         for i, bSideId in enumerate(track["bSide"]):
             fromNode = nodes_per_id_B[track["id"]][i]
             if bSideId in nodes_per_id_B:
@@ -97,23 +100,37 @@ def read_graph(file) -> TrackGraph:
             # This side is a bumper, it attaches to the other side
             if g.nodes[fromNode].type == "Bumper" and track["sawMovementAllowed"]:
                 toNode = nodes_per_id_A[track["id"]][i]
-                g.add_edge(TrackEdge(g.nodes[toNode], g.nodes[fromNode], 0))
+                length = track_lengths[track["id"]]
+                g.add_edge(TrackEdge(g.nodes[toNode], g.nodes[fromNode], length))
 
 
         if track["type"] == "SideSwitch":
             fromNode = None
-            toNode = None
+            toNodeL = None
+            toNodeR = None
             if not track["aSide"]:
                 fromNode = g.nodes[track["name"] + "A"]
-                toNode = g.nodes[track["name"][0:-3] + track["name"][-2:-4:-1] + "-B"]
+                toNodeName = track["name"][0:-3] + track["name"][-2:-4:-1] + "-B"
+                if toNodeName in g.nodes:
+                    toNodeL = g.nodes[toNodeName]
+                else:
+                    toNodeL = g.nodes[toNodeName + "L"]
+                    toNodeR = g.nodes[toNodeName + "R"]
             if not track["bSide"]:
                 fromNode = g.nodes[track["name"] + "B"]
-                toNode = g.nodes[track["name"][0:-3] + track["name"][-2:-4:-1] + "-A"]
+                toNodeName = track["name"][0:-3] + track["name"][-2:-4:-1] + "-A"
+                if toNodeName in g.nodes:
+                    toNodeL = g.nodes[toNodeName]
+                else:
+                    toNodeL = g.nodes[toNodeName + "L"]
+                    toNodeR = g.nodes[toNodeName + "R"]
 
             if fromNode is None:
                 raise ValueError("A and B side populated somehow " + track)
 
-            g.add_edge(TrackEdge(fromNode, toNode, 0))
+            g.add_edge(TrackEdge(fromNode, toNodeL, 0))
+            if toNodeR is not None:
+                g.add_edge(TrackEdge(fromNode, toNodeR, 0))
 
 
         # If it is a double-ended (not dead-end) track where parking is allowed, then we can go from A->B and B->A
@@ -163,9 +180,8 @@ def read_graph(file) -> TrackGraph:
     stations = data["stations"] if "stations" in data else []
     for station in stations:
         if len(nodes_per_id_A[station["trackId"]]) != 1 or len(nodes_per_id_B[station["trackId"]]) != 1:
-            logger.error(f'Found platform on a switch: A: {nodes_per_id_A[station["trackId"]]} or B: {nodes_per_id_B[station["trackId"]]}')
-        g.stations[f"{station['stationName']}|{station['platform']}|A"] = nodes_per_id_A[station["trackId"]][0]
-        g.stations[f"{station['stationName']}|{station['platform']}|B"] = nodes_per_id_B[station["trackId"]][0]
+            logger.error(f'Found platform {station["stationName"].upper()}|{station["platform"]} on a switch: A: {nodes_per_id_A[station["trackId"]]} or B: {nodes_per_id_B[station["trackId"]]}')
+        g.stations[f"{station['stationName'].upper()}|{station['platform']}"] = (nodes_per_id_A[station["trackId"]][0], nodes_per_id_B[station["trackId"]][0])
     return g
 
 

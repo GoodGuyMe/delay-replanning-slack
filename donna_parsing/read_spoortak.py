@@ -133,10 +133,9 @@ class Spoortak:
 
                 for station in self.stations:
                     station_kilometrering = get_lint_compensated_kilometrering(station.kilometrering, station.lint, lint)
-                    if start < station_kilometrering < end:
+                    if min(start, end) < station_kilometrering <= max(start, end):
                         tp.stationPlatform = True
                         stations.append(JsonStation(station.station_name, station.platform_number, tp.id))
-                        break
 
                 if tps and reverse:
                     connect_track_parts(tp, tps[-1])
@@ -168,10 +167,9 @@ class Spoortak:
 
         for station in self.stations:
             station_kilometrering = get_lint_compensated_kilometrering(station.kilometrering, station.lint, lint)
-            if start < station_kilometrering < end:
+            if min(start, end) < station_kilometrering <= max(start, end):
                 tp.stationPlatform = True
                 stations.append(JsonStation(station.station_name, station.platform_number, tp.id))
-                break
 
 
         if tps and reverse:
@@ -184,6 +182,8 @@ class Spoortak:
             sig = JsonSignal(b_side_signal, "B", tp.id)
             signals.append(sig)
 
+        if stations:
+            print([station.stationName for station in stations])
         return tps, signals, stations
 
     def __str__(self):
@@ -307,8 +307,8 @@ def get_track_sections(start_track: str):
         priority, tak = item.priority, item.item
         tps = track_sections[repr(tak)]
 
-        if tak.f.emplacement:
-            continue
+        # if tak.f.emplacement:
+        #     continue
 
         # Add a side
         if tak.tside in ["R", "L"]:
@@ -328,7 +328,6 @@ def extend_queue_to(pq: PriorityQueue, tak, tps, priority):
     if tak in spoortak_end:
         next_track = spoortak_end[tak]
 
-        # If the node was already added, don't flip it, but we found a loop
         if repr(next_track) not in track_sections:
             spoortak_start.pop(next_track.repr_f())
             spoortak_end.pop(next_track.repr_t())
@@ -337,11 +336,12 @@ def extend_queue_to(pq: PriorityQueue, tak, tps, priority):
 
             spoortak_start[next_track.repr_f()] = next_track
             spoortak_end[next_track.repr_t()] = next_track
+        # If the node was already added, don't flip it, but we found a loop
         else:
-            print(f"Loop between: {tps[-1].name} and {repr(next_track)}")
             next_tps = track_sections[repr(next_track)]
 
             conflict_switch = "Switch|" + repr(next_track.t)
+            print(f"To Loop between: {tps[-1].name} and {repr(next_track)}, conflict_switch: {conflict_switch}")
             if conflict_switch not in track_sections:
                 f = tps[-1]
                 t = next_tps[-1]
@@ -356,7 +356,32 @@ def extend_queue_to(pq: PriorityQueue, tak, tps, priority):
                 json_output.add_track_parts([sideswitch_f_t, sideswitch_t_f])
                 track_sections[conflict_switch] = [sideswitch_f_t, sideswitch_t_f]
             else:
-                print("Dunno what to do now :(")
+                f = tps[-1]
+                t = next_tps[-1]
+                sideswitch_f_t, sideswitch_t_f = track_sections[conflict_switch]
+                if (
+                    (sideswitch_f_t.contains_id(f.id) or sideswitch_f_t.contains_id(t.id)) and
+                    (sideswitch_t_f.contains_id(f.id) or sideswitch_t_f.contains_id(t.id))
+                ):
+                    print("Both id's are already added :)")
+                else:
+                    if sideswitch_t_f.contains_id(f.id):
+                        print("Situation A")
+                        t.add_a_side(sideswitch_f_t.id)
+                        sideswitch_f_t.add_b_side(t.id)
+                    elif sideswitch_t_f.contains_id(t.id):
+                        print("Situation B")
+                        f.add_a_side(sideswitch_f_t.id)
+                        sideswitch_f_t.add_b_side(f.id)
+                    elif sideswitch_f_t.contains_id(t.id):
+                        print("Situation C")
+                    elif sideswitch_f_t.contains_id(f.id):
+                        print("Situation D")
+
+                    print(f"Again at f: {f}, t: {t}, sideswitches: {sideswitch_f_t}, {sideswitch_t_f}")
+                    print("Check here!")
+
+
 
     if tak in spoortak_start:
         next_track = spoortak_start[tak]
@@ -376,7 +401,6 @@ def extend_queue_from(pq: PriorityQueue, tak, tps, priority):
     if tak in spoortak_start:
         next_track = spoortak_start[tak]
 
-        # If the node was already added, don't flip it, but we found a loop
         if repr(next_track) not in track_sections:
             spoortak_start.pop(next_track.repr_f())
             spoortak_end.pop(next_track.repr_t())
@@ -385,8 +409,9 @@ def extend_queue_from(pq: PriorityQueue, tak, tps, priority):
 
             spoortak_start[next_track.repr_f()] = next_track
             spoortak_end[next_track.repr_t()] = next_track
+        # If the node was already added, don't flip it, but we found a loop
         else:
-            print(f"Loop between: {tps[0].name} and {repr(next_track)}")
+            print(f"From Loop between: {tps[0].name} and {repr(next_track)}")
             next_tps = track_sections[repr(next_track)]
 
             conflict_switch = "Switch|" + repr(next_track.f)
@@ -404,7 +429,28 @@ def extend_queue_from(pq: PriorityQueue, tak, tps, priority):
                 json_output.add_track_parts([sideswitch_f_t, sideswitch_t_f])
                 track_sections[conflict_switch] = [sideswitch_f_t, sideswitch_t_f]
             else:
-                print("Dunno what to do now :(")
+                f = tps[0]
+                t = next_tps[0]
+                sideswitch_f_t, sideswitch_t_f = track_sections[conflict_switch]
+                if (
+                    (sideswitch_f_t.contains_id(f.id) or sideswitch_f_t.contains_id(t.id)) and
+                    (sideswitch_t_f.contains_id(f.id) or sideswitch_t_f.contains_id(t.id))
+                ):
+                    print("Both id's are already added :)")
+                else:
+                    if sideswitch_t_f.contains_id(f.id):
+                        print("Situation A")
+                    elif sideswitch_t_f.contains_id(t.id):
+                        print("Situation B")
+                        f.add_b_side(sideswitch_f_t.id)
+                        sideswitch_f_t.add_a_side(f.id)
+                    elif sideswitch_f_t.contains_id(t.id):
+                        print("Situation C")
+                    elif sideswitch_f_t.contains_id(f.id):
+                        print("Situation D")
+
+                    print(f"Again at f: {f}, t: {t}, sideswitches: {sideswitch_f_t}, {sideswitch_t_f}")
+                    print("Check here!")
 
 
     if tak in spoortak_end:

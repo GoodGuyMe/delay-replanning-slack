@@ -8,7 +8,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     logger = logging.getLogger('__main__')
-    logger.setLevel(os.environ.get("LOGLEVEL", logging.INFO))
+    logger.setLevel(os.environ.get("LOGLEVEL", logging.DEBUG))
 
 import json
 import time
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     block_intervals, _, moves_per_agent, computation_time = read_scenario(args.scenario, g, g_block, args.agent_id)
     block_routes = convertMovesToBlock(moves_per_agent, g)
     buffer_times, recovery_times = flexibility(block_intervals, block_routes, float(args.buffer), args.recovery.strip().lower() == "true")
-    agent_route = 1
+    agent_route = 2
     plot_route = (moves_per_agent[agent_route][0], block_routes[agent_route][0]) if agent_route in block_routes else None
     plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g.distance_markers, buffer_times, recovery_times, plot_routes=plot_route)
     safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, buffer_times, recovery_times, args.destination, float(args.agent_speed), args.recovery.strip().lower() == "true")

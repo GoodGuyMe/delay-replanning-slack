@@ -2,7 +2,7 @@ import sys
 import queue as Q
 from logging import getLogger
 
-from generation.graph import BlockEdge, Graph, Node, TrackEdge, TrackGraph, BlockGraph
+from generation.graph import BlockEdge, Graph, Node, TrackEdge, TrackGraph, BlockGraph, Direction
 from generation.signal_sections import convertMovesToBlock
 
 logger = getLogger('__main__.' + __name__)
@@ -15,12 +15,12 @@ def process_scenario(data, g: TrackGraph, g_block: BlockGraph, agent):
     types = {x["name"]: x for x in data["types"]}
     moves_per_agent = {}
     block_intervals = {}
-    for entry in data["trains"]:
+    for trainNumber, entry in enumerate(data["trains"]):
         measures = {}
         measures["trainLength"] = sum([types[x]["length"] for x in entry["trainUnitTypes"]])
         if len({types[i]["speed"] for i in entry["trainUnitTypes"]}) != 1:
             logger.error("[ERROR] Not all train units have the same type")
-        measures["trainSpeed"] = types[entry["trainUnitTypes"][0]]["speed"]
+        measures["trainSpeed"] = types[entry["trainUnitTypes"][0]]["speed"] / 3.6
         measures["walkingSpeed"] = data["walkingSpeed"]
         measures["headwayFollowing"] = data["headwayFollowing"]
         measures["headwayCrossing"] = data["headwayCrossing"]
@@ -28,12 +28,12 @@ def process_scenario(data, g: TrackGraph, g_block: BlockGraph, agent):
         measures["setupTime"] = data["setupTime"] if "setupTime" in data else 0
         measures["sightReactionTime"] = data["sightReactionTime"] if "sightReactionTime" in data else 0
         measures["minimumStopTime"] = data["minimumStopTime"] if "minimumStopTime" in data else 60
-        moves_per_agent[entry["trainNumber"]] = []
-        block_intervals[entry["trainNumber"]] = {e.get_identifier():[] for e in g_block.edges} | {n: [] for n in g_block.nodes}
+        moves_per_agent[trainNumber] = []
+        block_intervals[trainNumber] = {e.get_identifier():[] for e in g_block.edges} | {n: [] for n in g_block.nodes}
         # Each of the planned moves of the train must be converted to intervals
-        process_moves(entry, g, g_block, measures, moves_per_agent, block_intervals)
+        process_moves(entry, g, g_block, measures, moves_per_agent, block_intervals, trainNumber)
     # Combine intervals and merge overlapping intervals, taking into account the current agent
-    block_intervals, agent_intervals = combine_intervals_per_train(block_intervals, g, g_block, agent)
+    block_intervals, agent_intervals = combine_intervals_per_train(block_intervals, g_block, agent)
     for node in block_intervals:
         for i in range(len(block_intervals[node])):
             interval = block_intervals[node][i]
@@ -44,14 +44,14 @@ def process_scenario(data, g: TrackGraph, g_block: BlockGraph, agent):
     return block_intervals, agent_intervals, moves_per_agent
 
 
-def process_moves(entry, g, g_block, measures, moves_per_agent, block_intervals):
+def process_moves(entry, g, g_block, measures, moves_per_agent, block_intervals, trainNumber):
     """Process the data for all moves. A move is defined by a start and end time and a start and end node. First the path is constructed, then the unsafe intervals for each node and edge in the path are generated."""
     for i in range(len(entry["movements"])):
         move = entry["movements"][i]
-        current_train = entry["trainNumber"] # This is the train making the move, but not necessarily the delayed agent
+        current_train = trainNumber # This is the train making the move, but not necessarily the delayed agent
         path = construct_path(g, move)
-        moves_per_agent[entry["trainNumber"]].append(path)
-        block_routes = convertMovesToBlock(moves_per_agent, g)[current_train][0]
+        moves_per_agent[trainNumber].append(path)
+        block_routes = convertMovesToBlock(moves_per_agent, g, current_train)[current_train][0]
         current_block_intervals = generate_unsafe_intervals(g_block, path, block_routes, move, measures, current_train)
 
         
@@ -73,7 +73,7 @@ def process_moves(entry, g, g_block, measures, moves_per_agent, block_intervals)
                 block_intervals[current_train][node].append(tup)
     return block_intervals
 
-def calculate_distances(g: Graph, start: Node):
+def calculate_heuristic(g: Graph, start: Node):
     distances = {n: sys.maxsize for n in g.nodes}
     pq = Q.PriorityQueue()
     distances[start.name] = 0
@@ -92,7 +92,29 @@ def calculate_distances(g: Graph, start: Node):
                 pq_counter += 1
     return distances
 
-def calculate_path(g, start, end, print_path_error=True):
+def distance_between_nodes(g: Graph, start: Node, end):
+    distances = {n: sys.maxsize for n in g.nodes}
+    pq = Q.PriorityQueue()
+    distances[start.name] = 0
+    pq_counter = 0
+    # Use a counter so it doesn't have to compare nodes
+    pq.put((distances[start.name], pq_counter, start))
+    pq_counter += 1
+    # This does not include the other node intervals: this will have to be updated with propagating SIPP searches
+    while not pq.empty():
+        u = pq.get()[2]
+        for e in u.outgoing:
+            tmp = distances[u.name] + e.length
+            v = e.to_node
+            if tmp < distances[v.name]:
+                distances[v.name] = tmp
+                if end is not None and v.name == end.name:
+                    return tmp
+                pq.put((distances[v.name], pq_counter, v))
+                pq_counter += 1
+    raise ValueError(f"No path found between {start} and {end}")
+
+def calculate_path(g, start, end):
     distances = {n: sys.maxsize for n in g.nodes}
     previous = {n: None for n in g.nodes}
     previous_edge = {n: None for n in g.nodes}
@@ -125,27 +147,50 @@ def calculate_path(g, start, end, print_path_error=True):
         logger.error(f"##### ERROR ### {e} No path was found between {start.name} and {end.name}")
     return path
 
+def get_initial_direction(g: Graph, start, end):
+    start_a, start_b = start
+    end_a, end_b = end
+    start_a, start_b, end_a, end_b = g.nodes[start_a], g.nodes[start_b], g.nodes[end_a], g.nodes[end_b]
+    length_aa = distance_between_nodes(g, start_a, end_a)
+    length_ab = distance_between_nodes(g, start_a, end_b)
+    length_ba = distance_between_nodes(g, start_b, end_a)
+    length_bb = distance_between_nodes(g, start_b, end_b)
+    logger.debug(f"Shortest distance side: aa: {length_aa}, ab: {length_ab}, ba: {length_ba}, bb: {length_bb}")
+    min_length = min(length_aa, length_ab, length_ba, length_bb)
+    if min_length in [length_aa, length_ab]:
+        return 0
+    return 1
+
 def construct_path(g: Graph, move, print_path_error=True):
     """Construct a shortest path from the start to the end location to determine the locations and generate their unsafe intervals."""
-    start = move["startLocation"]
-    start = g.stations[start] if start in g.stations else start
-    old_stops = move["stops"] if "stops" in move else {}
-    stops = {}
-    for stop, time in old_stops.items():
-        if stop in g.stations:
-            stops[g.stations[stop]] = time
-        else:
-            stops[stop] = time
-    end = move["endLocation"]
-    end = g.stations[end] if end in g.stations else end
-    all_movements = [start] + list(stops.keys()) + [end]
+    start = g.get_station(move["startLocation"])
+    old_stops = move["stops"]
+    departure_times = {}
+    stops = []
+    for stop in old_stops:
+        location = g.get_station(stop["location"])
+        time = stop["time"]
+        stops.append(location)
+        departure_times[location] = time
+    end = g.get_station(move["endLocation"])
+    all_movements = [start] + stops + [end]
+    logger.debug(f"Finding path via {all_movements}")
     path = []
+    direction = get_initial_direction(g, all_movements[0], all_movements[1])
     for i in range(len(all_movements) - 1):
-        start = g.nodes[all_movements[i]]
-        end = g.nodes[all_movements[i + 1]]
-        next_path = calculate_path(g, start, end, print_path_error)
+        start = g.nodes[all_movements[i][direction]]
+        end_a = g.nodes[all_movements[i + 1][0]]
+        end_b = g.nodes[all_movements[i + 1][1]]
+        dist_a = distance_between_nodes(g, start, end_a)
+        dist_b = distance_between_nodes(g, start, end_b)
+        if dist_a <= dist_b:
+            next_path = calculate_path(g, start, end_a)
+            direction = 0
+        else:
+            next_path = calculate_path(g, start, end_b)
+            direction = 1
         if next_path and i != 0:
-            next_path[0].stops_at_station = stops[all_movements[i]]
+            next_path[0].stops_at_station = departure_times[all_movements[i]]
         path.extend(next_path)
 
     return path
@@ -175,7 +220,7 @@ def calculate_blocking_time(e: TrackEdge, cur_time, blocking_intervals, measures
             recovery_time
         )
 
-    for block in e.from_node.blocks:
+    for block in e.from_node.blocks(Direction.BOTH):
         blocking_intervals[block.get_identifier()].append(occupation_time)
 
     # Calculate the approach time for the next piece of track,
@@ -185,7 +230,7 @@ def calculate_blocking_time(e: TrackEdge, cur_time, blocking_intervals, measures
     N_BLOCKS = 2
 
     # Find current spot in block graph
-    bools = [e.from_node in block.trackNodes for block in path]
+    bools = [e.from_node in block.tracknodes(Direction.SAME) for block in path]
     current_path_index = bools.index(True) if True in bools else None
 
     next_blocks_approach_time = (start_approach_time,
@@ -195,11 +240,16 @@ def calculate_blocking_time(e: TrackEdge, cur_time, blocking_intervals, measures
                      0.0
     )
 
+    approach_blocks = set()
+
     if current_path_index is not None:
         for path_block in path[current_path_index:current_path_index + N_BLOCKS]:
-            for tn in path_block.trackNodes:
-                for block in tn.blocks:
-                    blocking_intervals[block.get_identifier()].append(next_blocks_approach_time)
+            for tn in path_block.tracknodes(Direction.BOTH):
+                for block in tn.blocks(Direction.BOTH):
+                    approach_blocks.add(block.get_identifier())
+
+    for block in approach_blocks:
+        blocking_intervals[block].append(next_blocks_approach_time)
 
 def generate_unsafe_intervals(g_block, path: list[TrackEdge], block_path: list[BlockEdge], move, measures, current_train):
     cur_time = move["startTime"]
@@ -266,7 +316,7 @@ def sort_and_merge(combined):
             else:
                 i += 1
 
-def combine_intervals_per_train(block_intervals, g, g_block, agent=None):
+def combine_intervals_per_train(block_intervals, g_block, agent=None):
     """Combine the intervals for individual trains together per node/edge and remove duplicates/overlap."""
     combined_blocks = {e.get_identifier(): [] for e in g_block.edges} | {n: [] for n in g_block.nodes}
     agent_intervals = {"blocks": {e.get_identifier(): [] for e in g_block.edges}} | {n: [] for n in g_block.nodes}
