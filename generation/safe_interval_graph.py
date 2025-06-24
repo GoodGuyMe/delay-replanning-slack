@@ -5,6 +5,8 @@ import matplotlib.patches as patches
 import numpy as np
 from matplotlib.lines import Line2D
 
+from generation.graph import BlockEdge, TrackEdge, Direction, BlockGraph
+
 logger = getLogger('__main__.' + __name__)
 
 def replaceAB(node, intervals):
@@ -22,28 +24,29 @@ def replaceAB(node, intervals):
         return node + "L"
     return node
 
-def plot_train_path(moves_per_agent, color_map=None, plot_route_track=None):
-    node_map2 = dict()
-    y2 = 0
-    plot_nodes = {edge.from_node.name for edge in plot_route_track} if plot_route_track else set()
+def plot_train_path(moves_per_agent, color_map=None, node_map=None):
     for agent_id, movements in moves_per_agent.items():
+        length_in_block = {b: 0 for b in node_map}
         color=None
         for movement in movements:
             for edge in movement:
-                node = edge.from_node.name
-                if node not in node_map2:
-                    node_map2[node] = (y2, edge)
-                    y2 += edge.length
-                if node in node_map2 and (node in plot_nodes or plot_route_track is None):
-                    y_cur, old_len = node_map2[node]
-                    linestyle = "-"
-                    train, = plt.plot([y_cur, y_cur + edge.length], [edge.start_time[agent_id], edge.depart_time[agent_id]], color=color,
-                                      linestyle=linestyle)
-                    color=train.get_color()
+                plotting_info = edge.plotting_info
+                if plotting_info and agent_id in plotting_info:
+                    block = plotting_info[agent_id]["block"].get_identifier()
+                    if block in node_map:
+                        y, e = node_map[block]
+                        lib = length_in_block[block]
+                        y = y + lib
+                        start = plotting_info[agent_id]["start_time"]
+                        end = plotting_info[agent_id]["end_time"]
+                        train, = plt.plot([y, y + edge.length], [start, end], color=color,
+                                          linestyle="-")
+                        length_in_block[block] = lib + edge.length
+                        color=train.get_color()
         if color_map is not None:
             color_map[agent_id] = color
 
-def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, distance_markers, buffer_times, recovery_times, xtics_dist = 5000, plot_routes=None):
+def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, g_block: BlockGraph, buffer_times, recovery_times, xtics_dist = 5000, plot_routes=None):
     node_map = dict()
     y = 0
     ax = plt.gca()
@@ -73,7 +76,7 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, dista
 
     color_map = {}
 
-    plot_train_path(moves_per_agent, color_map, plot_route_track)
+    plot_train_path(moves_per_agent, color_map, node_map)
 
 
     for node, (y, edge) in node_map.items():
@@ -100,20 +103,23 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, dista
         patches.Patch(hatch=r"\\\\", edgecolor=None,  label="Recovery time", alpha=0.0)
     ]
     plt.legend(handles=legend_items ,loc="upper left")
-    last_dist = float("-inf")
+    station_identifiers = {}
+    for station, (n_a, n_b) in g_block.stations.items():
+        for e in g_block.nodes[n_a].outgoing:
+            station_identifiers[e.get_identifier()] = station
+        for e in g_block.nodes[n_b].outgoing:
+            station_identifiers[e.get_identifier()] = station
 
-    for (dist, edge) in node_map.values():
-        if "r" in edge.from_node.name:
-            if last_dist < dist:
-                last_dist = dist + xtics_dist
-                xtics.append(edge.from_node.name[2:])
-            else:
-                xtics.append("")
-            x_axis.append(dist)
+    for block_id, (dist, edge) in node_map.items():
+        if block_id in station_identifiers:
+                xtics.append(station_identifiers[block_id])
+        # else:
+        #     xtics.append("")
+                x_axis.append(dist)
 
-    for key, value in distance_markers.items():
-        x_axis.append(value)
-        xtics.append(key)
+    # for key, value in distance_markers.items():
+    #     x_axis.append(value)
+    #     xtics.append(key)
 
     plt.xticks(x_axis, xtics, rotation=90)
     plt.tight_layout()

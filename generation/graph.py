@@ -154,21 +154,23 @@ class BlockEdge(Edge):
 class TrackEdge(Edge):
     def __init__(self, f, t, l):
         super().__init__(f, t, l)
-        self.depart_time = {}
-        self.start_time = {}
+        self.plotting_info = {}
         self.opposites:  list[Edge] = []
         self.associated: list[Edge] = []
         self.max_speed = 200 / 3.6
-        self.stops_at_station = None
+        self.stops_at_station = {}
         self.direction = ''.join(set(re.findall("[AB]", f"{str(f)[-2:]} {str(t)[-2:]}")))
         # if self.direction != "A" and self.direction != "B":
         #     raise ValueError("Direction must be either A or B")
 
-    def set_depart_time(self, agent, time):
-        self.depart_time[agent] = time
 
-    def set_start_time(self, agent, time):
-        self.start_time[agent] = time
+    def set_plotting_info(self, agent, cur_time, end_time, block_edge):
+        self.plotting_info[agent] = {
+            "start_time": cur_time,
+            "end_time": end_time,
+            "block": block_edge,
+        }
+
 
 class Graph:
     def __init__(self):

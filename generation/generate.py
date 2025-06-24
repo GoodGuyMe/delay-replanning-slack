@@ -104,7 +104,7 @@ if __name__ == "__main__":
     buffer_times, recovery_times = flexibility(block_intervals, block_routes, float(args.buffer), args.recovery.strip().lower() == "true")
     agent_route = 2
     plot_route = (moves_per_agent[agent_route][0], block_routes[agent_route][0]) if agent_route in block_routes else None
-    plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g.distance_markers, buffer_times, recovery_times, plot_routes=plot_route)
+    plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g_block, buffer_times, recovery_times, plot_routes=plot_route)
     safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, buffer_times, recovery_times, args.destination, float(args.agent_speed), args.recovery.strip().lower() == "true")
     write_intervals_to_file(args.output, safe_block_intervals, atfs, indices_to_states)
     # plot_safe_node_intervals(safe_block_intervals | safe_block_edges_intervals, block_routes)

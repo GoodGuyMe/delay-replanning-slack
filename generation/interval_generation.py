@@ -161,7 +161,7 @@ def get_initial_direction(g: Graph, start, end):
         return 0
     return 1
 
-def construct_path(g: Graph, move, print_path_error=True):
+def construct_path(g: Graph, move, print_path_error=True, current_agent=0):
     """Construct a shortest path from the start to the end location to determine the locations and generate their unsafe intervals."""
     start = g.get_station(move["startLocation"])
     old_stops = move["stops"]
@@ -190,7 +190,7 @@ def construct_path(g: Graph, move, print_path_error=True):
             next_path = calculate_path(g, start, end_b)
             direction = 1
         if next_path and i != 0:
-            next_path[0].stops_at_station = departure_times[all_movements[i]]
+            next_path[0].stops_at_station[current_agent] = departure_times[all_movements[i]]
         path.extend(next_path)
 
     return path
@@ -198,15 +198,15 @@ def construct_path(g: Graph, move, print_path_error=True):
 def calculate_blocking_time(e: TrackEdge, cur_time, blocking_intervals, measures, current_train, path: list[BlockEdge]):
 
     station_time = 0
-    if e.stops_at_station is not None:
-        station_time = max(measures["minimumStopTime"], e.stops_at_station - cur_time)
+    if current_train in e.stops_at_station:
+        station_time = max(measures["minimumStopTime"], e.stops_at_station[current_train] - cur_time)
 
     train_speed = min(e.max_speed, measures["trainSpeed"])
     clearing_time = measures["trainLength"] / train_speed
     end_occupation_time = cur_time + e.length / train_speed + clearing_time + station_time
 
     # Recovery time calculation
-    if e.stops_at_station is not None:
+    if current_train in e.stops_at_station:
         recovery_time = station_time - measures["minimumStopTime"]
     else:
         recovery_time = (e.length / train_speed) - e.length / (train_speed * 1.08)
@@ -233,6 +233,11 @@ def calculate_blocking_time(e: TrackEdge, cur_time, blocking_intervals, measures
     bools = [e.from_node in block.tracknodes(Direction.SAME) for block in path]
     current_path_index = bools.index(True) if True in bools else None
 
+    if current_path_index is not None:
+        logger.debug(f"Edge {e} belongs to block: {path[current_path_index]}")
+    else:
+        logger.debug(f"Edge {e} does not belong to any block in path: {path}")
+
     next_blocks_approach_time = (start_approach_time,
                      end_approach_time,
                      0,
@@ -251,6 +256,11 @@ def calculate_blocking_time(e: TrackEdge, cur_time, blocking_intervals, measures
     for block in approach_blocks:
         blocking_intervals[block].append(next_blocks_approach_time)
 
+    if current_path_index is not None:
+        e.set_plotting_info(current_train, cur_time, end_approach_time, path[current_path_index])
+
+    return end_approach_time
+
 def generate_unsafe_intervals(g_block, path: list[TrackEdge], block_path: list[BlockEdge], move, measures, current_train):
     cur_time = move["startTime"]
     block_intervals = {e.get_identifier():[] for e in g_block.edges} | {n: [] for n in g_block.nodes}
@@ -264,18 +274,8 @@ def generate_unsafe_intervals(g_block, path: list[TrackEdge], block_path: list[B
         #     cur_time = end_time
         # In all other cases use train speed
         # else:
-            calculate_blocking_time(e, cur_time, block_intervals, measures, current_train, block_path)
-
-            train_speed = min(e.max_speed, measures["trainSpeed"])
-
-            extra_stop_time = 0
-            if e.stops_at_station is not None:
-                extra_stop_time = max(measures["minimumStopTime"], e.stops_at_station - cur_time)
-
+            end_time = calculate_blocking_time(e, cur_time, block_intervals, measures, current_train, block_path)
             # Time train leaves the node
-            end_time = cur_time + e.length / train_speed + extra_stop_time
-            e.set_start_time(current_train, cur_time)
-            e.set_depart_time(current_train, end_time)
             cur_time = end_time
     return block_intervals
 
