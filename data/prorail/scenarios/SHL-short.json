@@ -1,0 +1,85 @@
+{
+    "headwayCrossing": 120,
+    "headwayFollowing": 180,
+    "minimumStopTime": 100,
+    "releaseTime": 20,
+    "setupTime": 20,
+    "sightReactionTime": 10,
+    "trains": [
+        {
+            "movements": [
+                {
+                    "endLocation": "HFD|2",
+                    "endTime": 2040.0,
+                    "startLocation": "ASD|10a",
+                    "startTime": 780.0,
+                    "stops": [
+                        {
+                            "location": "ASS|11",
+                            "time": 1140.0
+                        },
+                        {
+                            "location": "ASDL|1",
+                            "time": 1380.0
+                        },
+                        {
+                            "location": "SHL|4",
+                            "time": 1800.0
+                        }
+                    ]
+                }
+            ],
+            "trainNumber": "8371",
+            "trainUnitTypes": [
+                "SNG"
+            ],
+            "trainUnits": [
+                "2368",
+                "2750"
+            ]
+        }
+    ],
+    "types": [
+        {
+            "length": 138,
+            "name": "ICNG",
+            "speed": 200
+        },
+        {
+            "length": 138,
+            "name": "EUROSTAR",
+            "speed": 200
+        },
+        {
+            "length": 138,
+            "name": "DDZ",
+            "speed": 140
+        },
+        {
+            "length": 138,
+            "name": "ICM",
+            "speed": 140
+        },
+        {
+            "length": 169,
+            "name": "SNG",
+            "speed": 140
+        },
+        {
+            "length": 169,
+            "name": "SLT",
+            "speed": 140
+        },
+        {
+            "length": 138,
+            "name": "VIRM",
+            "speed": 140
+        },
+        {
+            "length": 138,
+            "name": "UNKNOWN",
+            "speed": 140
+        }
+    ],
+    "walkingSpeed": 1.4
+}
