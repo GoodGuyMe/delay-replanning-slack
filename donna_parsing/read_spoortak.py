@@ -186,10 +186,10 @@ class Spoortak:
             signals.append(sig)
 
         if (not self.t.afbuigend == self.tside) and self.tside != "V":
-            tps[-1].set_afbuiging("A", self.t.wisselhoek)
+            tps[-1].set_afbuiging(self.t.wisselhoek)
             tps[-1].length += 1
         if (not self.f.afbuigend == self.fside) and self.fside != "V":
-            tps[0].set_afbuiging("B", self.f.wisselhoek)
+            tps[0].set_afbuiging(self.f.wisselhoek)
             tps[0].length += 1
 
         if stations:

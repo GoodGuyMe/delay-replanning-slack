@@ -49,8 +49,7 @@ class JsonTrackPart(JSONEncoder):
     __last_id = 0
 
     def __init__(self, length, name, sawMovementAllowed, parkingAllowed, stationPlatform):
-        self.wisselhoek_a = None
-        self.wisselhoek_b = None
+        self.wisselhoek = None
         self.id = JsonTrackPart.__last_id
         JsonTrackPart.__last_id = JsonTrackPart.__last_id + 1
         self.length = length
@@ -96,11 +95,11 @@ class JsonTrackPart(JSONEncoder):
     def __repr__(self):
         return f"<TrackPart id:{self.id} length:{self.length} name:{self.name} sawMovementAllowed:{self.sawMovementAllowed} parkingAllowed:{self.parkingAllowed} stationPlatform:{self.stationPlatform} type:{self.type}, aSide:{self.aSide}, bSide:{self.bSide}>"
 
-    def set_afbuiging(self, direction, wisselhoek):
-        if direction == "A":
-            self.wisselhoek_a = wisselhoek
-        if direction == "B":
-            self.wisselhoek_b = wisselhoek
+    def set_afbuiging(self, wisselhoek):
+        if self.wisselhoek is None:
+            self.wisselhoek = wisselhoek
+        elif float(wisselhoek) < float(self.wisselhoek):
+            self.wisselhoek = wisselhoek
 
 
 class JsonSignal(JSONEncoder):

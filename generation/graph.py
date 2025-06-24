@@ -17,6 +17,26 @@ from queue import Queue
 from copy import copy
 from logging import getLogger
 
+a_to_s = {
+    "4.5": 40,
+    "7": 40,
+    "8": 40,
+    "9": 40,
+    "10": 40,
+    "12": 60,
+    "15": 80,
+    "18": 80,
+    "18.5": 80,
+    "20": 125,
+    "29": 140,
+    "34.7": 140,
+    "39.1": 160
+}
+def angle_to_speed(angle):
+    if angle is None:
+        return 200 / 3.6
+    return a_to_s[angle] / 3.6
+
 logger = getLogger('__main__.' + __name__)
 
 class Direction(Enum):
@@ -152,12 +172,12 @@ class BlockEdge(Edge):
 
 
 class TrackEdge(Edge):
-    def __init__(self, f, t, l):
+    def __init__(self, f, t, l, switch_angle=None):
         super().__init__(f, t, l)
         self.plotting_info = {}
         self.opposites:  list[Edge] = []
         self.associated: list[Edge] = []
-        self.max_speed = 200 / 3.6
+        self.max_speed = angle_to_speed(switch_angle)
         self.stops_at_station = {}
         self.direction = ''.join(set(re.findall("[AB]", f"{str(f)[-2:]} {str(t)[-2:]}")))
         # if self.direction != "A" and self.direction != "B":

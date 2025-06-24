@@ -81,7 +81,7 @@ def read_graph(file) -> TrackGraph:
                 # Connect the aSide node(s) to the respective edges
                 for aSideToTrack in nodes_per_id_A[aSideId]:
                     length = track_lengths[aSideId]
-                    e = g.add_edge(TrackEdge(g.nodes[fromNode], g.nodes[aSideToTrack], length))
+                    e = g.add_edge(TrackEdge(g.nodes[fromNode], g.nodes[aSideToTrack], length, track["wisselhoek"]))
                     aEdges.append(e)
             # This side is a bumper, it attaches to the other side
             if g.nodes[fromNode].type == "Bumper" and track["sawMovementAllowed"]:
@@ -95,7 +95,7 @@ def read_graph(file) -> TrackGraph:
                 # Connect the bSide node(s) to the respective neighbors
                 for bSideToTrack in nodes_per_id_B[bSideId]:
                     length = track_lengths[bSideId]
-                    e = g.add_edge(TrackEdge(g.nodes[fromNode], g.nodes[bSideToTrack], length))
+                    e = g.add_edge(TrackEdge(g.nodes[fromNode], g.nodes[bSideToTrack], length, track["wisselhoek"]))
                     bEdges.append(e)
             # This side is a bumper, it attaches to the other side
             if g.nodes[fromNode].type == "Bumper" and track["sawMovementAllowed"]:
