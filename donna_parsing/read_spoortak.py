@@ -25,6 +25,8 @@ class Switch:
         self.lint = None
         self.kilometrering = None
         self.emplacement = False
+        self.afbuigend = None
+        self.wisselhoek = None
 
     def __str__(self):
         return f'{self.area}-{self.code}'
@@ -35,6 +37,11 @@ class Switch:
     def set_kilometrering(self, lint, kilometrering):
         self.lint = lint
         self.kilometrering = int(kilometrering)
+
+    def set_switch_side(self, side, angle):
+        self.afbuigend = side
+        self.wisselhoek = angle
+
 
 class Signal:
     def __init__(self, area, code, side, lint, kilometrering):
@@ -116,7 +123,7 @@ class Spoortak:
     def add_station(self, station: Station):
         self.stations.append(station)
 
-    def get_track_sections(self, reverse=False) -> (list[JsonTrackPart], list[JsonSignal]):
+    def get_track_sections(self) -> (list[JsonTrackPart], list[JsonSignal]):
         tps = []
         signals = []
         stations = []
@@ -137,9 +144,7 @@ class Spoortak:
                         tp.stationPlatform = True
                         stations.append(JsonStation(station.station_name, station.platform_number, tp.id))
 
-                if tps and reverse:
-                    connect_track_parts(tp, tps[-1])
-                elif tps:
+                if tps:
                     connect_track_parts(tps[-1], tp)
                 tps.append(tp)
 
@@ -172,15 +177,20 @@ class Spoortak:
                 stations.append(JsonStation(station.station_name, station.platform_number, tp.id))
 
 
-        if tps and reverse:
-            connect_track_parts(tp, tps[-1])
-        elif tps:
+        if tps:
             connect_track_parts(tps[-1], tp)
         tps.append(tp)
 
         if b_side_signal:
             sig = JsonSignal(b_side_signal, "B", tp.id)
             signals.append(sig)
+
+        if (not self.t.afbuigend == self.tside) and self.tside != "V":
+            tps[-1].set_afbuiging("A", self.t.wisselhoek)
+            tps[-1].length += 1
+        if (not self.f.afbuigend == self.fside) and self.fside != "V":
+            tps[0].set_afbuiging("B", self.f.wisselhoek)
+            tps[0].length += 1
 
         if stations:
             print([station.stationName for station in stations])
@@ -253,13 +263,15 @@ def read_spoortak(file):
 def read_nonbelegging(filename):
     with open(filename) as f:
         for line in f:
-            items = line.strip().split('|')
-            if items[3] in ["WISSEL", "STOOTJUK", "TERRA_INCOGNITA"]:
-                try:
+            try:
+                items = line.strip().split('|')
+                if items[3] in ["WISSEL", "STOOTJUK", "TERRA_INCOGNITA"]:
                     switches[f"{items[0]}{items[2]}"].set_kilometrering(items[4], items[5])
                     switches[f"{items[0]}{items[2]}"].emplacement = items[22] == "GOEDEMPL"
-                except KeyError as e:
-                    print(f"Did not find {e.args[0]}")
+                    if items[3] == "WISSEL":
+                        switches[f"{items[0]}{items[2]}"].set_switch_side(items[12], items[13])
+            except KeyError as e:
+                print(f"Did not find {e.args[0]}")
 
 def read_belegging(file):
     with open(file) as f:
