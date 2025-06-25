@@ -49,7 +49,7 @@ def process_moves(entry, g, g_block, measures, moves_per_agent, block_intervals,
     for i in range(len(entry["movements"])):
         move = entry["movements"][i]
         current_train = trainNumber # This is the train making the move, but not necessarily the delayed agent
-        path = construct_path(g, move)
+        path = construct_path(g, move, current_agent=current_train, agent_velocity=measures["trainSpeed"])
         moves_per_agent[trainNumber].append(path)
         block_routes = convertMovesToBlock(moves_per_agent, g, current_train)[current_train][0]
         current_block_intervals = generate_unsafe_intervals(g_block, path, block_routes, move, measures, current_train)
@@ -73,44 +73,48 @@ def process_moves(entry, g, g_block, measures, moves_per_agent, block_intervals,
                 block_intervals[current_train][node].append(tup)
     return block_intervals
 
-def calculate_heuristic(g: Graph, start: Node):
-    distances = {n: sys.maxsize for n in g.nodes}
+def calculate_heuristic(g: Graph, start: Node, agent_velocity):
+    time_distances = {n: sys.maxsize for n in g.nodes}
     pq = Q.PriorityQueue()
-    distances[start.name] = 0
+    time_distances[start.name] = 0
     pq_counter = 0
     # Use a counter so it doesn't have to compare nodes
-    pq.put((distances[start.name], pq_counter, start))
+    pq.put((time_distances[start.name], pq_counter, start))
     pq_counter += 1
     # This does not include the other node intervals: this will have to be updated with propagating SIPP searches
+    logger.debug("Calculating Heuristic")
     while not pq.empty():
         v = pq.get()[2]
         for e in v.incoming:
-            tmp = distances[v.name] + e.length
-            if tmp < distances[e.from_node.name]:
-                distances[e.from_node.name] = tmp
-                pq.put((distances[e.from_node.name], pq_counter, e.from_node))
+            velocity = min(e.max_speed, agent_velocity)
+            tmp = time_distances[v.name] + (e.length / velocity)
+            if tmp < time_distances[e.from_node.name]:
+                time_distances[e.from_node.name] = tmp
+                pq.put((time_distances[e.from_node.name], pq_counter, e.from_node))
                 pq_counter += 1
-    return distances
+                logger.debug(f"time-distance to {e.from_node.name}: {tmp}")
+    return time_distances
 
-def distance_between_nodes(g: Graph, start: Node, end):
-    distances = {n: sys.maxsize for n in g.nodes}
+def distance_between_nodes(g: Graph, start: Node, end, agent_velocity):
+    time_distances = {n: sys.maxsize for n in g.nodes}
     pq = Q.PriorityQueue()
-    distances[start.name] = 0
+    time_distances[start.name] = 0
     pq_counter = 0
     # Use a counter so it doesn't have to compare nodes
-    pq.put((distances[start.name], pq_counter, start))
+    pq.put((time_distances[start.name], pq_counter, start))
     pq_counter += 1
     # This does not include the other node intervals: this will have to be updated with propagating SIPP searches
     while not pq.empty():
         u = pq.get()[2]
         for e in u.outgoing:
-            tmp = distances[u.name] + e.length
+            velocity = min(e.max_speed, agent_velocity)
+            tmp = time_distances[u.name] + (e.length / velocity)
             v = e.to_node
-            if tmp < distances[v.name]:
-                distances[v.name] = tmp
+            if tmp < time_distances[v.name]:
+                time_distances[v.name] = tmp
                 if end is not None and v.name == end.name:
                     return tmp
-                pq.put((distances[v.name], pq_counter, v))
+                pq.put((time_distances[v.name], pq_counter, v))
                 pq_counter += 1
     raise ValueError(f"No path found between {start} and {end}")
 
@@ -147,21 +151,21 @@ def calculate_path(g, start, end):
         logger.error(f"##### ERROR ### {e} No path was found between {start.name} and {end.name}")
     return path
 
-def get_initial_direction(g: Graph, start, end):
+def get_initial_direction(g: Graph, start, end, agent_velocity):
     start_a, start_b = start
     end_a, end_b = end
     start_a, start_b, end_a, end_b = g.nodes[start_a], g.nodes[start_b], g.nodes[end_a], g.nodes[end_b]
-    length_aa = distance_between_nodes(g, start_a, end_a)
-    length_ab = distance_between_nodes(g, start_a, end_b)
-    length_ba = distance_between_nodes(g, start_b, end_a)
-    length_bb = distance_between_nodes(g, start_b, end_b)
+    length_aa = distance_between_nodes(g, start_a, end_a, agent_velocity)
+    length_ab = distance_between_nodes(g, start_a, end_b, agent_velocity)
+    length_ba = distance_between_nodes(g, start_b, end_a, agent_velocity)
+    length_bb = distance_between_nodes(g, start_b, end_b, agent_velocity)
     logger.debug(f"Shortest distance side: aa: {length_aa}, ab: {length_ab}, ba: {length_ba}, bb: {length_bb}")
     min_length = min(length_aa, length_ab, length_ba, length_bb)
     if min_length in [length_aa, length_ab]:
         return 0
     return 1
 
-def construct_path(g: Graph, move, print_path_error=True, current_agent=0):
+def construct_path(g: Graph, move, print_path_error=True, current_agent=0, agent_velocity=15):
     """Construct a shortest path from the start to the end location to determine the locations and generate their unsafe intervals."""
     start = g.get_station(move["startLocation"])
     old_stops = move["stops"]
@@ -176,13 +180,13 @@ def construct_path(g: Graph, move, print_path_error=True, current_agent=0):
     all_movements = [start] + stops + [end]
     logger.debug(f"Finding path via {all_movements}")
     path = []
-    direction = get_initial_direction(g, all_movements[0], all_movements[1])
+    direction = get_initial_direction(g, all_movements[0], all_movements[1], agent_velocity)
     for i in range(len(all_movements) - 1):
         start = g.nodes[all_movements[i][direction]]
         end_a = g.nodes[all_movements[i + 1][0]]
         end_b = g.nodes[all_movements[i + 1][1]]
-        dist_a = distance_between_nodes(g, start, end_a)
-        dist_b = distance_between_nodes(g, start, end_b)
+        dist_a = distance_between_nodes(g, start, end_a, agent_velocity)
+        dist_b = distance_between_nodes(g, start, end_b, agent_velocity)
         if dist_a <= dist_b:
             next_path = calculate_path(g, start, end_a)
             direction = 0
@@ -199,7 +203,7 @@ def calculate_blocking_time(e: TrackEdge, cur_time, blocking_intervals, measures
 
     station_time = 0
     if current_train in e.stops_at_station:
-        station_time = max(measures["minimumStopTime"], e.stops_at_station[current_train] - cur_time)
+        station_time = e.stops_at_station[current_train] - cur_time
 
     train_speed = min(e.max_speed, measures["trainSpeed"])
     clearing_time = measures["trainLength"] / train_speed
@@ -207,7 +211,7 @@ def calculate_blocking_time(e: TrackEdge, cur_time, blocking_intervals, measures
 
     # Recovery time calculation
     if current_train in e.stops_at_station:
-        recovery_time = station_time - measures["minimumStopTime"]
+        recovery_time = max(0, station_time - measures["minimumStopTime"])
     else:
         recovery_time = (e.length / train_speed) - e.length / (train_speed * 1.08)
 

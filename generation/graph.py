@@ -5,6 +5,7 @@ import re
 import os
 import pickle
 import logging
+import sys
 import time
 from enum import Enum
 
@@ -118,12 +119,13 @@ class Signal:
 
 class Edge:
     __last_id = 1
-    def __init__(self, f:Node, t:Node, l):
+    def __init__(self, f:Node, t:Node, l, mv):
         self.id = Edge.__last_id
         Edge.__last_id += 1
         self.from_node = f
         self.to_node = t
         self.length = l
+        self.max_speed = mv
 
     def get_identifier(self):
         return f"{self.from_node.name}--{self.to_node.name}--{self.id}"
@@ -144,8 +146,8 @@ class Edge:
         return f"{self.from_node.name}--{self.to_node.name}"
 
 class BlockEdge(Edge):
-    def __init__(self, f, t, l, tracknodes_on_route:list[TrackNode], direction):
-        super().__init__(f, t, l)
+    def __init__(self, f, t, l, tracknodes_on_route:list[TrackNode], direction, mv):
+        super().__init__(f, t, l, mv)
         self.tn:list[TrackNode] = list(tracknodes_on_route)
         self.tnAssociated:list[TrackNode] = list()
         self.tnOpposites:list[TrackNode] = list()
@@ -173,11 +175,10 @@ class BlockEdge(Edge):
 
 class TrackEdge(Edge):
     def __init__(self, f, t, l, switch_angle=None):
-        super().__init__(f, t, l)
+        super().__init__(f, t, l, angle_to_speed(switch_angle))
         self.plotting_info = {}
         self.opposites:  list[Edge] = []
         self.associated: list[Edge] = []
-        self.max_speed = angle_to_speed(switch_angle)
         self.stops_at_station = {}
         self.direction = ''.join(set(re.findall("[AB]", f"{str(f)[-2:]} {str(t)[-2:]}")))
         # if self.direction != "A" and self.direction != "B":
@@ -253,7 +254,7 @@ class BlockGraph(Graph):
             signal.track.blk.append(block)
         for signal in tqdm.tqdm(g.signals, file=TqdmLogger(logger), mininterval=1, ascii=False):
             blocks = self.generate_signal_blocks(signal, g.signals)
-            for idx, (block, length) in enumerate(blocks):
+            for idx, (block, length, max_velocity) in enumerate(blocks):
 
                 # Create edges in g_block
                 from_signal_node = self.nodes[f"r-{signal.id}"]
@@ -262,7 +263,8 @@ class BlockGraph(Graph):
                 to_signal = track_to_signal[block[-1]]
                 to_signal_node = self.nodes[f"r-{to_signal.id}"]
                 direction = "".join(set(signal.direction + to_signal.direction))
-                self.add_edge(BlockEdge(from_signal_node, to_signal_node, length, block, direction))
+                e = self.add_edge(BlockEdge(from_signal_node, to_signal_node, length, block, direction, max_velocity))
+                logger.debug(f"Found block {e} with length {length} and max velocity {max_velocity}")
         for station, track_nodes in g.stations.items():
             node_a, node_b = track_nodes
 
@@ -293,6 +295,8 @@ class BlockGraph(Graph):
         for node in e.tracknodes(Direction.OPPOSE):
             node.blocksOpp.append(e)
 
+        return e
+
     def generate_signal_blocks(self, from_signal: Signal, signals: list[Signal]):
         end_tracks = {s.track for s in signals}
         start_track = from_signal.track
@@ -300,10 +304,10 @@ class BlockGraph(Graph):
         result = []
 
         queue = Queue()
-        queue.put(([start_track], {start_track}, 0))
+        queue.put(([start_track], {start_track}, 0, sys.maxsize))
 
         while not queue.empty():
-            route, visited, length = queue.get()
+            route, visited, length, max_velocity = queue.get()
 
             if len(route[-1].outgoing) == 0:
                 #No outgoing edges, what to do?
@@ -317,7 +321,7 @@ class BlockGraph(Graph):
                 if next_track in end_tracks:
                     route = copy(route)
                     route.append(next_track)
-                    result.append((route[1:], length + e.length))
+                    result.append((route[1:], length + e.length, min(max_velocity, e.max_speed)))
 
                 elif next_track not in visited:
                     route = copy(route)
@@ -325,7 +329,7 @@ class BlockGraph(Graph):
 
                     visited.add(next_track)
                     route.append(next_track)
-                    queue.put((route, visited, length + e.length))
+                    queue.put((route, visited, length + e.length, min(max_velocity, e.max_speed)))
 
         return result
 
