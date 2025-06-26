@@ -23,7 +23,7 @@ def convertMovesToBlock(moves_per_agent, g: TrackGraph, agent=None) -> dict[int,
                     if len(blocks) == 0:
                         raise ValueError(f"No valid block found for last move {move}")
                     if len(blocks) > 1:
-                        logger.critical(f"Should really only be one, {blocks}")
+                        logger.error(f"Should really only be one, {blocks}")
                     block_route.append(list(blocks)[0])
                     blocks = None
                 elif len(blocks) == 0:

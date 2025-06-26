@@ -2,47 +2,58 @@
 #include "augmentedsipp.hpp"
 #include "repeat.hpp"
 
-double update_reference_time(const EdgeATF& path, rePEAT::Open& open_list){
-    intervalTime_t upper_bound = path.beta;
-    intervalTime_t lower_bound = path.alpha;
-//    std::cerr << "Starting update tref with alpha " << lower_bound << " beta " << upper_bound << " delta " << path.delta << " gamma [";
-//    for (gam_item_t gamma : path.gamma) {
-//        std::cerr << "<" << gamma.first << ", " << gamma.second << ">, ";
+//double update_reference_time(const EdgeATF& path, rePEAT::Open& open_list){
+//    intervalTime_t upper_bound = path.beta;
+//    intervalTime_t lower_bound = path.alpha;
+////    std::cerr << "Starting update tref with alpha " << lower_bound << " beta " << upper_bound << " delta " << path.delta << " gamma [";
+////    for (gam_item_t gamma : path.gamma) {
+////        std::cerr << "<" << gamma.first << ", " << gamma.second << ">, ";
+////    }
+////    std::cerr << "]\n";
+////    std::cerr << "Queue has " << open_list.size() << " elements." << std::endl;
+//    while(lower_bound < upper_bound){
+//        if(open_list.empty()){
+//            return std::numeric_limits<double>::infinity();
+//        }
+//        auto n = open_list.top();
+//        open_list.pop();
+////        std::cerr << "popped " << n << std::endl;
+//        lower_bound = n.g.alpha;
+////        std::cerr << "new lb " << lower_bound << std::endl;
+//        if (lower_bound > path.alpha + epsilon()){
+//            if (lower_bound > upper_bound) {
+//                break;
+//            }
+////            std::cerr << "Result from lb ";
+//            return n.g.alpha;
+//        }
+//
 //    }
-//    std::cerr << "]\n";
-//    std::cerr << "Queue has " << open_list.size() << " elements." << std::endl;
+////    std::cerr << "Result from ub ";
+//    return upper_bound;
+//}
+
+double update_reference_time(const EdgeATF& path, rePEAT::Open& open_list){
+    double upper_bound = std::max(path.alpha, path.beta);
+    double lower_bound = path.alpha;
+    std::cerr << "Starting update tref with alpha " << lower_bound << " beta " << upper_bound << " delta " << std::endl;
     while(lower_bound < upper_bound){
         if(open_list.empty()){
             return std::numeric_limits<double>::infinity();
         }
         auto n = open_list.top();
         open_list.pop();
-//        std::cerr << "popped " << n << std::endl;
-        lower_bound = n.g.alpha;
-//        std::cerr << "new lb " << lower_bound << std::endl;
-        if (lower_bound > path.alpha + epsilon()){
-            if (lower_bound > upper_bound) {
-                break;
-            }
-//            std::cerr << "Result from lb ";
-            return n.g.alpha;
+        std::cerr << "popped " << n;
+        lower_bound = n.f - path.delta;
+        std::cerr << ", new lb " << lower_bound << std::endl;
+        if (n.g.alpha > lower_bound + epsilon()){
+            std::cerr << "Result from lb ";
+            return lower_bound;
         }
-
     }
-//    std::cerr << "Result from ub ";
+    std::cerr << "Result from ub ";
     return upper_bound;
 }
-
-//double update_reference_time(const EdgeATF& path, rePEAT::Open open_list){
-//    double upper_bound = path.beta;
-//    double lower_bound = path.alpha;
-//    std::cerr << "Starting update tref with alpha " << lower_bound << " beta " << upper_bound << " delta " << path.delta << " gamma [";
-//    for (intervalTime_t gam: path.gamma) {
-//        std::cerr << gam << ", ";
-//    }
-//    std::cerr << "]\n";
-//    return upper_bound;
-//}
 
 CompoundATF<std::vector<GraphNode *>> rePEAT::search(GraphNode * source, const Location& dest, MetaData & m,
                                                      double start_time, gamma_t gamma){

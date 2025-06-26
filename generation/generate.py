@@ -46,9 +46,9 @@ def read_scenario(file, g, g_block, agent=-1):
     except:
         data = json.load(open(file))
     start_time = time.time()
-    block_intervals, agent_intervals, moves_per_agent = process_scenario(data, g, g_block, agent)
+    block_intervals, moves_per_agent = process_scenario(data, g, g_block, agent)
     end_time = time.time()
-    return block_intervals, agent_intervals, moves_per_agent, end_time - start_time
+    return block_intervals, moves_per_agent, end_time - start_time
 
 def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, indices_to_states):
     """Write SIPP graph to gzip file for the search procedure"""
@@ -73,33 +73,38 @@ def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, indi
             f.write(f"{from_id} {to_id} {zeta} {alpha} {beta} {delta} {id_before} {crt_b} {id_after} {buffer_after} {crt_a} {heuristic}\n")
         f.write(f"num_trains {num_trains}\n")
 
-def create_station_map(location):
+def time_graph_creation(location):
+    start_time = time.time()
     g = read_graph(location)
     g_block = block_graph_constructor(g)
-    return g_block.stations
+    end_time = time.time()
+    return g, g_block, end_time - start_time
 
-
-def time_safe_intervals_and_write(location, scenario, agent_id, agent_speed, output, max_buffer_time, use_recovery_time, destination, plot=False):
-    """For testing the time to get the safe intervals. Also writes to file (without timing). Used for experiments."""
-    g = read_graph(location)
-    g_block = block_graph_constructor(g)
-    block_intervals, _, moves_per_agent, unsafe_computation_time = read_scenario(scenario, g, g_block, agent_id)
+def time_scenario_creation(scenario, g, g_block, agent_id, max_buffer_time, use_recovery_time):
+    block_intervals, moves_per_agent, unsafe_computation_time = read_scenario(scenario, g, g_block, agent_id)
+    start_time = time.time()
     block_routes = convertMovesToBlock(moves_per_agent, g)
     buffer_times, recovery_times = flexibility(block_intervals, block_routes, max_buffer_time, use_recovery_time)
-    start_time = time.time()
-    safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, buffer_times, recovery_times, destination, float(agent_speed), print_intervals=False)
-    safe_computation_time = time.time() - start_time
-    write_intervals_to_file(output, safe_block_intervals, atfs, indices_to_states)
-    if plot:
-        plot_route = (moves_per_agent[plot][0], block_routes[plot][0]) if plot in block_routes else None
-        plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g.distance_markers, buffer_times, recovery_times, plot_routes=plot_route)
-    return unsafe_computation_time + safe_computation_time
+    end_time = time.time()
+    return block_intervals, moves_per_agent, unsafe_computation_time, block_routes, buffer_times, recovery_times, end_time - start_time
 
-if __name__ == "__main__":
+def time_interval_creation(block_intervals, g_block, buffer_times, recovery_times, destination, agent_velocity):
+    start_time = time.time()
+    safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(
+        block_intervals, g_block, buffer_times, recovery_times, destination, float(agent_velocity), print_intervals=False)
+    safe_computation_time = time.time() - start_time
+    return safe_block_intervals, safe_block_edges_intervals, atfs, indices_to_states, safe_computation_time
+
+def plot_route(plot_agent, moves_per_agent, block_routes, block_intervals, g_block, buffer_times, recovery_times, plottings=None):
+    if plottings is None:
+        plottings = (moves_per_agent[plot_agent][0], block_routes[plot_agent][0]) if plot_agent in block_routes else None
+    plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g_block, buffer_times, recovery_times, plot_routes=plottings)
+
+
+def main():
     args = parser.parse_args()
-    g = read_graph(args.location)
-    g_block = block_graph_constructor(g)
-    block_intervals, _, moves_per_agent, computation_time = read_scenario(args.scenario, g, g_block, args.agent_id)
+    g, g_block, g_duration = time_graph_creation(args.location)
+    block_intervals, moves_per_agent, computation_time = read_scenario(args.scenario, g, g_block, args.agent_id)
     block_routes = convertMovesToBlock(moves_per_agent, g)
     buffer_times, recovery_times = flexibility(block_intervals, block_routes, float(args.buffer), args.recovery.strip().lower() == "true")
     agent_route = 2
@@ -108,3 +113,6 @@ if __name__ == "__main__":
     safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(block_intervals, g_block, buffer_times, recovery_times, args.destination, float(args.agent_speed), args.recovery.strip().lower() == "true")
     write_intervals_to_file(args.output, safe_block_intervals, atfs, indices_to_states)
     # plot_safe_node_intervals(safe_block_intervals | safe_block_edges_intervals, block_routes)
+
+if __name__ == "__main__":
+    main()

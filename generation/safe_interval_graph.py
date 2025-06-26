@@ -46,7 +46,7 @@ def plot_train_path(moves_per_agent, color_map=None, node_map=None):
         if color_map is not None:
             color_map[agent_id] = color
 
-def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, g_block: BlockGraph, buffer_times, recovery_times, xtics_dist = 5000, plot_routes=None):
+def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, g_block: BlockGraph, buffer_times, recovery_times, plot_routes=None):
     node_map = dict()
     y = 0
     ax = plt.gca()
