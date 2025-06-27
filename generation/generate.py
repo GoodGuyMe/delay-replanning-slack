@@ -76,17 +76,25 @@ def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, indi
 def time_graph_creation(location):
     start_time = time.time()
     g = read_graph(location)
+    end_time = time.time()
+    g_time = end_time - start_time
+    start_time = time.time()
     g_block = block_graph_constructor(g)
     end_time = time.time()
-    return g, g_block, end_time - start_time
+    return g, g_block, g_time, end_time - start_time
 
-def time_scenario_creation(scenario, g, g_block, agent_id, max_buffer_time, use_recovery_time):
+def time_scenario_creation(scenario, g, g_block, agent_id):
     block_intervals, moves_per_agent, unsafe_computation_time = read_scenario(scenario, g, g_block, agent_id)
     start_time = time.time()
     block_routes = convertMovesToBlock(moves_per_agent, g)
+    end_time = time.time()
+    return block_intervals, moves_per_agent, unsafe_computation_time, block_routes, end_time - start_time
+
+def time_flexibility_creation(block_routes, block_intervals, max_buffer_time, use_recovery_time):
+    start_time = time.time()
     buffer_times, recovery_times = flexibility(block_intervals, block_routes, max_buffer_time, use_recovery_time)
     end_time = time.time()
-    return block_intervals, moves_per_agent, unsafe_computation_time, block_routes, buffer_times, recovery_times, end_time - start_time
+    return buffer_times, recovery_times, end_time - start_time
 
 def time_interval_creation(block_intervals, g_block, buffer_times, recovery_times, destination, agent_velocity):
     start_time = time.time()
@@ -95,10 +103,10 @@ def time_interval_creation(block_intervals, g_block, buffer_times, recovery_time
     safe_computation_time = time.time() - start_time
     return safe_block_intervals, safe_block_edges_intervals, atfs, indices_to_states, safe_computation_time
 
-def plot_route(plot_agent, moves_per_agent, block_routes, block_intervals, g_block, buffer_times, recovery_times, plottings=None):
+def plot_route(plot_agent, moves_per_agent, block_routes, block_intervals, g_block, buffer_times, recovery_times, plottings=None, exclude_agent=-1):
     if plottings is None:
         plottings = (moves_per_agent[plot_agent][0], block_routes[plot_agent][0]) if plot_agent in block_routes else None
-    plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g_block, buffer_times, recovery_times, plot_routes=plottings)
+    plot_blocking_staircase(block_intervals, block_routes, moves_per_agent, g_block, buffer_times, recovery_times, plot_routes=plottings, exclude_agent=exclude_agent)
 
 
 def main():

@@ -6,7 +6,6 @@ from dateutil import parser
 
 import requests
 import pandas as pd
-from rx import start_async
 
 from scenario_json import JsonScenario, JsonMovements
 
@@ -33,20 +32,28 @@ def get_train_route(train):
 def parse_stop(stop):
     station = df.loc[df['uic'] == int(stop["stop"]["uicCode"]), "code"].iloc[0]
     departures = stop["departures"]
+    arrivals = stop["arrivals"]
     if len(departures) == 0:
-        if len(stop["arrivals"]) == 0:
+        if len(arrivals) == 0:
             print(f"ERROR, no departures or arrivals for {stop}")
-            return f"Not in the netherlands", -1
+            return f"Not in the netherlands", -1, -1
         print(f"Using arrival time as {stop['status']}")
-        departures = stop["arrivals"]
+        departures = arrivals
     if len(departures) > 1:
         print(f"ERROR, using first departure of {departures}")
+
+    if len(arrivals) == 0:
+        print(f"Using departure time as {stop['status']}")
+        arrivals = departures
     departure_time = parser.parse(departures[0]["plannedTime"])
-    offset_time = (departure_time - start_time).total_seconds()
+    arrival_time =   parser.parse(arrivals[0]["plannedTime"])
+
+    offset_departure = (departure_time - start_time).total_seconds()
+    offset_arrival = (arrival_time - start_time).total_seconds()
     track = departures[0]["plannedTrack"]
     if "-" in track:
         track = track.split("-")[0]
-    return f"{station}|{track}", offset_time
+    return f"{station}|{track}", offset_departure, offset_arrival
 
 def get_units(stop):
     try:
@@ -56,7 +63,7 @@ def get_units(stop):
             units.append(part["stockIdentifier"])
         return units, type
     except Exception:
-        return 0, "UNKNOWN"
+        return [0], ["UNKNOWN"]
 
 def save_scenario(filename, scenario):
     with open(filename, "w", encoding='utf-8') as f:
@@ -65,7 +72,8 @@ def save_scenario(filename, scenario):
 if __name__ == "__main__":
     scenario = JsonScenario()
     trains = set()
-    stations = ["Shl", "Ledn"]
+    filter_traintypes = {"EUROSTAR"}
+    stations = ["Shl", "Ledn", "Gv", "Dt"]
 
     for station in stations:
         response = get_departures(station)
@@ -79,20 +87,29 @@ if __name__ == "__main__":
         filtered_stops = []
         for stop in route["payload"]["stops"]:
             if stop["status"] != "PASSING":
-                key, value = parse_stop(stop)
-                if value > 0:
-                    filtered_stops.append({"location": key, "time": value})
+                key, depart, arrive = parse_stop(stop)
+                if depart > 0:
+                    if key == "ASD|15a":
+                        key = "ASD|13a"
+                    if key == "ASD|14a":
+                        key = "ASD|11a"
+                    filtered_stops.append({"location": key, "time": depart, "expected_arrival": arrive})
         if len(filtered_stops) <= 1:
             print(f"Train is at the end of the stop at it's current time {route}")
             continue
         movements = [JsonMovements(filtered_stops)]
         unit, unit_types = get_units(route["payload"]["stops"][0])
-        scenario.add_train(train, unit, unit_types, movements)
+        if len(set(unit_types) & filter_traintypes) == 0:
+            scenario.add_train(train, unit, unit_types, movements)
+        else:
+            print(f"Train is of type {unit_types}")
     scenario.add_type("ICNG", 138, 200)
     scenario.add_type("EUROSTAR", 138, 200)
     scenario.add_type("SNG", 169, 140)
     scenario.add_type("SLT", 169, 140)
     scenario.add_type("VIRM", 138, 140)
     scenario.add_type("DDZ", 138, 140)
+    scenario.add_type("ICM", 138, 140)
+    scenario.add_type("ICD", 138, 140)
     scenario.add_type("UNKNOWN", 138, 140)
-    save_scenario(f"../data/prorail/scenarios/SHL.json", scenario)
+    save_scenario(f"../data/prorail/scenarios/SHL-26-6-2025.json", scenario)

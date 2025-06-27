@@ -29,6 +29,5 @@ class JsonMovements(JSONEncoder):
         self.startTime = stops[0]["time"]
         self.endLocation = stops[-1]["location"]
         self.endTime = stops[-1]["time"]
-
         self.stops = stops[1:-1]
 

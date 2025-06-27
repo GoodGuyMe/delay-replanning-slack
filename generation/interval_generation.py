@@ -16,6 +16,7 @@ def process_scenario(data, g: TrackGraph, g_block: BlockGraph, agent):
     moves_per_agent = {}
     block_intervals = {}
     for trainNumber, entry in enumerate(data["trains"]):
+        trainNumber += 1
         measures = {}
         measures["trainLength"] = sum([types[x]["length"] for x in entry["trainUnitTypes"]])
         if len({types[i]["speed"] for i in entry["trainUnitTypes"]}) != 1:
