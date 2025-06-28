@@ -24,8 +24,10 @@ def replaceAB(node, intervals):
         return node + "L"
     return node
 
-def plot_train_path(moves_per_agent, color_map=None, node_map=None):
+def plot_train_path(moves_per_agent, color_map=None, node_map=None, exclude_agent=-1):
     for agent_id, movements in moves_per_agent.items():
+        if agent_id == exclude_agent:
+            continue
         length_in_block = {b: 0 for b in node_map}
         color=None
         for movement in movements:
@@ -46,7 +48,7 @@ def plot_train_path(moves_per_agent, color_map=None, node_map=None):
         if color_map is not None:
             color_map[agent_id] = color
 
-def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, g_block: BlockGraph, buffer_times, recovery_times, xtics_dist = 5000, plot_routes=None):
+def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, g_block: BlockGraph, buffer_times, recovery_times, plot_routes=None, exclude_agent=-1):
     node_map = dict()
     y = 0
     ax = plt.gca()
@@ -76,7 +78,9 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, g_blo
 
     color_map = {}
 
-    plot_train_path(moves_per_agent, color_map, node_map)
+    plot_train_path(moves_per_agent, color_map, node_map, exclude_agent)
+    use_bt = False
+    use_crt = False
 
 
     for node, (y, edge) in node_map.items():
@@ -87,11 +91,15 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, g_blo
                 # errors = np.zeros((2, 1))
                 # errors[1, 0] = buffer_times[train][node]
                 # ax.errorbar((2 * y + edge.length) / 2, stop, yerr=errors, fmt="none", color=color_map[train])
+                if buffer_times[train][node] > 0:
+                    use_bt = True
+                    error_block = patches.Rectangle((y, stop), edge.length, buffer_times[train][node], linewidth=1, facecolor=color_map[train], alpha=0.3)
+                    ax.add_patch(error_block)
 
-                error_block = patches.Rectangle((y, stop), edge.length, buffer_times[train][node], linewidth=1, facecolor=color_map[train], alpha=0.3)
-                recovery_block = patches.Rectangle((y, stop), edge.length, recovery_times[train][node], linewidth=1, facecolor=None, alpha=0.0, hatch=r"\\")
-                ax.add_patch(error_block)
-                ax.add_patch(recovery_block)
+                if recovery_times[train][node] > 0:
+                    use_crt = True
+                    recovery_block = patches.Rectangle((y, stop), edge.length, recovery_times[train][node], linewidth=1, facecolor=None, alpha=0.0, hatch=r"\\")
+                    ax.add_patch(recovery_block)
 
     plt.ylabel(f"Time (s)")
     plt.xlabel(f"Distance")
@@ -99,9 +107,11 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, g_blo
     legend_items = [
         Line2D([0], [0], color="green", label="Train Path"),
         patches.Patch(facecolor=None,   edgecolor="red", label="Blocking Time", fill=False),
-        patches.Patch(facecolor="green", edgecolor=None,  label="Buffer time", alpha=0.3),
-        patches.Patch(hatch=r"\\\\", edgecolor=None,  label="Recovery time", alpha=0.0)
     ]
+    if use_bt:
+        legend_items.append(patches.Patch(facecolor="green", edgecolor=None,  label="Buffer time", alpha=0.3),)
+    if use_crt:
+        legend_items.append(patches.Patch(hatch=r"\\\\", edgecolor=None,  label="Recovery time", alpha=0.0))
     plt.legend(handles=legend_items ,loc="upper left")
     station_identifiers = {}
     for station, (n_a, n_b) in g_block.stations.items():

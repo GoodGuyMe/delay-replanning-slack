@@ -253,6 +253,7 @@ class BlockGraph(Graph):
             block = self.add_node(BlockNode(f"r-{signal.id}"))
             signal.track.blk.append(block)
         for signal in tqdm.tqdm(g.signals, file=TqdmLogger(logger), mininterval=1, ascii=False):
+            logger.debug(f"Expanding blocks of {signal}")
             blocks = self.generate_signal_blocks(signal, g.signals)
             for idx, (block, length, max_velocity) in enumerate(blocks):
 
@@ -298,7 +299,7 @@ class BlockGraph(Graph):
         return e
 
     def generate_signal_blocks(self, from_signal: Signal, signals: list[Signal]):
-        end_tracks = {s.track for s in signals}
+        end_tracks = {s.track.get_identifier() for s in signals}
         start_track = from_signal.track
 
         result = []
@@ -318,7 +319,7 @@ class BlockGraph(Graph):
             for e in route[-1].outgoing:
                 next_track = e.to_node
 
-                if next_track in end_tracks:
+                if next_track.get_identifier() in end_tracks:
                     route = copy(route)
                     route.append(next_track)
                     result.append((route[1:], length + e.length, min(max_velocity, e.max_speed)))

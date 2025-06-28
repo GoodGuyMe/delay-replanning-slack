@@ -9,6 +9,29 @@
         {
             "movements": [
                 {
+                    "endLocation": "RTD|2",
+                    "endTime": 3480.0,
+                    "startLocation": "ASD|13a",
+                    "startTime": 600.0,
+                    "stops": [
+                        {
+                            "location": "SHL|5",
+                            "time": 1620.0
+                        }
+                    ]
+                }
+            ],
+            "trainNumber": "9388",
+            "trainUnitTypes": [
+                "EUROSTAR"
+            ],
+            "trainUnits": [
+                "4306"
+            ]
+        },
+        {
+            "movements": [
+                {
                     "endLocation": "HFD|2",
                     "endTime": 2040.0,
                     "startLocation": "ASD|10a",
@@ -1244,61 +1267,6 @@
         {
             "movements": [
                 {
-                    "endLocation": "BD|4",
-                    "endTime": 4500.0,
-                    "startLocation": "DVD|4",
-                    "startTime": 540.0,
-                    "stops": [
-                        {
-                            "location": "ASDZ|4",
-                            "time": 900.0
-                        },
-                        {
-                            "location": "SHL|5",
-                            "time": 1320.0
-                        },
-                        {
-                            "location": "RTD|3",
-                            "time": 3180.0
-                        }
-                    ]
-                }
-            ],
-            "trainNumber": "1864",
-            "trainUnitTypes": [
-                "ICNG"
-            ],
-            "trainUnits": [
-                "3137",
-                "3141"
-            ]
-        },
-        {
-            "movements": [
-                {
-                    "endLocation": "RTD|3",
-                    "endTime": 2460.0,
-                    "startLocation": "ASDZ|4",
-                    "startTime": 180.0,
-                    "stops": [
-                        {
-                            "location": "SHL|5",
-                            "time": 660.0
-                        }
-                    ]
-                }
-            ],
-            "trainNumber": "9564",
-            "trainUnitTypes": [
-                "ICNG"
-            ],
-            "trainUnits": [
-                "3316"
-            ]
-        },
-        {
-            "movements": [
-                {
                     "endLocation": "ASD|11a",
                     "endTime": 2340.0,
                     "startLocation": "HFD|3",
@@ -1849,41 +1817,6 @@
         {
             "movements": [
                 {
-                    "endLocation": "AMFS|2",
-                    "endTime": 3240.0,
-                    "startLocation": "SHL|1",
-                    "startTime": 480.0,
-                    "stops": [
-                        {
-                            "location": "ASDZ|1",
-                            "time": 960.0
-                        },
-                        {
-                            "location": "DVD|1",
-                            "time": 1260.0
-                        },
-                        {
-                            "location": "HVS|2",
-                            "time": 2220.0
-                        },
-                        {
-                            "location": "AMF|1",
-                            "time": 3000.0
-                        }
-                    ]
-                }
-            ],
-            "trainNumber": "1871",
-            "trainUnitTypes": [
-                "ICNG"
-            ],
-            "trainUnits": [
-                "3206"
-            ]
-        },
-        {
-            "movements": [
-                {
                     "endLocation": "GVC|9",
                     "endTime": 2580.0,
                     "startLocation": "HLM|6",
@@ -2030,29 +1963,6 @@
         {
             "movements": [
                 {
-                    "endLocation": "RTD|2",
-                    "endTime": 3480.0,
-                    "startLocation": "ASD|13a",
-                    "startTime": 600.0,
-                    "stops": [
-                        {
-                            "location": "SHL|5",
-                            "time": 1620.0
-                        }
-                    ]
-                }
-            ],
-            "trainNumber": "9388",
-            "trainUnitTypes": [
-                "EUROSTAR"
-            ],
-            "trainUnits": [
-                "4306"
-            ]
-        },
-        {
-            "movements": [
-                {
                     "endLocation": "VL|3",
                     "endTime": 10680.0,
                     "startLocation": "DT|1",
@@ -2119,41 +2029,6 @@
             ],
             "trainUnits": [
                 "8663"
-            ]
-        },
-        {
-            "movements": [
-                {
-                    "endLocation": "RTD|11",
-                    "endTime": 4080.0,
-                    "startLocation": "ALMB|1",
-                    "startTime": 300.0,
-                    "stops": [
-                        {
-                            "location": "ALM|1",
-                            "time": 660.0
-                        },
-                        {
-                            "location": "DVD|4",
-                            "time": 1680.0
-                        },
-                        {
-                            "location": "ASDZ|4",
-                            "time": 2040.0
-                        },
-                        {
-                            "location": "SHL|5",
-                            "time": 2520.0
-                        }
-                    ]
-                }
-            ],
-            "trainNumber": "2466",
-            "trainUnitTypes": [
-                "ICNG"
-            ],
-            "trainUnits": [
-                "3225"
             ]
         },
         {

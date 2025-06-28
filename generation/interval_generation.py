@@ -16,6 +16,7 @@ def process_scenario(data, g: TrackGraph, g_block: BlockGraph, agent):
     moves_per_agent = {}
     block_intervals = {}
     for trainNumber, entry in enumerate(data["trains"]):
+        trainNumber += 1
         measures = {}
         measures["trainLength"] = sum([types[x]["length"] for x in entry["trainUnitTypes"]])
         if len({types[i]["speed"] for i in entry["trainUnitTypes"]}) != 1:
@@ -33,7 +34,7 @@ def process_scenario(data, g: TrackGraph, g_block: BlockGraph, agent):
         # Each of the planned moves of the train must be converted to intervals
         process_moves(entry, g, g_block, measures, moves_per_agent, block_intervals, trainNumber)
     # Combine intervals and merge overlapping intervals, taking into account the current agent
-    block_intervals, agent_intervals = combine_intervals_per_train(block_intervals, g_block, agent)
+    block_intervals = combine_intervals_per_train(block_intervals, g_block, agent)
     for node in block_intervals:
         for i in range(len(block_intervals[node])):
             interval = block_intervals[node][i]
@@ -41,7 +42,7 @@ def process_scenario(data, g: TrackGraph, g_block: BlockGraph, agent):
                 logger.error(f"ERROR  node {node}: unsafe node interval {interval} has later end than start")
             if i > 0 and int(interval[0]) < int(block_intervals[node][i-1][1]):
                 logger.error(f"ERROR  node {node}: unsafe node interval {interval} has a start which comes before the end of previous interval {block_intervals[node][i-1]}")
-    return block_intervals, agent_intervals, moves_per_agent
+    return block_intervals, moves_per_agent
 
 
 def process_moves(entry, g, g_block, measures, moves_per_agent, block_intervals, trainNumber):
@@ -283,7 +284,7 @@ def generate_unsafe_intervals(g_block, path: list[TrackEdge], block_path: list[B
             cur_time = end_time
     return block_intervals
 
-def combine_intervals(intervals, identifier, agent_intervals, combined, agent):
+def combine_intervals(intervals, combined, agent):
     for train in intervals:
         for n in intervals[train]:
             intervals[train][n].sort()
@@ -299,9 +300,6 @@ def combine_intervals(intervals, identifier, agent_intervals, combined, agent):
                 if not double:
                     if train != int(agent):
                         combined[n].append(tup)
-                    else:
-                        pass
-                        # agent_intervals[identifier][n].append(tup)
 
 def sort_and_merge(combined):
     for n in combined:
@@ -323,11 +321,10 @@ def sort_and_merge(combined):
 def combine_intervals_per_train(block_intervals, g_block, agent=None):
     """Combine the intervals for individual trains together per node/edge and remove duplicates/overlap."""
     combined_blocks = {e.get_identifier(): [] for e in g_block.edges} | {n: [] for n in g_block.nodes}
-    agent_intervals = {"blocks": {e.get_identifier(): [] for e in g_block.edges}} | {n: [] for n in g_block.nodes}
 
-    combine_intervals(block_intervals, "blocks", agent_intervals, combined_blocks, agent)
+    combine_intervals(block_intervals, combined_blocks, agent)
 
     # Sort again to order mixed traffic and merge overlapping
     sort_and_merge(combined_blocks)
 
-    return combined_blocks, agent_intervals
+    return combined_blocks
