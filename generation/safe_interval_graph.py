@@ -1,3 +1,4 @@
+from datetime import timedelta
 from logging import getLogger
 
 import matplotlib.pyplot as plt
@@ -96,10 +97,10 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, g_blo
                     error_block = patches.Rectangle((y, stop), edge.length, buffer_times[train][node], linewidth=1, facecolor=color_map[train], alpha=0.3)
                     ax.add_patch(error_block)
 
-                if recovery_times[train][node] > 0:
-                    use_crt = True
-                    recovery_block = patches.Rectangle((y, stop), edge.length, recovery_times[train][node], linewidth=1, facecolor=None, alpha=0.0, hatch=r"\\")
-                    ax.add_patch(recovery_block)
+                # if recovery_times[train][node] > 0:
+                #     use_crt = True
+                #     recovery_block = patches.Rectangle((y, stop), edge.length, recovery_times[train][node], linewidth=1, facecolor=None, alpha=0.0, hatch=r"\\")
+                #     ax.add_patch(recovery_block)
 
     plt.ylabel(f"Time (s)")
     plt.xlabel(f"Distance")
@@ -132,6 +133,7 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, g_blo
     #     xtics.append(key)
 
     plt.xticks(x_axis, xtics, rotation=90)
+    ax.set_yticklabels([str(timedelta(seconds=ytick)) for ytick in ax.get_yticks()])
     plt.tight_layout()
 
 
