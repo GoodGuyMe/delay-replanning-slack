@@ -12,13 +12,14 @@ class JsonScenario(JSONEncoder):
         self.sightReactionTime = 10
         self.minimumStopTime = 100
 
-    def add_type(self, name, length, speed, acceleration, deceleration):
+    def add_type(self, name, length, speed, acceleration, deceleration, minimum_station_time):
         self.types.append({
             'name': name,
             'length': length,
             'speed': speed,
             'acceleration': acceleration,
-            'deceleration': deceleration
+            'deceleration': deceleration,
+            'minimum_station_time': minimum_station_time,
         })
 
     def add_train(self, train_number, train_units, train_type, movements):

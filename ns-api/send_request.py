@@ -73,7 +73,7 @@ if __name__ == "__main__":
     scenario = JsonScenario()
     trains = set()
     filter_traintypes = {"EUROSTAR"}
-    stations = ["Shl", "Ledn", "Gv", "Dt"]
+    stations = ["Shl", "Ledn", "Gv", "Dt", "Gvc"]
 
     for station in stations:
         response = get_departures(station)
@@ -104,13 +104,13 @@ if __name__ == "__main__":
         else:
             print(f"Train is of type {unit_types}")
 
-    scenario.add_type("ICNG", 138, 200, 0.5, 1.1)
-    scenario.add_type("EUROSTAR", 138, 200, 0.5, 1.1)
-    scenario.add_type("SNG", 169, 140, 1.1, 1.1)
-    scenario.add_type("SLT", 169, 140, 0.9, 1.1)
-    scenario.add_type("VIRM", 138, 140, 0.7, 1.1)
-    scenario.add_type("DDZ", 138, 140, 0.9, 1.1)
-    scenario.add_type("ICM", 138, 140, 0.7, 1.1)
-    scenario.add_type("ICD", 138, 140, 0.7, 1.1)
-    scenario.add_type("UNKNOWN", 138, 140, 1, 1.1)
-    save_scenario(f"../data/prorail/scenarios/SHL.json", scenario)
+    scenario.add_type("ICNG", 138, 200, 0.5, 1.1, 120)
+    scenario.add_type("EUROSTAR", 138, 200, 0.5, 1.1, 120)
+    scenario.add_type("SNG", 169, 140, 1.1, 1.1, 42)
+    scenario.add_type("SLT", 169, 140, 0.9, 1.1, 42)
+    scenario.add_type("VIRM", 138, 140, 0.7, 1.1, 54)
+    scenario.add_type("DDZ", 138, 140, 0.9, 1.1, 54)
+    scenario.add_type("ICM", 138, 140, 0.7, 1.1, 54)
+    scenario.add_type("ICD", 138, 140, 0.7, 1.1, 54)
+    scenario.add_type("UNKNOWN", 138, 140, 1, 1.1, 120)
+    save_scenario(f"../data/prorail/scenarios/SHL-2025-06-30.json", scenario)
