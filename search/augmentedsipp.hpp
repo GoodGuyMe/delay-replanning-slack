@@ -40,6 +40,24 @@ namespace asipp{
         intervalTime_t beta  = std::min(cur.g.beta,  edge.beta  - cur.g.delta);
         intervalTime_t delta = cur.g.delta + edge.delta;
 
+        intervalTime_t beta_reduction = cur.g.beta - beta;
+        if (beta_reduction > 0.0) {
+            std::cerr << "Reducing every gamma by " << beta_reduction << std::endl;
+            int index = 0;
+//            Departure time at origin changed, update every max_gamma.
+            for (gam_item_t x: gamma) {
+                if (index != edge.agent_after.id && x.second > 0) {
+                    std::cerr << "Reducing " << gamma[index] << std::endl;
+                    gamma[index] = gam_item_t(x.first, std::max(x.first, x.second - beta_reduction), x.last_recovery);
+
+                    if (x.first > x.second - beta_reduction) {
+                        std::cerr << "ERROR at " << gamma[index] << std::endl;
+                    }
+                }
+                index++;
+            }
+        }
+
         gam_item_t gam_after = gamma[edge.agent_after.id];
 
         gam_after = get_reduced_gamma(gam_after, edge.agent_after);
@@ -49,9 +67,9 @@ namespace asipp{
 //        intervalTime_t duration_available = beta-(edge.alpha - delta);
         intervalTime_t duration_available = std::max(0.0, beta - alpha);
         intervalTime_t max_gamma = gam_after.second;
-        if (duration_available > 0.0) {
-            max_gamma = std::min(duration_available + min_gamma, gam_after.second);
-        }
+        std::cerr << "Duration: " << duration_available << ", Max gamma before: " << max_gamma;
+        max_gamma = std::min(duration_available + min_gamma, gam_after.second);
+        std::cerr << " after: " << max_gamma << std::endl;
 
 //        gamma[edge.agent_after.id] = get_reduced_gamma(gam_item_t(min_gamma, max_gamma, gam_after.last_recovery), edge.agent_after);
         gamma[edge.agent_after.id] = gam_item_t(min_gamma, max_gamma, gam_after.last_recovery);
@@ -79,20 +97,18 @@ namespace asipp{
                 m.decreased++;
                 double h = edge.heuristic;
                 Node_t new_node = open_list.decrease_key(handle, arrival_time_function, h, destination, source);
-                std::cerr << "Decreased: " << new_node << std::endl;
+                std::cerr << "Decreased with better arrival time: " << new_node << std::endl;
             } else if(arrival_time_function.beta > (*handle).g.beta) {
-                std::cerr << "This line fucked with it" << std::endl;
                 m.decreased++;
                 double h = edge.heuristic;
                 Node_t new_node = open_list.decrease_key(handle, arrival_time_function, h, destination, source);
-                std::cerr << "Decreased: " << new_node << std::endl;
+                std::cerr << "Decreased with better longer available path: " << new_node << std::endl;
             } else {
-                std::cerr << "This line still fucked with it" << std::endl << "  New:      " << arrival_time_function << std::endl << "  Existing: " << (*handle).g << std::endl;
+                std::cerr << "Already found destination, but is (maybe) worse? " << std::endl << "  New:      " << arrival_time_function << std::endl << "  Existing: " << (*handle).g << std::endl;
             }
         }
         else{
             m.generated++;
-//            double h = arrival_time_function.sum_of_delays();
             double h = edge.heuristic;
             Node_t new_node = open_list.emplace(arrival_time_function, h, destination, source);
             std::cerr << "Added: " << new_node << std::endl;
