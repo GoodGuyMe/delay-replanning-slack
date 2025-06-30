@@ -1,3 +1,7 @@
+from logging import getLogger
+
+logger = getLogger('__main__.' + __name__)
+
 # TODO maybe should use smarter form off search, as list is most likely sorted on agent id right? or maybe it does not have to...
 def get_single_buffer_time(intervals, agent):
 

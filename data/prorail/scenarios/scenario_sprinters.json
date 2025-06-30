@@ -1,0 +1,205 @@
+{
+    "types": [
+        {
+            "name": "VIRM",
+            "length": 60,
+            "speed": 35
+        }
+    ],
+    "trains": [
+        {
+            "trainNumber": 1,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "VIRM"
+            ],
+            "movements": [
+                {
+                    "startLocation": "Shl|6|A",
+                    "startTime": 8,
+                    "endTime": 2000,
+                    "endLocation": "Gvc|10|A",
+                    "stops": {
+                        "Hfd|1|A": 12,
+                        "Nvp|1|A": 17,
+                        "Ssh|1|A": 23,
+                        "Ledn|8a|A": 0,
+                        "Dvnk|1|A": 0,
+                        "Vst|1|A": 0,
+                        "Gvm|1|A": 0,
+                        "Laa|3|A": 0,
+                        "Gvc|10|A": 0
+                    }
+                }
+            ]
+        },
+        {
+            "trainNumber": 2,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "VIRM"
+            ],
+            "movements": [
+                {
+                    "startLocation": "Shl|5|A",
+                    "startTime": 18,
+                    "endTime": 0,
+                    "endLocation": "Ledn|8a|A",
+                    "stops": {
+                        "Hfd|1|A": 22,
+                        "Nvp|1|A": 27,
+                        "Ssh|1|A": 34
+                    }
+                }
+            ]
+        },
+        {
+            "trainNumber": 3,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "VIRM"
+            ],
+            "movements": [
+                {
+                    "startLocation": "Shl|5|A",
+                    "startTime": 38,
+                    "endTime": 0,
+                    "endLocation": "Gvc|10|A",
+                    "stops": {
+                        "Hfd|1|A": 42,
+                        "Nvp|1|A": 47,
+                        "Ssh|1|A": 53,
+                        "Ledn|8a|A": 0,
+                        "Dvnk|1|A": 0,
+                        "Vst|1|A": 0,
+                        "Gvm|1|A": 0,
+                        "Laa|3|A": 0,
+                        "Gvc|10|A": 0
+                    }
+                }
+            ]
+        },
+        {
+            "trainNumber": 4,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "VIRM"
+            ],
+            "movements": [
+                {
+                    "startLocation": "Shl|5|A",
+                    "startTime": 48,
+                    "endTime": 0,
+                    "endLocation": "Gvc|10|A",
+                    "stops": {
+                        "Hfd|1|A": 0,
+                        "Nvp|1|A": 0,
+                        "Ssh|1|A": 0,
+                        "Ledn|8a|A": 0,
+                        "Dvnk|1|A": 0,
+                        "Vst|1|A": 0,
+                        "Gvm|1|A": 0,
+                        "Laa|3|A": 0,
+                        "Gvc|10|A": 0
+                    }
+                }
+            ]
+        },
+        {
+            "trainNumber": 4,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "VIRM"
+            ],
+            "movements": [
+                {
+                    "startLocation": "Gvc|10|B",
+                    "startTime": 50,
+                    "endTime": 2000,
+                    "endLocation": "Shl|2|B",
+                    "stops": {
+                        "Laa|4|B": 0,
+                        "Gvm|4|B": 0,
+                        "Vst|4|B": 0,
+                        "Dvnk|4|B": 0,
+                        "Ledn|4a|B": 0,
+                        "Ssh|2|B": 0,
+                        "Nvp|2|B": 0,
+                        "Hfd|4|B": 0
+                    }
+                }
+            ]
+        },
+        {
+            "trainNumber": 5,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "VIRM"
+            ],
+            "movements": [
+                {
+                    "startLocation": "Gvc|10|B",
+                    "startTime": 500,
+                    "endTime": 2000,
+                    "endLocation": "Shl|2|B",
+                    "stops": {
+                        "Laa|4|B": 0,
+                        "Gvm|4|B": 0,
+                        "Vst|4|B": 0,
+                        "Dvnk|4|B": 0,
+                        "Ledn|4a|B": 0,
+                        "Ssh|2|B": 0,
+                        "Nvp|2|B": 0,
+                        "Hfd|4|B": 0
+                    }
+                }
+            ]
+        },
+        {
+            "trainNumber": 6,
+            "trainUnits": [
+                8656
+            ],
+            "trainUnitTypes": [
+                "VIRM"
+            ],
+            "movements": [
+                {
+                    "startLocation": "Gvc|10|B",
+                    "startTime": 500,
+                    "endTime": 2000,
+                    "endLocation": "Shl|2|B",
+                    "stops": {
+                        "Laa|4|B": 0,
+                        "Gvm|4|B": 0,
+                        "Vst|4|B": 0,
+                        "Dvnk|4|B": 0,
+                        "Ledn|4a|B": 0,
+                        "Ssh|2|B": 0,
+                        "Nvp|2|B": 0,
+                        "Hfd|4|B": 0
+                    }
+                }
+            ]
+        }
+    ],
+    "headwayFollowing": 180,
+    "headwayCrossing": 120,
+    "walkingSpeed": 1.4,
+    "releaseTime": 20,
+    "setupTime": 20,
+    "sightReactionTime": 10,
+    "minimumStopTime": 100
+}

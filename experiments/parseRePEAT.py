@@ -8,7 +8,11 @@ def parse_list_of_outputs(s):
     i = 0
     while "Nodes generated" not in s[i]:
         i += 1
-    metadata = s[i]
+    lns = s[i].split(" ")
+    metadata = {}
+    metadata["Nodes generated"] = lns[2]
+    metadata["Nodes decreased"] = lns[5]
+    metadata["Nodes expanded"] = lns[8]
     i+=1
     catf = s[i].strip(", ").split(", ") # avoid empty element in list
     catf = [tuple(x.strip("'").strip("<").strip(">").split(",")) for x in catf]
@@ -28,6 +32,13 @@ def parse_list_of_outputs(s):
         atf = tuple(atf)
         eatfs.append(atf)
         i += 1
+
+    search_time = s[i].split(" ")
+    i += 1
+    lookup_time = s[i].split(" ")
+    metadata["Search time"] = search_time[-2]
+    metadata["Lookup time"] = lookup_time[-2]
+
     if [] in paths:
         paths.remove([]) # because the last path added stays empty
     unique_paths = {}
@@ -41,6 +52,7 @@ def parse_list_of_outputs(s):
         else:
             unique_paths[path_string] = 1
             unique_path_eatfs[path_string] = [eatfs[i]]
+
 
     return metadata, catf, unique_paths, unique_path_eatfs
 

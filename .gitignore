@@ -1,4 +1,5 @@
 __pycache__/
 .idea
-/data/prorail/
+/data/prorail/*
 /donna_parsing/log.txt
+!/data/prorail/scenarios

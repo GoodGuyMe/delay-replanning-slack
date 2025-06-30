@@ -1,6 +1,9 @@
 import pickle
+from logging import getLogger
 
 import generation
+
+logger = getLogger('__main__.' + __name__)
 
 class GraphPickler(pickle.Pickler):
     def persistent_id(self, obj):

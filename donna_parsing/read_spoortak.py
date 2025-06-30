@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from data.check_location_scenario_files import check_json_files
+from donna_parsing.parsedjson import JsonStation
 from parsedjson import JsonTrackPart, JsonOutput, JsonSignal
 
 kilometrering_dict: dict[str, tuple] = dict()
@@ -24,6 +25,8 @@ class Switch:
         self.lint = None
         self.kilometrering = None
         self.emplacement = False
+        self.afbuigend = None
+        self.wisselhoek = None
 
     def __str__(self):
         return f'{self.area}-{self.code}'
@@ -34,6 +37,11 @@ class Switch:
     def set_kilometrering(self, lint, kilometrering):
         self.lint = lint
         self.kilometrering = int(kilometrering)
+
+    def set_switch_side(self, side, angle):
+        self.afbuigend = side
+        self.wisselhoek = angle
+
 
 class Signal:
     def __init__(self, area, code, side, lint, kilometrering):
@@ -56,6 +64,16 @@ class Signal:
 
     def __repr__(self):
         return f'{self.area}|{self.code}'
+
+class Station:
+    def __init__(self,lint, kilometrering, station_name, platform_number):
+        self.lint = lint
+        self.kilometrering = int(kilometrering)
+        self.station_name = station_name
+        self.platform_number = platform_number
+
+    def __repr__(self):
+        return f'{self.station_name}|{self.platform_number}'
 
 def split_name(tp: JsonTrackPart):
     name = tp.name[0:-1]
@@ -97,13 +115,18 @@ class Spoortak:
         self.t = t
         self.tside = tside
         self.signals: list[Signal] = []
+        self.stations: list[Station] = []
 
     def add_signal(self, signal: Signal):
         self.signals.append(signal)
 
-    def get_track_sections(self, reverse=False) -> (list[JsonTrackPart], list[JsonSignal]):
+    def add_station(self, station: Station):
+        self.stations.append(station)
+
+    def get_track_sections(self) -> (list[JsonTrackPart], list[JsonSignal]):
         tps = []
         signals = []
+        stations = []
         lint = self.f.lint
         start = self.f.kilometrering
         name = repr(self.f) + self.fside
@@ -112,11 +135,16 @@ class Spoortak:
             for signal in self.signals:
                 end = get_lint_compensated_kilometrering(signal.kilometrering, signal.lint, lint)
                 len = abs(start - end)
+
                 tp = JsonTrackPart(len, f"{name}|{repr(signal)}", False, False, False)
 
-                if tps and reverse:
-                    connect_track_parts(tp, tps[-1])
-                elif tps:
+                for station in self.stations:
+                    station_kilometrering = get_lint_compensated_kilometrering(station.kilometrering, station.lint, lint)
+                    if min(start, end) < station_kilometrering <= max(start, end):
+                        tp.stationPlatform = True
+                        stations.append(JsonStation(station.station_name, station.platform_number, tp.id))
+
+                if tps:
                     connect_track_parts(tps[-1], tp)
                 tps.append(tp)
 
@@ -136,15 +164,20 @@ class Spoortak:
                 name = repr(signal)
                 lint = signal.lint
 
-        # TODO get lint of switch
         tolint = self.t.lint
-        end = get_lint_compensated_kilometrering(self.t.kilometrering, lint, tolint)
+        end = get_lint_compensated_kilometrering(self.t.kilometrering, tolint, lint)
         len = abs(start - end)
+
         tp = JsonTrackPart(len, f"{name}|{repr(self.t)}{self.tside}", False, False, False)
 
-        if tps and reverse:
-            connect_track_parts(tp, tps[-1])
-        elif tps:
+        for station in self.stations:
+            station_kilometrering = get_lint_compensated_kilometrering(station.kilometrering, station.lint, lint)
+            if min(start, end) < station_kilometrering <= max(start, end):
+                tp.stationPlatform = True
+                stations.append(JsonStation(station.station_name, station.platform_number, tp.id))
+
+
+        if tps:
             connect_track_parts(tps[-1], tp)
         tps.append(tp)
 
@@ -152,7 +185,16 @@ class Spoortak:
             sig = JsonSignal(b_side_signal, "B", tp.id)
             signals.append(sig)
 
-        return tps, signals
+        if (not self.t.afbuigend == self.tside) and self.tside != "V":
+            tps[-1].set_afbuiging(self.t.wisselhoek)
+            tps[-1].length += 1
+        if (not self.f.afbuigend == self.fside) and self.fside != "V":
+            tps[0].set_afbuiging(self.f.wisselhoek)
+            tps[0].length += 1
+
+        if stations:
+            print([station.stationName for station in stations])
+        return tps, signals, stations
 
     def __str__(self):
         return f'{self.f}{self.fside}-{self.t}{self.tside}'
@@ -221,13 +263,15 @@ def read_spoortak(file):
 def read_nonbelegging(filename):
     with open(filename) as f:
         for line in f:
-            items = line.strip().split('|')
-            if items[3] in ["WISSEL", "STOOTJUK", "TERRA_INCOGNITA"]:
-                try:
+            try:
+                items = line.strip().split('|')
+                if items[3] in ["WISSEL", "STOOTJUK", "TERRA_INCOGNITA"]:
                     switches[f"{items[0]}{items[2]}"].set_kilometrering(items[4], items[5])
                     switches[f"{items[0]}{items[2]}"].emplacement = items[22] == "GOEDEMPL"
-                except KeyError as e:
-                    print(f"Did not find {e.args[0]}")
+                    if items[3] == "WISSEL":
+                        switches[f"{items[0]}{items[2]}"].set_switch_side(items[12], items[13])
+            except KeyError as e:
+                print(f"Did not find {e.args[0]}")
 
 def read_belegging(file):
     with open(file) as f:
@@ -243,6 +287,17 @@ def read_belegging(file):
                     print(signal)
                 else:
                     print(f"Found removed track {track}")
+            if "DRGLPT_SPOOR" == items[10]:
+                track = f"{items[0]}|{items[2]}|{items[4]}"
+                if track in spoortak_start:
+                    tak = spoortak_start[track]
+                    station = Station(items[12], items[13], items[-2], items[9])
+                    tak.add_station(station)
+                    # Add the current kilometrering ( lint: items[12], kilometrering : items[13]) there is (possibly) a platform with #{items[9]}
+                    print(f"Found spoor {items[9]} at {items[-2]}, at location {items[12]}, {items[13]}")
+                else:
+                    print(f"Found removed track {track}")
+
 
 def save_track_sections(filename):
     with open(filename, "w", encoding='utf-8') as f:
@@ -253,9 +308,10 @@ def get_track_sections(start_track: str):
 
     pq = PriorityQueue()
     pq.put(PrioritizedItem(len(initial_tak), initial_tak))
-    tps, signals = initial_tak.get_track_sections()
+    tps, signals, stations = initial_tak.get_track_sections()
     json_output.add_track_parts(tps)
     json_output.add_signals(signals)
+    json_output.add_stations(stations)
     track_sections[repr(initial_tak)] = tps
 
     while not pq.empty():
@@ -263,8 +319,8 @@ def get_track_sections(start_track: str):
         priority, tak = item.priority, item.item
         tps = track_sections[repr(tak)]
 
-        if tak.f.emplacement:
-            continue
+        # if tak.f.emplacement:
+        #     continue
 
         # Add a side
         if tak.tside in ["R", "L"]:
@@ -284,7 +340,6 @@ def extend_queue_to(pq: PriorityQueue, tak, tps, priority):
     if tak in spoortak_end:
         next_track = spoortak_end[tak]
 
-        # If the node was already added, don't flip it, but we found a loop
         if repr(next_track) not in track_sections:
             spoortak_start.pop(next_track.repr_f())
             spoortak_end.pop(next_track.repr_t())
@@ -293,11 +348,12 @@ def extend_queue_to(pq: PriorityQueue, tak, tps, priority):
 
             spoortak_start[next_track.repr_f()] = next_track
             spoortak_end[next_track.repr_t()] = next_track
+        # If the node was already added, don't flip it, but we found a loop
         else:
-            print(f"Loop between: {tps[-1].name} and {repr(next_track)}")
             next_tps = track_sections[repr(next_track)]
 
             conflict_switch = "Switch|" + repr(next_track.t)
+            print(f"To Loop between: {tps[-1].name} and {repr(next_track)}, conflict_switch: {conflict_switch}")
             if conflict_switch not in track_sections:
                 f = tps[-1]
                 t = next_tps[-1]
@@ -312,16 +368,42 @@ def extend_queue_to(pq: PriorityQueue, tak, tps, priority):
                 json_output.add_track_parts([sideswitch_f_t, sideswitch_t_f])
                 track_sections[conflict_switch] = [sideswitch_f_t, sideswitch_t_f]
             else:
-                print("Dunno what to do now :(")
+                f = tps[-1]
+                t = next_tps[-1]
+                sideswitch_f_t, sideswitch_t_f = track_sections[conflict_switch]
+                if (
+                    (sideswitch_f_t.contains_id(f.id) or sideswitch_f_t.contains_id(t.id)) and
+                    (sideswitch_t_f.contains_id(f.id) or sideswitch_t_f.contains_id(t.id))
+                ):
+                    print("Both id's are already added :)")
+                else:
+                    if sideswitch_t_f.contains_id(f.id):
+                        print("Situation A")
+                        t.add_a_side(sideswitch_f_t.id)
+                        sideswitch_f_t.add_b_side(t.id)
+                    elif sideswitch_t_f.contains_id(t.id):
+                        print("Situation B")
+                        f.add_a_side(sideswitch_f_t.id)
+                        sideswitch_f_t.add_b_side(f.id)
+                    elif sideswitch_f_t.contains_id(t.id):
+                        print("Situation C")
+                    elif sideswitch_f_t.contains_id(f.id):
+                        print("Situation D")
+
+                    print(f"Again at f: {f}, t: {t}, sideswitches: {sideswitch_f_t}, {sideswitch_t_f}")
+                    print("Check here!")
+
+
 
     if tak in spoortak_start:
         next_track = spoortak_start[tak]
         if repr(next_track) not in track_sections:
-            next_tps, signals = next_track.get_track_sections()
+            next_tps, signals, stations = next_track.get_track_sections()
             connect_track_parts(tps[-1], next_tps[0])
             track_sections[repr(next_track)] = next_tps
             json_output.add_track_parts(next_tps)
             json_output.add_signals(signals)
+            json_output.add_stations(stations)
             pq.put(PrioritizedItem(priority + len(next_track), next_track))
         else:
             next_tps = track_sections[repr(next_track)]
@@ -331,7 +413,6 @@ def extend_queue_from(pq: PriorityQueue, tak, tps, priority):
     if tak in spoortak_start:
         next_track = spoortak_start[tak]
 
-        # If the node was already added, don't flip it, but we found a loop
         if repr(next_track) not in track_sections:
             spoortak_start.pop(next_track.repr_f())
             spoortak_end.pop(next_track.repr_t())
@@ -340,8 +421,9 @@ def extend_queue_from(pq: PriorityQueue, tak, tps, priority):
 
             spoortak_start[next_track.repr_f()] = next_track
             spoortak_end[next_track.repr_t()] = next_track
+        # If the node was already added, don't flip it, but we found a loop
         else:
-            print(f"Loop between: {tps[0].name} and {repr(next_track)}")
+            print(f"From Loop between: {tps[0].name} and {repr(next_track)}")
             next_tps = track_sections[repr(next_track)]
 
             conflict_switch = "Switch|" + repr(next_track.f)
@@ -359,17 +441,40 @@ def extend_queue_from(pq: PriorityQueue, tak, tps, priority):
                 json_output.add_track_parts([sideswitch_f_t, sideswitch_t_f])
                 track_sections[conflict_switch] = [sideswitch_f_t, sideswitch_t_f]
             else:
-                print("Dunno what to do now :(")
+                f = tps[0]
+                t = next_tps[0]
+                sideswitch_f_t, sideswitch_t_f = track_sections[conflict_switch]
+                if (
+                    (sideswitch_f_t.contains_id(f.id) or sideswitch_f_t.contains_id(t.id)) and
+                    (sideswitch_t_f.contains_id(f.id) or sideswitch_t_f.contains_id(t.id))
+                ):
+                    print("Both id's are already added :)")
+                else:
+                    if sideswitch_t_f.contains_id(f.id):
+                        print("Situation A")
+                    elif sideswitch_t_f.contains_id(t.id):
+                        print("Situation B")
+                        f.add_b_side(sideswitch_f_t.id)
+                        sideswitch_f_t.add_a_side(f.id)
+                    elif sideswitch_f_t.contains_id(t.id):
+                        print("Situation C")
+                    elif sideswitch_f_t.contains_id(f.id):
+                        print("Situation D")
+
+                    print(f"Again at f: {f}, t: {t}, sideswitches: {sideswitch_f_t}, {sideswitch_t_f}")
+                    print("Check here!")
 
 
     if tak in spoortak_end:
         next_track = spoortak_end[tak]
         if repr(next_track) not in track_sections:
-            next_tps, signals = next_track.get_track_sections()
+            next_tps, signals, stations = next_track.get_track_sections()
             connect_track_parts(next_tps[-1], tps[0])
             track_sections[repr(next_track)] = next_tps
             json_output.add_track_parts(next_tps)
             json_output.add_signals(signals)
+            json_output.add_stations(stations)
+
             pq.put(PrioritizedItem(priority + len(next_track), next_track))
         else:
             next_tps = track_sections[repr(next_track)]
@@ -393,4 +498,4 @@ if __name__ == '__main__':
     save_track_sections("data/prorail/parsed/netherlands-schiphol.json")
     for tp in json_output.trackParts:
         print(tp)
-    check_json_files("data/prorail/parsed/netherlands-schiphol.json")
+    # check_json_files("data/prorail/parsed/netherlands-schiphol.json")
