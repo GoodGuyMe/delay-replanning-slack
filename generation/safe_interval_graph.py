@@ -94,7 +94,10 @@ def plot_blocking_staircase(blocking_times, block_routes, moves_per_agent, g_blo
                 # ax.errorbar((2 * y + edge.length) / 2, stop, yerr=errors, fmt="none", color=color_map[train])
                 if buffer_times[train][node] > 0:
                     use_bt = True
-                    error_block = patches.Rectangle((y, stop), edge.length, buffer_times[train][node], linewidth=1, facecolor=color_map[train], alpha=0.3)
+                    color = color_map[train] if train in color_map else None
+                    error_block = patches.Rectangle((y, stop), edge.length, buffer_times[train][node], linewidth=1, facecolor=color, alpha=0.3)
+                    if train not in color_map:
+                        color_map[train] = color
                     ax.add_patch(error_block)
 
                 # if recovery_times[train][node] > 0:
