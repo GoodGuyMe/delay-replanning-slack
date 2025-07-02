@@ -111,7 +111,7 @@ def plot_route(plot_agent, moves_per_agent, block_routes, block_intervals, g_blo
 
 def main():
     args = parser.parse_args()
-    g, g_block, g_duration = time_graph_creation(args.location)
+    g, g_block, _, _ = time_graph_creation(args.location)
     block_intervals, moves_per_agent, computation_time = read_scenario(args.scenario, g, g_block, args.agent_id)
     block_routes = convertMovesToBlock(moves_per_agent, g)
     buffer_times, recovery_times = flexibility(block_intervals, block_routes, float(args.buffer), args.recovery.strip().lower() == "true")
