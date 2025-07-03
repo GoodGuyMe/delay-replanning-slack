@@ -9,51 +9,6 @@
         {
             "movements": [
                 {
-                    "endLocation": "AMFS|2",
-                    "endTime": 5160.0,
-                    "startLocation": "RTD|12",
-                    "startTime": 780.0,
-                    "stops": [
-                        {
-                            "expected_arrival": 2340.0,
-                            "location": "SHL|1",
-                            "time": 2400.0
-                        },
-                        {
-                            "expected_arrival": 2760.0,
-                            "location": "ASDZ|2",
-                            "time": 2880.0
-                        },
-                        {
-                            "expected_arrival": 3180.0,
-                            "location": "DVD|1",
-                            "time": 3180.0
-                        },
-                        {
-                            "expected_arrival": 4080.0,
-                            "location": "HVS|3",
-                            "time": 4140.0
-                        },
-                        {
-                            "expected_arrival": 4800.0,
-                            "location": "AMF|1",
-                            "time": 4920.0
-                        }
-                    ]
-                }
-            ],
-            "trainNumber": "1867",
-            "trainUnitTypes": [
-                "ICNG"
-            ],
-            "trainUnits": [
-                "3138",
-                "3206"
-            ]
-        },
-        {
-            "movements": [
-                {
                     "endLocation": "GVC|2",
                     "endTime": 3360.0,
                     "startLocation": "DDR|5",
@@ -825,45 +780,6 @@
             "trainUnits": [
                 "2322",
                 "2360"
-            ]
-        },
-        {
-            "movements": [
-                {
-                    "endLocation": "LLS|4",
-                    "endTime": 5880.0,
-                    "startLocation": "RTD|11",
-                    "startTime": 1380.0,
-                    "stops": [
-                        {
-                            "expected_arrival": 2940.0,
-                            "location": "SHL|1",
-                            "time": 3120.0
-                        },
-                        {
-                            "expected_arrival": 3480.0,
-                            "location": "ASDZ|2",
-                            "time": 3600.0
-                        },
-                        {
-                            "expected_arrival": 4740.0,
-                            "location": "ALM|4",
-                            "time": 4920.0
-                        },
-                        {
-                            "expected_arrival": 5220.0,
-                            "location": "ALMB|2",
-                            "time": 5220.0
-                        }
-                    ]
-                }
-            ],
-            "trainNumber": "2461",
-            "trainUnitTypes": [
-                "ICNG"
-            ],
-            "trainUnits": [
-                "3205"
             ]
         },
         {
@@ -2369,79 +2285,6 @@
         {
             "movements": [
                 {
-                    "endLocation": "BD|4",
-                    "endTime": 6420.0,
-                    "startLocation": "AMFS|2",
-                    "startTime": 360.0,
-                    "stops": [
-                        {
-                            "expected_arrival": 600.0,
-                            "location": "AMF|7",
-                            "time": 780.0
-                        },
-                        {
-                            "expected_arrival": 1440.0,
-                            "location": "HVS|5",
-                            "time": 1500.0
-                        },
-                        {
-                            "expected_arrival": 2460.0,
-                            "location": "DVD|4",
-                            "time": 2460.0
-                        },
-                        {
-                            "expected_arrival": 2700.0,
-                            "location": "ASDZ|4",
-                            "time": 2820.0
-                        },
-                        {
-                            "expected_arrival": 3180.0,
-                            "location": "SHL|5",
-                            "time": 3240.0
-                        },
-                        {
-                            "expected_arrival": 4860.0,
-                            "location": "RTD|3",
-                            "time": 5100.0
-                        }
-                    ]
-                }
-            ],
-            "trainNumber": "1860",
-            "trainUnitTypes": [
-                "ICNG"
-            ],
-            "trainUnits": [
-                "3220"
-            ]
-        },
-        {
-            "movements": [
-                {
-                    "endLocation": "RTD|11",
-                    "endTime": 2400.0,
-                    "startLocation": "ASDZ|4",
-                    "startTime": 360.0,
-                    "stops": [
-                        {
-                            "expected_arrival": 720.0,
-                            "location": "SHL|5",
-                            "time": 840.0
-                        }
-                    ]
-                }
-            ],
-            "trainNumber": "2458",
-            "trainUnitTypes": [
-                "ICNG"
-            ],
-            "trainUnits": [
-                "3147"
-            ]
-        },
-        {
-            "movements": [
-                {
                     "endLocation": "GVC|1",
                     "endTime": 2160.0,
                     "startLocation": "RTB|2",
@@ -2804,40 +2647,6 @@
             ],
             "trainUnits": [
                 "9573"
-            ]
-        },
-        {
-            "movements": [
-                {
-                    "endLocation": "BD|4",
-                    "endTime": 4620.0,
-                    "startLocation": "DVD|4",
-                    "startTime": 660.0,
-                    "stops": [
-                        {
-                            "expected_arrival": 900.0,
-                            "location": "ASDZ|4",
-                            "time": 1020.0
-                        },
-                        {
-                            "expected_arrival": 1380.0,
-                            "location": "SHL|5",
-                            "time": 1440.0
-                        },
-                        {
-                            "expected_arrival": 3060.0,
-                            "location": "RTD|3",
-                            "time": 3300.0
-                        }
-                    ]
-                }
-            ],
-            "trainNumber": "1858",
-            "trainUnitTypes": [
-                "ICNG"
-            ],
-            "trainUnits": [
-                "3130"
             ]
         },
         {
@@ -4895,40 +4704,6 @@
             ],
             "trainUnits": [
                 "9583"
-            ]
-        },
-        {
-            "movements": [
-                {
-                    "endLocation": "RTD|3",
-                    "endTime": 4380.0,
-                    "startLocation": "ALMB|1",
-                    "startTime": 420.0,
-                    "stops": [
-                        {
-                            "expected_arrival": 660.0,
-                            "location": "ALM|1",
-                            "time": 780.0
-                        },
-                        {
-                            "expected_arrival": 2040.0,
-                            "location": "ASDZ|3",
-                            "time": 2100.0
-                        },
-                        {
-                            "expected_arrival": 2460.0,
-                            "location": "SHL|5",
-                            "time": 2580.0
-                        }
-                    ]
-                }
-            ],
-            "trainNumber": "9560",
-            "trainUnitTypes": [
-                "ICNG"
-            ],
-            "trainUnits": [
-                "3311"
             ]
         },
         {
