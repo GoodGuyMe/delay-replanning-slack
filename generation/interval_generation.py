@@ -123,7 +123,7 @@ def distance_between_nodes(g: Graph, start: Node, end, agent_velocity):
                     return tmp
                 pq.put((time_distances[v.name], pq_counter, v))
                 pq_counter += 1
-    raise ValueError(f"No path found between {start} and {end}")
+    return sys.maxsize
 
 def calculate_path(g, start, end):
     distances = {n: sys.maxsize for n in g.nodes}

@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import time
 from datetime import datetime, timezone, timedelta
 from dateutil import parser
 
@@ -69,11 +70,9 @@ def save_scenario(filename, scenario):
     with open(filename, "w", encoding='utf-8') as f:
         json.dump(scenario, f, ensure_ascii=False, indent=4, default=lambda o: o.__dict__, sort_keys=True)
 
-if __name__ == "__main__":
+def main(stations, filter_traintypes, name):
     scenario = JsonScenario()
     trains = set()
-    filter_traintypes = {"EUROSTAR"}
-    stations = ["Shl", "Ledn", "Gv", "Dt", "Gvc"]
 
     for station in stations:
         response = get_departures(station)
@@ -81,6 +80,8 @@ if __name__ == "__main__":
         for departure in response["payload"]["departures"]:
             train = departure["product"]
             trains.add(train["number"])
+        time.sleep(0.1)
+        print(f"Added trains from station {station}")
 
     for train in trains:
         route = get_train_route(train)
@@ -93,6 +94,10 @@ if __name__ == "__main__":
                         key = "ASD|13a"
                     if key == "ASD|14a":
                         key = "ASD|11a"
+                    if key == "GVC|6":
+                        key = "GVC|4"
+                    if key == "GVC|5":
+                        key = "GVC|3"
                     filtered_stops.append({"location": key, "time": depart, "expected_arrival": arrive})
         if len(filtered_stops) <= 1:
             print(f"Train is at the end of the stop at it's current time {route}")
@@ -113,4 +118,17 @@ if __name__ == "__main__":
     scenario.add_type("ICM", 138, 140, 0.7, 1.1, 54)
     scenario.add_type("ICD", 138, 140, 0.7, 1.1, 54)
     scenario.add_type("UNKNOWN", 138, 140, 1, 1.1, 120)
-    save_scenario(f"../data/prorail/scenarios/SHL-2025-06-30.json", scenario)
+    save_scenario(f"../data/prorail/scenarios/{name}.json", scenario)
+
+if __name__ == "__main__":
+    # filter_traintypes = {"EUROSTAR", "ICNG"}
+    # stations = ["Shl", "Ledn", "Gv", "Dt", "Rtd"]
+    # main(stations, filter_traintypes, "SHL/2025-07-04_1")
+    #
+    # filter_traintypes = {"EUROSTAR", "ICNG"}
+    # stations = ["Shl", "Ledn", "Gv", "Asdz"]
+    # main(stations, filter_traintypes, "TAD/2025-07-04_1")
+
+    filter_traintypes = {"EUROSTAR", "ICNG", "EUROCITY"}
+    stations = ["Hlm", "Ledn", "Gv", "Dt", "Gvc", "Rtd", "Rsd", "Vss", "Krg", "Kbd"]
+    main(stations, filter_traintypes, "RT/2025-07-04_1")
