@@ -175,6 +175,8 @@ class Experiment:
             logger.info(f"eats: {eatfs}")
             logger.info(f"cats: {catf}")
             self.results = (metadata, catf, paths, eatfs)
+        else:
+            logger.error(f'Search failed for repeat, ec: {proc.returncode}')
 
 
     def plot(self, axs, **kwargs):
