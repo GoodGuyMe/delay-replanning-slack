@@ -8,7 +8,7 @@ from generation.signal_sections import convertMovesToBlock
 
 logger = getLogger('__main__.' + __name__)
 
-def process_scenario(data, g: TrackGraph, g_block: BlockGraph, agent):
+def process_scenario(data, g: TrackGraph, g_block: BlockGraph):
     """Process the data from the scenario."""
     # Create a global end time (end of the planning horizon)
     g.global_end_time = max([2 * move["endTime"] for entry in data["trains"] for move in entry["movements"]])
@@ -39,15 +39,6 @@ def process_scenario(data, g: TrackGraph, g_block: BlockGraph, agent):
         block_intervals[trainNumber] = {e.get_identifier():[] for e in g_block.edges} | {n: [] for n in g_block.nodes}
         # Each of the planned moves of the train must be converted to intervals
         process_moves(entry, g, g_block, measures, moves_per_agent, block_intervals, trainNumber)
-    # Combine intervals and merge overlapping intervals, taking into account the current agent
-    block_intervals = combine_intervals_per_train(block_intervals, g_block, agent)
-    for node in block_intervals:
-        for i in range(len(block_intervals[node])):
-            interval = block_intervals[node][i]
-            if int(interval[0]) > int(interval[1]):
-                logger.error(f"ERROR  node {node}: unsafe node interval {interval} has later end than start")
-            if i > 0 and int(interval[0]) < int(block_intervals[node][i-1][1]):
-                logger.error(f"ERROR  node {node}: unsafe node interval {interval} has a start which comes before the end of previous interval {block_intervals[node][i-1]}")
     return block_intervals, moves_per_agent
 
 
@@ -329,7 +320,9 @@ def generate_unsafe_intervals(g_block, path: list[TrackEdge], block_path: list[B
         cur_time = end_time
     return block_intervals
 
-def combine_intervals(intervals, combined, agent):
+def combine_intervals(intervals, combined, agents):
+    if not type(agents) is set:
+        agents = [int(agents)]
     for train in intervals:
         for n in intervals[train]:
             intervals[train][n].sort()
@@ -343,7 +336,7 @@ def combine_intervals(intervals, combined, agent):
                     elif x[0] >= tup[0] and x[0] <= tup[1] and x[1] <= tup[1] and x[1] >= tup[0]:
                         combined[n].remove(x)
                 if not double:
-                    if train != int(agent):
+                    if train not in agents:
                         combined[n].append(tup)
 
 def sort_and_merge(combined):

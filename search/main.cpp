@@ -67,8 +67,11 @@ int main(int argc, char* argv[]) {
                 std::cout << "Search time: " << search_duration.count() << " milliseconds\n";
                 std::flush(std::cout);
 
-                auto c = res.time_lookup(vm["lookups"].as<long>());
+//                auto c = res.time_lookup(vm["lookups"].as<long>());
             } else {
+                std::cout << vm.count("edgegraph") << std::endl;
+                std::cout << std::filesystem::is_regular_file(vm["edgegraph"].as<std::filesystem::path>()) << std::endl;
+                std::cout << vm["edgegraph"].as<std::filesystem::path>() << std::endl;
                 std::cout << desc << std::endl;
             }
 

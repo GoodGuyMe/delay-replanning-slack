@@ -37,7 +37,7 @@ parser.add_argument('-p', "--printing", help="(optional) whether to print edge i
 parser.add_argument('-b', "--buffer", help="(optional) max buffer time (default=float(\"inf\")", default=float("inf"))
 parser.add_argument('-r', "--recovery", help="(optional) use recovery time (default=True", default="True")
 
-def read_scenario(file, g, g_block, agent=-1):
+def read_scenario(file, g, g_block):
     """Read scenario files in json format."""
     try:
         base_path = Path(__file__).parent
@@ -46,13 +46,26 @@ def read_scenario(file, g, g_block, agent=-1):
     except:
         data = json.load(open(file))
     start_time = time.time()
-    block_intervals, moves_per_agent = process_scenario(data, g, g_block, agent)
+    block_intervals, moves_per_agent = process_scenario(data, g, g_block)
     end_time = time.time()
     return block_intervals, moves_per_agent, end_time - start_time
 
-def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, indices_to_states):
+def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, indices_to_states, **kwargs):
     """Write SIPP graph to gzip file for the search procedure"""
-    # with open(file + "_unzipped", "wt") as f:
+
+    def filter_origin(n):
+        return n.split("-")[1].split("|")[0]
+    filter_tracks = kwargs.get("filter_tracks", set())
+
+    if len(filter_tracks) > 0:
+        logger.debug(f'Filtering tracks: {filter_tracks}')
+        new_safe_edge_intervals = []
+        for e in safe_edge_intervals:
+            if filter_origin(indices_to_states[e[0]]) in filter_tracks or filter_origin(indices_to_states[e[1]]) in filter_tracks:
+                new_safe_edge_intervals.append(e)
+        safe_edge_intervals = new_safe_edge_intervals
+
+
     with open(file, "wt") as f:
         f.write("vertex count: " + str(len([x for node in safe_node_intervals for x in safe_node_intervals[node]])) + "\n")
         f.write("edge count: " + str(len(safe_edge_intervals)) + "\n")
@@ -83,8 +96,8 @@ def time_graph_creation(location):
     end_time = time.time()
     return g, g_block, g_time, end_time - start_time
 
-def time_scenario_creation(scenario, g, g_block, agent_id):
-    block_intervals, moves_per_agent, unsafe_computation_time = read_scenario(scenario, g, g_block, agent_id)
+def time_scenario_creation(scenario, g, g_block):
+    block_intervals, moves_per_agent, unsafe_computation_time = read_scenario(scenario, g, g_block)
     start_time = time.time()
     block_routes = convertMovesToBlock(moves_per_agent, g)
     end_time = time.time()
@@ -96,10 +109,10 @@ def time_flexibility_creation(block_routes, block_intervals, max_buffer_time, us
     end_time = time.time()
     return buffer_times, recovery_times, end_time - start_time
 
-def time_interval_creation(block_intervals, g_block, buffer_times, recovery_times, destination, agent_velocity):
+def time_interval_creation(block_intervals, g_block, buffer_times, recovery_times, destination, agent_velocity, **kwargs):
     start_time = time.time()
     safe_block_intervals, safe_block_edges_intervals, atfs, _, indices_to_states = create_safe_intervals(
-        block_intervals, g_block, buffer_times, recovery_times, destination, float(agent_velocity), print_intervals=False)
+        block_intervals, g_block, buffer_times, recovery_times, destination, float(agent_velocity), print_intervals=False, **kwargs)
     safe_computation_time = time.time() - start_time
     return safe_block_intervals, safe_block_edges_intervals, atfs, indices_to_states, safe_computation_time
 

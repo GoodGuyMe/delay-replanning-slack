@@ -135,34 +135,39 @@ class Layout:
         return convertMovesToBlock(moves_per_agent, self.g, current_train)[current_train][0]
 
 class Scenario:
-    def __init__(self, l: Layout, scen_file, agent_id):
+    def __init__(self, l: Layout, scen_file):
         self.l = l
-        self.agent_id = agent_id
-        self.block_intervals, self.moves_per_agent, self.unsafe_computation_time, self.block_routes, self.t_moves_to_block = generate.time_scenario_creation(scen_file, self.l.g, self.l.g_block, agent_id)
+        self.block_intervals, self.moves_per_agent, self.unsafe_computation_time, self.block_routes, self.t_moves_to_block = generate.time_scenario_creation(scen_file, self.l.g, self.l.g_block)
 
-    def get_flexibility(self, max_buffer_time, use_recovery_time):
-        return generate.time_flexibility_creation(self.block_routes, self.block_intervals, max_buffer_time, use_recovery_time)
+    def combine_intervals_per_train(self, filter_agents):
+        # Combine intervals and merge overlapping intervals, taking into account the current agent
+        return generate.combine_intervals_per_train(self.block_intervals, self.l.g_block, filter_agents)
 
-    def plot(self, agent_to_plot_route_of, buffer_times, recovery_times, plot_route_of_agent_to_plot_route_of=True):
+    def get_flexibility(self, block_intervals, max_buffer_time, use_recovery_time):
+        return generate.time_flexibility_creation(self.block_routes, block_intervals, max_buffer_time, use_recovery_time)
+
+    def plot(self, agent_to_plot_route_of, block_intervals, buffer_times, recovery_times, plot_route_of_agent_to_plot_route_of=True):
         exclude_agent=-1
         if not plot_route_of_agent_to_plot_route_of:
             exclude_agent=agent_to_plot_route_of
-        generate.plot_route(agent_to_plot_route_of, self.moves_per_agent, self.block_routes, self.block_intervals, self.l.g_block, buffer_times, recovery_times, exclude_agent=exclude_agent)
+        generate.plot_route(agent_to_plot_route_of, self.moves_per_agent, self.block_routes, block_intervals, self.l.g_block, buffer_times, recovery_times, exclude_agent=exclude_agent)
 
 class Experiment:
-    def __init__(self, s: Scenario, agent: Agent, max_buffer_time, use_recovery_time, metadata):
+    def __init__(self, s: Scenario, agent: Agent, filter_agents, max_buffer_time, use_recovery_time, metadata):
         self.s = s
         self.agent = agent
         self.metadata= metadata
+        self.block_intervals = self.s.combine_intervals_per_train(filter_agents)
 
-        self.buffer_times, self.recovery_times, self.time_flexibility_creation = s.get_flexibility(max_buffer_time, use_recovery_time)
-        self.safe_block_intervals, self.safe_block_edges_intervals, self.atfs, self.indices_to_states, self.safe_computation_time = generate.time_interval_creation(self.s.block_intervals, self.s.l.g_block, self.buffer_times, self.recovery_times, self.agent.destination, agent.velocity)
+        self.buffer_times, self.recovery_times, self.time_flexibility_creation = s.get_flexibility(self.block_intervals, max_buffer_time, use_recovery_time)
+        self.safe_block_intervals, self.safe_block_edges_intervals, self.atfs, self.indices_to_states, self.safe_computation_time = generate.time_interval_creation(self.block_intervals, self.s.l.g_block, self.buffer_times, self.recovery_times, self.agent.destination, agent.velocity)
         self.results = None
 
-    def run_search(self, timeout):
+    def run_search(self, timeout, **kwargs):
         file = "output"
-        generate.write_intervals_to_file(file, self.safe_block_intervals, self.atfs, self.indices_to_states)
+        generate.write_intervals_to_file(file, self.safe_block_intervals, self.atfs, self.indices_to_states, **kwargs)
         try:
+            logger.debug(f'Running: {" ".join(["../search/buildDir/atsipp.exe", "--start", self.agent.origin, "--goal", self.agent.destination, "--edgegraph", file, "--search", "repeat", "--startTime", str(self.agent.start_time)])}')
             proc = subprocess.run(["../search/buildDir/atsipp.exe", "--start", self.agent.origin, "--goal", self.agent.destination, "--edgegraph", file, "--search", "repeat", "--startTime", str(self.agent.start_time)], timeout=timeout, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 
         except subprocess.TimeoutExpired:
@@ -191,7 +196,6 @@ class Experiment:
             "track graph creation": self.s.l.g_duration,
             "routing graph creation": self.s.l.g_block_duration,
             "FlexSIPP search time": float(self.results[0]["Search time"]) / 1000.0 if self.results is not None else -1,
-            "Lookup time": float(self.results[0]["Lookup time"]) / 1000.0 if self.results is not None else -1,
         }
 
     def get_complexity(self):
@@ -201,14 +205,17 @@ class Experiment:
             "nodes expanded": int(self.results[0]["Nodes expanded"]) if self.results is not None else -1,
         }
 
-def run_experiments(exps: list[Experiment], timeout):
+def run_experiments(exps: list[Experiment], timeout, **kwargs):
     for e in exps:
-        e.run_search(timeout)
+        e.run_search(timeout, **kwargs)
+        logger.debug(f"results of {e}: {e.results}")
 
 def setup_experiment(scenario: Scenario, overwrite_settings, default_direction=0):
     experiments = []
     for exp in overwrite_settings:
         set_default(exp)
+        logger.info(f"Setting up experiment {exp}")
+
         origin = exp["origin"]
         destination = exp["destination"]
         velocity = exp["velocity"]
@@ -216,16 +223,15 @@ def setup_experiment(scenario: Scenario, overwrite_settings, default_direction=0
         max_buffer_time = exp["max_buffer_time"]
         use_recovery_time = exp["use_recovery_time"]
         metadata = exp["metadata"]
+        filter_agents = exp["filter_agents"]
 
-        agent_id = scenario.agent_id
-        logger.info(f"Setting up experiment {exp}")
 
         origin_signal = scenario.l.station_to_block(origin, direction=default_direction)
         destination_signal = scenario.l.station_to_block(destination, direction=default_direction)
-        agent = Agent(agent_id, origin_signal, destination_signal, velocity, start_time)
+        agent = Agent(filter_agents, origin_signal, destination_signal, velocity, start_time)
 
 
-        experiments.append(Experiment(scenario, agent, max_buffer_time, use_recovery_time, metadata))
+        experiments.append(Experiment(scenario, agent, filter_agents, max_buffer_time, use_recovery_time, metadata))
     return experiments
 
 default_settings = {
@@ -235,6 +241,7 @@ default_settings = {
     "max_buffer_time": 0,
     "start_time": 0,
     "use_recovery_time": False,
+    "filter_agents": -1,
     "metadata": {
         "color": "Red",
         "label": "No flexibility",

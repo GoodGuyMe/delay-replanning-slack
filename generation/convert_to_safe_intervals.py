@@ -5,7 +5,7 @@ logger = getLogger('__main__.' + __name__)
 from generation.interval_generation import calculate_heuristic
 
 
-def create_safe_intervals(intervals, g, buffer_times, recovery_times, destination, agent_speed=15, print_intervals=False):
+def create_safe_intervals(intervals, g, buffer_times, recovery_times, destination, agent_speed=15, print_intervals=False, **kwargs):
     errors = []
     safe_node_intervals = {n: [] for n in g.nodes}
     safe_edge_intervals = {e.get_identifier(): [] for e in g.edges}

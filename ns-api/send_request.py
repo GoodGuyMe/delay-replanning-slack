@@ -121,14 +121,15 @@ def main(stations, filter_traintypes, name):
     save_scenario(f"../data/prorail/scenarios/{name}.json", scenario)
 
 if __name__ == "__main__":
+    date = "2025-07-08_4"
     filter_traintypes = {"EUROSTAR", "ICNG"}
     stations = ["Shl", "Ledn", "Gv", "Dt", "Rtd"]
-    main(stations, filter_traintypes, "SHL/2025-07-04_2")
+    main(stations, filter_traintypes, f"SHL/{date}")
 
     filter_traintypes = {"EUROSTAR", "ICNG"}
     stations = ["Shl", "Ledn", "Gv", "Asdz"]
-    main(stations, filter_traintypes, "TAD/2025-07-04_2")
+    main(stations, filter_traintypes, f"TAD/{date}")
 
     filter_traintypes = {"EUROSTAR", "ICNG", "EUROCITY"}
     stations = ["Hlm", "Ledn", "Gv", "Dt", "Gvc", "Rtd", "Rsd", "Vss", "Krg", "Kbd"]
-    main(stations, filter_traintypes, "RT/2025-07-04_2")
+    main(stations, filter_traintypes, f"RT/{date}")

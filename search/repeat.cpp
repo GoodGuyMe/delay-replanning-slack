@@ -36,7 +36,7 @@
 double update_reference_time(const EdgeATF& path, rePEAT::Open& open_list){
     double upper_bound = std::max(path.alpha, path.beta);
     double lower_bound = path.alpha;
-    std::cerr << "Starting update tref with alpha " << lower_bound << " beta " << upper_bound << " delta " << std::endl;
+    std::cerr << "Starting update tref with alpha " << lower_bound << " beta " << upper_bound << " delta " << path.delta << std::endl;
     while(lower_bound < upper_bound){
         if(open_list.empty()){
             return std::numeric_limits<double>::infinity();
@@ -48,11 +48,11 @@ double update_reference_time(const EdgeATF& path, rePEAT::Open& open_list){
         std::cerr << ", new lb " << lower_bound << std::endl;
         if (n.g.alpha > lower_bound + epsilon()){
             std::cerr << "Result from lb ";
-            return lower_bound;
+            return lower_bound + epsilon();
         }
     }
     std::cerr << "Result from ub ";
-    return upper_bound;
+    return upper_bound + epsilon();
 }
 
 CompoundATF<std::vector<GraphNode *>> rePEAT::search(GraphNode * source, const Location& dest, MetaData & m,
@@ -72,5 +72,6 @@ CompoundATF<std::vector<GraphNode *>> rePEAT::search(GraphNode * source, const L
         solutions.add(res.second, res.first);
         t_ref = update_reference_time(res.second, open_list);
     }
+    std::cerr << "At end of safe interval at start node at " << t_ref << std::endl;
     return solutions;
 }

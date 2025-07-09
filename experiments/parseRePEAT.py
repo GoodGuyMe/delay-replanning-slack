@@ -34,10 +34,7 @@ def parse_list_of_outputs(s):
         i += 1
 
     search_time = s[i].split(" ")
-    i += 1
-    lookup_time = s[i].split(" ")
     metadata["Search time"] = search_time[-2]
-    metadata["Lookup time"] = lookup_time[-2]
 
     if [] in paths:
         paths.remove([]) # because the last path added stays empty
