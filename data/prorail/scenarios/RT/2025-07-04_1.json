@@ -5026,45 +5026,6 @@
         {
             "movements": [
                 {
-                    "endLocation": "LLS|3",
-                    "endTime": 5040.0,
-                    "startLocation": "RTD|12",
-                    "startTime": 420.0,
-                    "stops": [
-                        {
-                            "expected_arrival": 2040.0,
-                            "location": "SHL|1",
-                            "time": 2160.0
-                        },
-                        {
-                            "expected_arrival": 2520.0,
-                            "location": "ASDZ|2",
-                            "time": 2640.0
-                        },
-                        {
-                            "expected_arrival": 3780.0,
-                            "location": "ALM|4",
-                            "time": 3960.0
-                        },
-                        {
-                            "expected_arrival": 4200.0,
-                            "location": "ALMB|2",
-                            "time": 4380.0
-                        }
-                    ]
-                }
-            ],
-            "trainNumber": "9531",
-            "trainUnitTypes": [
-                "UNKNOWN"
-            ],
-            "trainUnits": [
-                0
-            ]
-        },
-        {
-            "movements": [
-                {
                     "endLocation": "ZL|10",
                     "endTime": 14160.0,
                     "startLocation": "RSD|3a",
