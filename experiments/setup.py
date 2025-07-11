@@ -205,6 +205,11 @@ class Experiment:
             "nodes expanded": int(self.results[0]["Nodes expanded"]) if self.results is not None else -1,
         }
 
+    def get_label(self):
+        return {
+            "label": self.metadata["label"],
+        }
+
 def run_experiments(exps: list[Experiment], timeout, **kwargs):
     for e in exps:
         e.run_search(timeout, **kwargs)
