@@ -141,6 +141,10 @@ namespace asipp{
 
             std::cerr << "Outgoing edge " << edge << ", b: " << gamma_before << ", a: " << gamma_after << std::endl;
 
+            gamma_t old_gamma = gamma_t(cur.g.gamma);
+            old_gamma[successor->edge.agent_after.id] = gam_item_t(gamma_after.first, gamma_after.second,  gamma_after.last_recovery);
+            extendOpen(cur, open_list, m, successor->source, successor->destination, edge, old_gamma);
+
 //            If there is more buffer time available than is currently being used, use it.
             intervalTime_t available_buffer_time = edge.agent_after.max_buffer_time - gamma_after.second;
             if (available_buffer_time > epsilon()) {
@@ -159,10 +163,6 @@ namespace asipp{
                 std::cerr << "Additional edge " << extra_edge << ", " << new_gamma[successor->edge.agent_after.id] << std::endl;
                 extendOpen(cur, open_list, m, successor->source, successor->destination, extra_edge, new_gamma);
             }
-
-            gamma_t old_gamma = gamma_t(cur.g.gamma);
-            old_gamma[successor->edge.agent_after.id] = gam_item_t(gamma_after.first, gamma_after.second,  gamma_after.last_recovery);
-            extendOpen(cur, open_list, m, successor->source, successor->destination, edge, old_gamma);
         }
     }
 
