@@ -11,7 +11,7 @@
 namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
-//    if (std::freopen("redirerr.txt", "w", stderr)) {
+    if (std::freopen("redirerr.txt", "w", stderr)) {
         try {
             po::options_description desc("Allowed options");
             desc.add_options()
@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
         catch (const po::error &ex) {
             std::cerr << ex.what() << std::endl;
         }
-//        std::fclose(stderr);
-//    }
+        std::fclose(stderr);
+    }
     return 0;
 }

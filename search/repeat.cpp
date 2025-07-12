@@ -43,12 +43,12 @@ double update_reference_time(const EdgeATF& path, rePEAT::Open& open_list){
         }
         auto n = open_list.top();
         open_list.pop();
-        std::cerr << "popped " << n;
+        std::cerr << "popped " << n.g;
         lower_bound = n.f - path.delta;
         std::cerr << ", new lb " << lower_bound << std::endl;
-        if (n.g.alpha > lower_bound + epsilon()){
+        if (n.g.alpha > (lower_bound + epsilon())){
             std::cerr << "Result from lb ";
-            return lower_bound + epsilon();
+            return std::max(path.alpha, lower_bound) + epsilon();
         }
     }
     std::cerr << "Result from ub ";
@@ -72,6 +72,6 @@ CompoundATF<std::vector<GraphNode *>> rePEAT::search(GraphNode * source, const L
         solutions.add(res.second, res.first);
         t_ref = update_reference_time(res.second, open_list);
     }
-    std::cerr << "At end of safe interval at start node at " << t_ref << std::endl;
+    std::cerr << "At end of safe interval at start node at " << t_ref << "source int " << std::get<4>(source->state.interval) << std::endl;
     return solutions;
 }

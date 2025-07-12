@@ -99,10 +99,12 @@ namespace asipp{
                 Node_t new_node = open_list.decrease_key(handle, arrival_time_function, h, destination, source);
                 std::cerr << "Decreased with better arrival time: " << new_node << std::endl;
             } else if(arrival_time_function.beta > (*handle).g.beta) {
-                m.decreased++;
-                double h = edge.heuristic;
-                Node_t new_node = open_list.decrease_key(handle, arrival_time_function, h, destination, source);
-                std::cerr << "Decreased with better longer available path: " << new_node << std::endl;
+                if (arrival_time_function.earliest_arrival_time() <= (*handle).g.earliest_arrival_time()) {
+                    m.decreased++;
+                    double h = edge.heuristic;
+                    Node_t new_node = open_list.decrease_key(handle, arrival_time_function, h, destination, source);
+                    std::cerr << "Decreased with better longer available path: " << new_node << std::endl;
+                }
             } else {
                 std::cerr << "Already found destination, but is (maybe) worse? " << std::endl << "  New:      " << arrival_time_function << std::endl << "  Existing: " << (*handle).g << std::endl;
             }

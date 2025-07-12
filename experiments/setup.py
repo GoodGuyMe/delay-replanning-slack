@@ -93,9 +93,11 @@ def plot_experiments(exps, save_path=None, **kwargs):
         e.plot(axs, **kwargs)
 
     axs[0].legend()
-    if save_path:
-        fig.savefig(f"figures/{save_path}")
-    plt.show()
+    if save_path is not None:
+        fig.savefig(save_path)
+        plt.close(fig)
+    else:
+        plt.show()
 
 class Agent:
     def __init__(self, id, origin, destination, velocity, start_time, **kwargs):
@@ -263,3 +265,26 @@ def _set_default(setting: dict, default: dict):
 
 def set_default(setting):
     _set_default(setting, default_settings)
+
+def calculate_allowed_nodes(r_start, r_stop, agent, layout):
+    i_start = r_start.index[0] + 1
+    i_stop = r_stop.index[0]
+    stops = agent["stops"][i_start:i_stop]
+
+    move = {
+        "startLocation": r_start["location"].iloc[0],
+        "startTime": r_start["time"].iloc[0],
+        "endLocation": r_stop["location"].iloc[0],
+        "endTime": r_stop["expected_arrival"].iloc[0],
+        "stops": stops,
+    }
+
+    block_path = layout.get_path_for_agent(move, agent["trainNumber"], agent["velocity"])
+
+    def filter_origin(n):
+        return n.split("-")[1].split("|")[0]
+
+    allowed_nodes = {filter_origin(block_path[0].from_node.name)}
+    for e in block_path:
+        allowed_nodes.add(filter_origin(e.to_node.name))
+    return allowed_nodes
