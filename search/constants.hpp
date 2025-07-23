@@ -25,16 +25,19 @@ struct gam_item_t {
     intervalTime_t first;
     intervalTime_t second;
     intervalTime_t last_recovery;
+    std::string location;
+    intervalTime_t initial_delay;
 
     gam_item_t() = default;
-    gam_item_t(intervalTime_t min_gamma, intervalTime_t max_gamma, intervalTime_t _last_recovery): first(min_gamma), second(max_gamma), last_recovery(_last_recovery) {}
+    gam_item_t(intervalTime_t min_gamma, intervalTime_t max_gamma, intervalTime_t _last_recovery,
+               std::string delay_location, intervalTime_t _initial_delay): first(min_gamma), second(max_gamma), last_recovery(_last_recovery), location(delay_location), initial_delay(_initial_delay) {}
 
     inline friend bool operator==(const gam_item_t &gam, const gam_item_t &other) {
         return gam.first == other.first && gam.second == other.second;
     }
 
     inline friend std::ostream& operator<< (std::ostream& stream, const gam_item_t& n){
-        stream << "<" << n.first << ": " << n.second << ": " << n.last_recovery << ">";
+        stream << "<" << n.first << ": " << n.second << ": " << n.last_recovery << ": " << n.location << ": " << n.initial_delay << ">";
         return stream;
     }
 
@@ -43,7 +46,7 @@ struct gam_item_t {
         intervalTime_t max_gamma = std::max(gam.second - reduction, 0.0);
         intervalTime_t new_recovery = std::max(gam.last_recovery - reduction, 0.0);
 
-        return gam_item_t(min_gamma, max_gamma, new_recovery);
+        return gam_item_t(min_gamma, max_gamma, new_recovery, gam.location, gam.initial_delay);
     }
 
     inline friend bool valid_gamma(const gam_item_t &gam) {

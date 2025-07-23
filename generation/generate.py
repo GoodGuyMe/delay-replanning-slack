@@ -74,10 +74,9 @@ def write_intervals_to_file(file, safe_node_intervals, safe_edge_intervals, indi
 
         """ Write safe node intervals, as 'node_name start end id_before id_after'"""
         for node in safe_node_intervals:
-            for start, end, id_before, id_after, _, _ in safe_node_intervals[node]:
-                max_buffer  = 0.0
+            for start, end, id_before, id_after, buf_after, _ in safe_node_intervals[node]:
                 num_trains = max(num_trains, id_before, id_after)
-                f.write(f"{node} {start} {end} {id_before} {id_after} {max_buffer}\n")
+                f.write(f"{node} {start} {end} {id_before} {id_after} {buf_after}\n")
 
         """Write atfs, as 'from_id to_id zeta alpha beta delta id_before max_buf_before len_unsafe_before id_after max_buf_after len_unsafe_after'"""
         for from_id, to_id, zeta, alpha, beta, delta, id_before, crt_b, id_after, buffer_after, crt_a, heuristic in safe_edge_intervals:

@@ -48,10 +48,11 @@ namespace asipp{
             for (gam_item_t x: gamma) {
                 if (index != edge.agent_after.id && x.second > 0) {
                     std::cerr << "Reducing " << gamma[index] << std::endl;
-                    gamma[index] = gam_item_t(x.first, std::max(x.first, x.second - beta_reduction), x.last_recovery);
+                    gamma[index] = gam_item_t(x.first, std::max(x.first, x.second - beta_reduction), x.last_recovery, x.location, x.initial_delay);
 
                     if (x.first > x.second - beta_reduction) {
                         std::cerr << "ERROR at " << gamma[index] << std::endl;
+                        return;
                     }
                 }
                 index++;
@@ -72,7 +73,7 @@ namespace asipp{
         std::cerr << " after: " << max_gamma << std::endl;
 
 //        gamma[edge.agent_after.id] = get_reduced_gamma(gam_item_t(min_gamma, max_gamma, gam_after.last_recovery), edge.agent_after);
-        gamma[edge.agent_after.id] = gam_item_t(min_gamma, max_gamma, gam_after.last_recovery);
+        gamma[edge.agent_after.id] = gam_item_t(min_gamma, max_gamma, gam_after.last_recovery, gam_after.location, gam_after.initial_delay);
 
         EdgeATF arrival_time_function(zeta, alpha, beta, delta, gamma);
 
@@ -144,7 +145,7 @@ namespace asipp{
             std::cerr << "Outgoing edge " << edge << ", b: " << gamma_before << ", a: " << gamma_after << std::endl;
 
             gamma_t old_gamma = gamma_t(cur.g.gamma);
-            old_gamma[successor->edge.agent_after.id] = gam_item_t(gamma_after.first, gamma_after.second,  gamma_after.last_recovery);
+            old_gamma[successor->edge.agent_after.id] = gam_item_t(gamma_after.first, gamma_after.second,  gamma_after.last_recovery, gamma_after.location, gamma_after.initial_delay);
             extendOpen(cur, open_list, m, successor->source, successor->destination, edge, old_gamma);
 
 //            If there is more buffer time available than is currently being used, use it.
@@ -160,7 +161,13 @@ namespace asipp{
                 extra_edge.beta = extra_edge.alpha + available_buffer_time;
 
                 gamma_t new_gamma = gamma_t(cur.g.gamma);
-                new_gamma[successor->edge.agent_after.id] = gam_item_t(gamma_after.second, successor->edge.agent_after.max_buffer_time, gamma_after.last_recovery);
+                new_gamma[successor->edge.agent_after.id] =
+                        gam_item_t(
+                                gamma_after.second,
+                                successor->edge.agent_after.max_buffer_time,
+                                gamma_after.last_recovery,
+                                cur.node->state.loc.name,
+                                gamma_after.second);
 
                 std::cerr << "Additional edge " << extra_edge << ", " << new_gamma[successor->edge.agent_after.id] << std::endl;
                 extendOpen(cur, open_list, m, successor->source, successor->destination, extra_edge, new_gamma);

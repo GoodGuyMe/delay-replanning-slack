@@ -100,7 +100,7 @@ class TrackNode(Node):
         if self.direction != "A" and self.direction != "B":
             raise ValueError("Direction must be either A or B")
 
-    def blocks(self, dir: Direction = Direction.SAME):
+    def blocks(self, dir=Direction.SAME):
         if dir == Direction.SAME:
             return self.blk
         if dir == Direction.OPPOSE:
@@ -168,7 +168,7 @@ class BlockEdge(Edge):
 
     def get_affected_blocks(self) -> list:
         affected_blocks = set()
-        for node in self.tracknodes("AB"):
+        for node in self.tracknodes(Direction.BOTH):
             affected_blocks = affected_blocks.union(set(node.blocks(Direction.BOTH)))
         return list(affected_blocks)
 
@@ -231,6 +231,7 @@ class Graph:
             return self.stations[f"{station}b"]
         if station[0:-1] in self.stations:
             return self.stations[station[0:-1]]
+        raise ValueError(f"{station} is not a station")
 
 class TrackGraph(Graph):
     def __init__(self, file_name):

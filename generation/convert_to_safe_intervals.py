@@ -28,7 +28,8 @@ def create_safe_intervals(intervals, g, buffer_times, recovery_times, destinatio
         # Each tuple is (start, end, duration, train)
         for start, end, dur, train, _ in intervals[node]:
             if current > start:
-                interval = (current, start, train_before, train, 0, 0)
+                buffer_after = buffer_times[train][node] if node in buffer_times[train] else 0
+                interval = (current, start, train_before, train, buffer_after, 0)
                 train_before = train
                 logger.error(f"INTERVAL ERROR safe node interval {interval} on node {node} has later end than start.")
             elif current == start:
@@ -37,7 +38,8 @@ def create_safe_intervals(intervals, g, buffer_times, recovery_times, destinatio
                 train_before = train
                 current = end
             else:
-                interval = (current, start, train_before, train, 0, 0)
+                buffer_after = buffer_times[train][node] if node in buffer_times[train] else 0
+                interval = (current, start, train_before, train, buffer_after, 0)
                 safe_node_intervals[node].append(interval)
                 train_before = train
                 # Dictionary with node keys, each entry has a dictionary with interval keys and then the index value

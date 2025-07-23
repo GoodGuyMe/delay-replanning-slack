@@ -1,5 +1,7 @@
 import subprocess
+import math
 import matplotlib.pyplot as plt
+import numpy as np
 from datetime import timedelta
 from logging import getLogger
 
@@ -8,9 +10,18 @@ logger = getLogger('pybook.' + __name__)
 from generation import generate
 from parseRePEAT import *
 
+linestyles = [
+    (0, (5, 10)),
+    (5, (5, 10)),
+    (10, (5, 10)),
+    (0, (5, 0))
+]
+
 def plot_atf(segments, axs, eatfs, **kwargs):
     color = kwargs.get('color', None)
     label = kwargs.get('label', None)
+    linestyle = linestyles[kwargs.get('linestyle', 0)]
+
     y_offset = kwargs.get('y_offset', 0)
 
     if 'expected_arrival_time' in kwargs:
@@ -20,8 +31,8 @@ def plot_atf(segments, axs, eatfs, **kwargs):
     line = None
     for (x0, x1, y0, y1) in segments:
         if x0 == "-inf" and x1 != "inf" and y1 != "inf":
-            axs[0].hlines(float(y1) + y_offset, 0, float(x1), colors=color)
-        line, = axs[0].plot([float(x0), float(x1)], [float(y0) + y_offset, float(y1) + y_offset], color=color)
+            axs[0].hlines(float(y1) + y_offset, 0, float(x1), colors=color, linestyle=linestyle)
+        line, = axs[0].plot([float(x0), float(x1)], [float(y0) + y_offset, float(y1) + y_offset], color=color, linestyle=linestyle)
     line.set_label(label) if line is not None else None
 
     plotted_intervals = []
@@ -29,7 +40,7 @@ def plot_atf(segments, axs, eatfs, **kwargs):
         for (zeta, alpha, beta, delta, gammas) in path_eatf:
             min_gamma = 0
             max_gamma = 0
-            for gamma_min, gamma_max, rt in gammas:
+            for gamma_min, gamma_max, rt, location, initial_delay in gammas:
                 # if gamma_max > gamma_min:
                 #     raise ValueError(f"Max gamma > Min gamma, {gamma_max} > {gamma_min}")
                 min_gamma += max(float(gamma_min) - float(rt), 0)
@@ -42,7 +53,7 @@ def plot_atf(segments, axs, eatfs, **kwargs):
 
             if alpha <= beta:
                 # axs[1].plot([previous_beta, alpha], [min_gamma + y_offset, min_gamma + y_offset], color=color)
-                axs[1].plot([alpha, beta], [min_gamma + y_offset, max_gamma + y_offset], color=color)
+                axs[1].plot([alpha, beta], [min_gamma + y_offset, max_gamma + y_offset], color=color, linestyle=linestyle)
             # else:
             #     # axs[1].plot([previous_beta, beta - (gamma_diff)], [min_gamma + y_offset, min_gamma + y_offset], color=color)
             #     axs[1].plot([beta - (gamma_diff), beta], [min_gamma + y_offset, max_gamma + y_offset], color=color)
@@ -53,7 +64,7 @@ def plot_atf(segments, axs, eatfs, **kwargs):
     plotted_intervals.sort(key=lambda x: x[0])
 
     for (alpha, beta, min_gamma, max_gamma) in plotted_intervals:
-        axs[1].plot([previous_beta, alpha], [min_gamma + y_offset, min_gamma + y_offset], color=color)
+        axs[1].plot([previous_beta, alpha], [min_gamma + y_offset, min_gamma + y_offset], color=color, linestyle=linestyle)
         previous_beta = beta
 
             # logger.info(f"{alpha}, {beta}, {gammas}, {min_gammas} - {max_gammas}")
@@ -71,15 +82,22 @@ def setup_plt(**kwargs):
     axs[0].set_ylabel("Arrival time (hh:mm:ss)")
     axs[1].set_ylabel("Total delay of agents (s)")
     axs[0].set_title("Arrival Time Function")
-    axs[0].set_xlim(left=kwargs.get("min_x", None), right=kwargs.get("max_x", None))
+    leftx, rightx = axs[0].set_xlim(left=kwargs.get("min_x", None), right=kwargs.get("max_x", None))
     axs[1].set_xlim(left=kwargs.get("min_x", None), right=kwargs.get("max_x", None))
-    axs[0].set_ylim(bottom=kwargs.get("min_y", None), top=kwargs.get("max_y", None))
+    lefty, righty = axs[0].set_ylim(bottom=kwargs.get("min_y", None), top=kwargs.get("max_y", None))
     axs[0].grid()
     axs[1].grid()
 
-    axs[0].set_xticklabels([str(timedelta(seconds=xtick)) for xtick in axs[0].get_xticks()])
-    axs[0].set_yticklabels([str(timedelta(seconds=ytick)) for ytick in axs[0].get_yticks()])
-    axs[1].set_xticklabels([str(timedelta(seconds=xtick)) for xtick in axs[1].get_xticks()])
+    first_minx = math.ceil(leftx / 60) * 60
+    xticks = list(np.arange(first_minx, rightx + 1, 60))
+
+    axs[0].set_xticks(xticks, labels=[str(timedelta(seconds=xtick)) for xtick in xticks])
+    axs[1].set_xticks(xticks, labels=[str(timedelta(seconds=xtick)) for xtick in xticks])
+
+    first_miny = math.ceil(lefty / 60) * 60
+    yticks = list(np.arange(first_miny, righty + 1, 60))
+
+    axs[0].set_yticks(yticks, labels=[str(timedelta(seconds=ytick)) for ytick in yticks])
 
     return fig, axs
 
@@ -98,6 +116,28 @@ def plot_experiments(exps, save_path=None, **kwargs):
         plt.close(fig)
     else:
         plt.show()
+
+def get_path_data(experiments, df, **kwargs):
+    path_data = []
+    for exp in experiments:
+        if exp.results:
+            for path, res in exp.results[3].items():
+                for zeta, alpha, beta, delta, gammas in res:
+                    for agent_i, agent in enumerate(gammas):
+                        if agent[3] != '':
+                            a = df.loc[df["id"] == agent_i].iloc[0].to_dict() | {
+                                "delay_location": agent[3],
+                                "delay_amount": float(agent[4]),
+                            }
+                            path_data.append({
+                                "path": path,
+                                "zeta": float(zeta),
+                                "alpha": float(alpha),
+                                "beta": float(beta),
+                                "delta": float(delta),
+                                "label": exp.metadata["label"]
+                            } | a | kwargs)
+    return path_data
 
 class Agent:
     def __init__(self, id, origin, destination, velocity, start_time, **kwargs):
@@ -187,7 +227,7 @@ class Experiment:
 
 
     def plot(self, axs, **kwargs):
-        plot_atf(self.results[1], axs, self.results[3], label=self.metadata["label"], color=self.metadata["color"], y_offset=self.metadata["offset"], **kwargs)
+        plot_atf(self.results[1], axs, self.results[3], label=self.metadata["label"], color=self.metadata["color"], y_offset=self.metadata["offset"], linestyle=self.metadata["linestyle"], **kwargs)
 
     def get_running_time(self):
         return {

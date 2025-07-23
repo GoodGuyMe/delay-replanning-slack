@@ -34,7 +34,7 @@
 //}
 
 double update_reference_time(const EdgeATF& path, rePEAT::Open& open_list){
-    double upper_bound = std::max(path.alpha, path.beta);
+    double upper_bound = path.beta;
     double lower_bound = path.alpha;
     std::cerr << "Starting update tref with alpha " << lower_bound << " beta " << upper_bound << " delta " << path.delta << std::endl;
     while(lower_bound < upper_bound){
@@ -61,7 +61,7 @@ CompoundATF<std::vector<GraphNode *>> rePEAT::search(GraphNode * source, const L
     std::vector<GraphNode *> path;
     CompoundATF solutions(path);
     m.init();
-    while(t_ref < end(source->state.interval)){
+    while(t_ref < end(source->state.interval) + std::get<4>(source->state.interval)){
         std::cerr << "tref: " << t_ref << "\n";
         Open open_list;
         open_list.emplace(EdgeATF(-std::numeric_limits<double>::infinity(), t_ref, std::numeric_limits<double>::infinity(), 0.0, gamma), 0, source, nullptr);
