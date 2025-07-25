@@ -43,10 +43,13 @@ class Runner:
 
         return agent_df
 
-    def _get_replanning_agent(self, trainseries, direction):
+    def _get_replanning_agent(self, trainseries, direction, from_stop):
+        def filter(row):
+            stops = pd.DataFrame(self.get_inclusive_stops(row))
+            return stops["location"].str.contains(from_stop).any()
+
         series = self._get_series(trainseries, direction)
-        index = 0 if len(series) == 1 else 1
-        agent = series.iloc[index]
+        agent= series.loc[series.apply(filter, axis=1)].iloc[0]
         return agent
 
     def _get_series(self, trainseries, direction):
@@ -84,8 +87,8 @@ class Runner:
 
 
 class TadRunner(Runner):
-    def run(self, trainseries, direction, f, t, timeout=300, default_direction=1):
-        agent = self._get_replanning_agent(trainseries, direction)
+    def run(self, trainseries, direction, f, t, timeout=300, default_direction=1, max_buffer_time=900):
+        agent = self._get_replanning_agent(trainseries, direction, f)
         allowed_nodes = self.allowed_nodes(f, t, agent)
         # Setup experiment
         experiment_settings = [
@@ -97,22 +100,11 @@ class TadRunner(Runner):
                 "metadata": {
                     "offset": 0,
                 },
-            },
-            {
+            },{
                 "start_time": self.r_start["time"].iloc[0],
                 "origin": self.r_start["location"].iloc[0],
                 "destination": self.r_stop["location"].iloc[0],
-                "max_buffer_time": 900,
-                "filter_agents": agent['id'],
-                "metadata": {
-                    "color": "Green",
-                    "label": "Buffer time",
-                }
-            }, {
-                "start_time": self.r_start["time"].iloc[0],
-                "origin": self.r_start["location"].iloc[0],
-                "destination": self.r_stop["location"].iloc[0],
-                "max_buffer_time": 900,
+                "max_buffer_time": max_buffer_time,
                 "use_recovery_time": True,
                 "filter_agents": agent['id'],
                 "metadata": {
@@ -128,9 +120,10 @@ class TadRunner(Runner):
 
     def plot(self, experiments, save=None, x_offset=900, y_offset=900):
         if experiments:
-            kwargs = {"min_x": self.r_start["time"].iloc[0], "max_x": self.r_start["time"].iloc[0] + x_offset,
-                      "min_y": self.r_stop["expected_arrival"].iloc[0] - y_offset, "max_y": self.r_stop["expected_arrival"].iloc[0] + y_offset,
-                      "expected_arrival_time": self.r_stop["expected_arrival"].iloc[0]}
+            expected_arrival = self.r_stop["expected_arrival"].iloc[0] - self.r_start["time"].iloc[0]
+            kwargs = {"min_x": 0, "max_x": x_offset,
+                      "min_y": expected_arrival - y_offset, "max_y": expected_arrival + y_offset,
+                      "expected_arrival_time": expected_arrival}
             if save is not None:
                 save_path = self.save_dir / save
                 save_path.parent.mkdir(exist_ok=True, parents=True)
@@ -139,7 +132,7 @@ class TadRunner(Runner):
 
 class RTRunner(Runner):
     def run(self, trainseries, direction, f, t, timeout=300):
-        agent = self._get_replanning_agent(trainseries, direction)
+        agent = self._get_replanning_agent(trainseries, direction, f)
         if len(agent) == 0:
             return []
         allowed_nodes = self.allowed_nodes(f, t, agent)

@@ -111,6 +111,6 @@ namespace rePEAT{
         }
     };
 
-    CompoundATF<std::vector<GraphNode *>> search(GraphNode * source, const Location& dest, MetaData & m, double start_time, gamma_t gamma);
+    CompoundATF<std::vector<GraphNode *>> search(GraphNode * source, const Location& dest, MetaData & m, double start_time, gamma_t gamma, intervalTime_t search_duration);
 }
 

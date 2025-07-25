@@ -26,7 +26,7 @@ def plot_atf(segments, axs, eatfs, **kwargs):
 
     if 'expected_arrival_time' in kwargs:
         eat = kwargs['expected_arrival_time']
-        axs[0].axhline(eat)
+        axs[0].axhline(eat, color="g")
 
     line = None
     for (x0, x1, y0, y1) in segments:
@@ -43,8 +43,8 @@ def plot_atf(segments, axs, eatfs, **kwargs):
             for gamma_min, gamma_max, rt, location, initial_delay in gammas:
                 # if gamma_max > gamma_min:
                 #     raise ValueError(f"Max gamma > Min gamma, {gamma_max} > {gamma_min}")
-                min_gamma += max(float(gamma_min) - float(rt), 0)
-                max_gamma += max(float(gamma_max) - float(rt), 0)
+                min_gamma += max(float(gamma_min), 0)
+                max_gamma += max(float(gamma_max), 0)
 
             alpha = float(alpha)
             beta = float(beta)
@@ -81,7 +81,6 @@ def setup_plt(**kwargs):
     axs[1].set_xlabel("Departure time (hh:mm:ss)")
     axs[0].set_ylabel("Arrival time (hh:mm:ss)")
     axs[1].set_ylabel("Total delay of agents (s)")
-    axs[0].set_title("Arrival Time Function")
     leftx, rightx = axs[0].set_xlim(left=kwargs.get("min_x", None), right=kwargs.get("max_x", None))
     axs[1].set_xlim(left=kwargs.get("min_x", None), right=kwargs.get("max_x", None))
     lefty, righty = axs[0].set_ylim(bottom=kwargs.get("min_y", None), top=kwargs.get("max_y", None))
@@ -95,7 +94,7 @@ def setup_plt(**kwargs):
     axs[1].set_xticks(xticks, labels=[str(timedelta(seconds=xtick)) for xtick in xticks])
 
     first_miny = math.ceil(lefty / 60) * 60
-    yticks = list(np.arange(first_miny, righty + 1, 60))
+    yticks = list(np.arange(first_miny, righty + 1, 120))
 
     axs[0].set_yticks(yticks, labels=[str(timedelta(seconds=ytick)) for ytick in yticks])
 
@@ -110,6 +109,8 @@ def plot_experiments(exps, save_path=None, **kwargs):
         logger.info(f"Plotting {e}")
         e.plot(axs, **kwargs)
 
+    extra_legend, = axs[0].plot([0, 0], [0, 0], color="g")
+    extra_legend.set_label("Expected Arrival Time")
     axs[0].legend()
     if save_path is not None:
         fig.savefig(save_path)
@@ -218,7 +219,7 @@ class Experiment:
         if int(proc.returncode) == 0:
             repeat_output = str(proc.stdout).split("'")[1].rsplit("\\r\\n")
             logger.debug(f"repeat output: {repeat_output}")
-            metadata, catf, paths, eatfs = parse_list_of_outputs(repeat_output)
+            metadata, catf, paths, eatfs = parse_list_of_outputs(repeat_output, offset=self.agent.start_time)
             logger.info(f"eats: {eatfs}")
             logger.info(f"cats: {catf}")
             self.results = (metadata, catf, paths, eatfs)

@@ -3,7 +3,7 @@ def parse_repeat(s):
     s = s.strip("\n").split("\n") # avoid empty element in list
     return parse_list_of_outputs(s)
 
-def parse_list_of_outputs(s):
+def parse_list_of_outputs(s, offset=0):
     # s is the output split on newline characters
     i = 0
     while "Nodes generated" not in s[i]:
@@ -15,7 +15,7 @@ def parse_list_of_outputs(s):
     metadata["Nodes expanded"] = lns[8]
     i+=1
     catf = s[i].strip(", ").split(", ") # avoid empty element in list
-    catf = [tuple(x.strip("'").strip("<").strip(">").split(",")) for x in catf]
+    catf = [tuple([str(round(float(y) - offset, 2)) for y in (x.strip("'").strip("<").strip(">").split(","))]) for x in catf]
     i += 1
     paths = []
     eatfs = []
@@ -29,6 +29,8 @@ def parse_list_of_outputs(s):
         atf = atf.strip("<").strip(">").split(",")
         gammas = [gamma[1:-1].split(": ") for gamma in atf[-1][1:-1].split("; ")[0:-1]]
         atf[-1] = gammas
+        for j in range(len(atf) - 2):
+            atf[j] = str(round(float(atf[j]) - offset, 2))
         atf = tuple(atf)
         eatfs.append(atf)
         i += 1
